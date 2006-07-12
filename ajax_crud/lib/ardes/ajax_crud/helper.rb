@@ -39,11 +39,10 @@ module Ardes
         html_options[:class] = options.delete(:class) || 'action'
         html_options[:onclick] = "#{confirm_link_to}#{html_options[:onclick]}" if options.delete(:safe)
         add_loading(options)
-        options[:url] = {:action => 'cancel'}
-        options[:url][:id] = url[:id] if url[:id]
-        options[:url][:params] = url[:params] || {}
-        options[:url][:params][:cancel] = url[:action]
-        options[:url] = internal_url(options[:url])
+        url[:params] ||= {}
+        url[:params][:cancel] = url.delete(:action)
+        url[:action] = 'cancel'
+        options[:url] = internal_url(url)
         link_to_remote(content, options, html_options)
       end
 
@@ -54,7 +53,9 @@ module Ardes
         options[:html] ||= {}
         options[:html][:id] = "#{public_id(url)}_form"
         options[:builder] ||= Ardes::AjaxCrud::FormBuilder
-        form_remote_for('model', @model, options, &block)
+        object_name = options.delete(:object_name) || controller.model_sym
+        object = options.delete(:object) || controller.model_object
+        form_remote_for(object_name, object, options, &block)
       end
 
       def public_id(url = {})
@@ -95,7 +96,7 @@ module Ardes
         action_id = public_id(options)
         page.replace_html action_id, :partial => options[:action]
         page.visual_effect :highlight, action_id, {:duration => 0.25, :startcolor => '"#FFDDDD"', :queue => 'front'}
-        page << "ArdesAjaxCrud.focus('#{action_id}');"
+        #page << "ArdesAjaxCrud.focus('#{action_id}');"
       end
 
       def rjs_update_item(page, item, new_record, options = {})
@@ -111,7 +112,7 @@ module Ardes
         options[:id] = item.id
         item_id = "#{public_id(options)}_item"
         
-        page.insert_html :top, list_id, :partial => "list_empty" if controller.model_count == 0
+        page.insert_html :top, list_id, :partial => "list_empty" if controller.model_list(reload = false).size == 1 
         page.remove item_id
         page.visual_effect :highlight, list_id
       end
@@ -135,7 +136,7 @@ module Ardes
         item_id = "#{public_id(options)}_item"
 
         page.remove end_id
-        page.remove empty_id if controller.model_count == 1
+        page.remove empty_id if controller.model_list(reload = false) == 0
         
         page.insert_html :bottom, list_id, :partial => 'item', :locals => {:item => item}
         page.insert_html :bottom, list_id, :partial => 'list_end'
