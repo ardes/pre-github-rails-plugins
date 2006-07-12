@@ -19,20 +19,28 @@ class AjaxCrudTest < Test::Unit::TestCase
     @response = ActionController::TestResponse.new
   end
   
-  def test_model_count
-    assert_equal 3, @controller.model_count
-    assert_equal 3, @controller.instance_eval { @model_count }
-  end
-  
   def test_model_list
     list = [ajax_crud_models(:first), ajax_crud_models(:second), ajax_crud_models(:third)]
     assert_equal list, @controller.model_list
-    assert_equal list, @controller.instance_eval { @models }
+    assert_equal list, @controller.instance_eval { @ajax_crud_models }
+    
+    AjaxCrudModel.delete_all
+    assert_equal list, @controller.model_list(reload = false)
+    assert_equal [],   @controller.model_list(reload = true)
+    assert_equal [],   @controller.instance_eval { @ajax_crud_models }
+  end
+  
+  def test_find_or_new_model
+    obj = @controller.instance_eval { find_or_new_model }
+    assert_equal obj, @controller.instance_eval { @ajax_crud_model }
+    
+    assert_equal ajax_crud_models(:first), obj = @controller.instance_eval { find_or_new_model(1) }
+    assert_equal obj, @controller.instance_eval { @ajax_crud_model }
   end
   
   def test_model_desc
     assert_equal 'ajax crud model: 1', @controller.model_desc(ajax_crud_models(:first))
-    @controller.instance_eval { @model = AjaxCrudModel.find_by_name('third') }
+    @controller.instance_eval { find_model(3) }
     assert_equal 'ajax crud model: 3', @controller.model_desc
   end
   
@@ -58,7 +66,7 @@ class AjaxCrudTest < Test::Unit::TestCase
     assert_equal 'ajax_crud_model_666', AjaxCrudModelController.public_id(:params => {:id => 666})
   end
   
-  def test_class_public_is_with_action_and_id
+  def test_class_public_id_with_action_and_id
     assert_equal 'ajax_crud_model_666_action', AjaxCrudModelController.public_id(:id => 666, :action => 'action')
     assert_equal 'ajax_crud_model_666_action', AjaxCrudModelController.public_id(:params => {:id => 666}, :action => 'action')
   end
@@ -66,7 +74,7 @@ class AjaxCrudTest < Test::Unit::TestCase
   def test_index
     get :index
     assert_response :success
-    assert_equal assigns['models'], AjaxCrudModel.find_all
+    assert_equal assigns['ajax_crud_models'], AjaxCrudModel.find_all
     assert_template 'ajax_crud_model/index'
     
     assert_div(nil, nil, 'loading', :class => 'loading')
@@ -86,7 +94,7 @@ class AjaxCrudTest < Test::Unit::TestCase
   def test_show
     xhr :get, :show, :id => 1
     assert_response :success
-    assert_equal assigns['model'], AjaxCrudModel.find(1)
+    assert_equal AjaxCrudModel.find(1), assigns['ajax_crud_model']
     assert_template 'ajax_crud_model/open'
     
     assert_rjs :insert_html, :top, 'ajax_crud_model_1'
@@ -96,10 +104,39 @@ class AjaxCrudTest < Test::Unit::TestCase
     assert_action_form 1, 'show'
   end
   
+  def test_edit
+    xhr :get, :edit, :id => 1
+    assert_response :success
+    assert_equal AjaxCrudModel.find(1), assigns['ajax_crud_model']
+    assert_template 'ajax_crud_model/open'
+    
+    assert_rjs :insert_html, :top, 'ajax_crud_model_1'
+    
+    convert_xhr_body
+    assert_div 1, 'edit', :class => 'action'
+    assert_action_form 1, 'edit'
+  end
+  
+  def test_edit_post_valid
+    xhr :post, :edit, :id => 1, :ajax_crud_model => {:name => 'changed'}
+    assert_response :success
+    assert_equal 'changed', AjaxCrudModel.find(1).name
+    assert_template 'ajax_crud_model/edit'
+    assert_rjs :replace_html, 'ajax_crud_model_1_item_main'
+  end
+  
+  def test_edit_post_invalid
+    xhr :post, :edit, :id => 1, :ajax_crud_model => {:name => ''}
+    assert_response :success
+    assert_equal 'first', AjaxCrudModel.find(1).name
+    assert_template 'ajax_crud_model/error'
+    assert_rjs :replace_html, 'ajax_crud_model_1_edit'
+  end
+  
   def test_new
     xhr :get, :edit, :id => 'new'
     assert_response :success
-    assert_kind_of AjaxCrudModel, assigns['model']
+    assert_kind_of AjaxCrudModel, assigns['ajax_crud_model']
     assert_template 'ajax_crud_model/open'
     
     assert_rjs :insert_html, :top, 'ajax_crud_model_new'
@@ -107,6 +144,22 @@ class AjaxCrudTest < Test::Unit::TestCase
     convert_xhr_body
     assert_div 'new', 'edit', :class => 'action'
     assert_action_form 'new', 'edit'
+  end
+  
+  def test_new_post_valid
+    xhr :post, :edit, :id => 'new', :ajax_crud_model => {:name => 'new'}
+    assert_response :success
+    assert_kind_of AjaxCrudModel, assigns['ajax_crud_model']
+    assert_equal 'new', AjaxCrudModel.find(assigns['ajax_crud_model'].id).name
+    assert_template 'ajax_crud_model/edit'
+    assert_rjs :insert_html, :bottom, 'ajax_crud_model_list'
+  end
+  
+  def test_new_post_invalid
+    xhr :post, :edit, :id => 'new', :ajax_crud_model => {:name => ''}
+    assert_response :success
+    assert_template 'ajax_crud_model/error'
+    assert_rjs :replace_html, 'ajax_crud_model_new_edit'
   end
   
 private
