@@ -1,0 +1,71 @@
+module Ardes
+  module Test
+    module HasUkPostcode
+      def self.included(base)
+        base.extend(ClassMethods)
+      end
+
+      module ClassMethods
+        # Usage: 
+        #   test_has_uk_postcode Class, :postcode_attr
+        #   test_has_uk_postcode Class, :postcode_attr, :another_postcode_attr
+        #   test_has_uk_postcode Class, :postcode_attr, ..., [fixture names]
+        #
+        # If fixture names are given then those fixtures will be tested,
+        # if ommitted then all fixtures will be tested
+        def test_has_uk_postcode(target_class, *args)
+          include InstanceMethods
+          self.class_eval do
+            cattr_accessor :has_uk_postcode_class, :has_uk_postcode_attrs, :has_uk_postcode_fixtures
+            self.has_uk_postcode_fixtures = args.last.is_a?(Array) ? args.pop : nil
+            self.has_uk_postcode_class = target_class
+            self.has_uk_postcode_attrs = args
+          end
+        end
+      end
+
+      module InstanceMethods
+        def test_has_uk_postcode_should_read_postcodes_as_value_objects
+          obj = self.has_uk_postcode_class.find_first
+          self.has_uk_postcode_attrs.each do |attr|
+            assert_kind_of Ardes::UkPostcode, obj.send(attr) unless obj.send(attr).nil?
+          end
+        end
+      
+        def test_has_uk_postcode_should_validate_valid_data_in_fixtures
+          if self.has_uk_postcode_fixtures
+            to_test = self.has_uk_postcode_fixtures.collect do |fixture|
+              fixture = send(self.has_uk_postcode_class.table_name, fixture)
+              self.has_uk_postcode_class.find(fixture.id)
+            end
+          else
+            to_test = self.has_uk_postcode_class.find(:all)
+          end
+          to_test.each do |record|
+            self.has_uk_postcode_attrs.each do |attr|
+              assert record.valid_for_attributes?(attr)
+            end
+          end
+        end
+
+        def test_should_validate_S11_8BH_on_all_postcodes
+          obj = self.has_uk_postcode_class.new
+          self.has_uk_postcode_attrs.each do |attr|
+            obj.send(attr.to_s + '=', Ardes::UkPostcode.new('S11 8BH'))
+            assert obj.valid_for_attributes?(attr)
+          end
+        end
+              
+        def test_should_not_validate_XXX_XXX_on_all_postcodes
+          obj = self.has_uk_postcode_class.new
+          self.has_uk_postcode_attrs.each do |attr|
+            obj.send(attr.to_s + '=', Ardes::UkPostcode.new('XXX XXX'))
+            assert(!obj.valid_for_attributes?(attr))
+          end        
+        end
+      end
+    end
+  end
+end
+
+Test::Unit::TestCase.class_eval { include Ardes::Test::HasUkPostcode }
