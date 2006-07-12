@@ -13,7 +13,9 @@ module Ardes
       
     module Helper
       def self.included(base)
-        base.class_eval { alias_method_chain :form_for_action, :tips }
+        base.class_eval do
+          alias_method_chain :form_for_action, :tips
+        end
       end
       
       def form_for_action_with_tips(url, options = {}, &block)
@@ -23,7 +25,6 @@ module Ardes
       
       def tip_for(attribute)
         return unless tip = controller.ajax_crud_tips[attribute]
-        
         if tip.is_a? String
           eval "\"#{tip}\""
         elsif tip.is_a? Proc
