@@ -1,12 +1,20 @@
 /*****************************************************************************
-** Fonts for ajax_crud and headings
+** Ajax crud container
 */
 
 #ajax_crud {
+/*  min-height: 1200px; *//* to stop safari scrollbar refresh bug */
+}
+
+/*****************************************************************************
+** Fonts for ajax_crud and headings
+*/
+
+#ajax_crud, #ajax_crud form textarea {
   font-family: verdana, arial, helvetica, sans-serif;
   font-size:   12px;
   line-height: 15px;
-  color: #333;
+  color: #222;
 }
 
 #ajax_crud h1, #ajax_crud h2, #ajax_crud h3 {
@@ -84,6 +92,11 @@
   padding:10px;
 }
 
+#ajax_crud form textarea, #ajax_crud form input, #ajax_crud form select {
+  font-size: 11px;
+  margin-top: -2px;
+}
+
 #ajax_crud form a.action {
   font-size: 12px;
 }
@@ -102,7 +115,7 @@
   float: left;
   text-align: right;
   width: 110px;
-  margin: 0px 10px 0 0;
+  margin: 0 10px 0 0;
 }
 
 #ajax_crud form div.no_label {
@@ -142,11 +155,9 @@
   padding: 5px;
 }
 
-/* TODO: need to turn padding off for "field error" class
-#ajax_crud form div.error+.field {
-  padding: 0;
+#ajax_crud form div.field.error {
+  padding-left: 0;
 }
-*/
 
 #ajax_crud form div.error div.error {
   font-size: 10px;
@@ -204,7 +215,6 @@
   display: none;
 }
 
-
 #ajax_crud div.list li.item div.actions {
   border: none;
 }
@@ -214,13 +224,13 @@
 }
 
 #ajax_crud div.list li.item div.item_main {
-  margin: 0;
+  margin: 2px;
   padding: 2px;
   float: left;
 }
 
 #ajax_crud div.list li.item div.item_links {
-  margin: 0;
+  margin: 2px;
   padding: 2px;
   font-size: 10px;
   float: right;
