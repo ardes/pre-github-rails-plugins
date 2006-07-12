@@ -1,2 +1,2 @@
-rjs_remove_item page, @model
+rjs_remove_item page, controller.model_object
 rjs_message page, @message
