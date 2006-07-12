@@ -7,7 +7,7 @@ module Ardes
         unless self.included_modules.include?(Ardes::AjaxCrudBelongsTo::Controller::InstanceMethods)
           include InstanceMethods
           extend ClassMethods
-          cattr_accessor :belongs_to_associations
+          class_inheritable_accessor :belongs_to_associations
           self.belongs_to_associations = []
           inherit_views :ajax_crud_belongs_to
           before_filter :load_belongs_to
@@ -19,9 +19,9 @@ module Ardes
       module InstanceMethods  
         def self.included(base)
           base.class_eval do
-            alias_method_chain :edit,             :belongs_to
-            alias_method_chain :default_params,   :belongs_to
-            alias_method_chain :load_model_list,  :belongs_to
+            alias_method_chain :edit,            :belongs_to
+            alias_method_chain :default_params,  :belongs_to
+            alias_method_chain :load_model_list, :belongs_to
           end
         end
 
@@ -34,12 +34,16 @@ module Ardes
           default_params_without_belongs_to.merge(belongs_to_conditions)
         end
     
-      private
+      protected
+        def belongs_to_object(sym)
+          instance_variable_get("@#{sym}")
+        end
+        
         def belongs_to_conditions
           conditions = {}
           self.belongs_to_associations.each do |assoc|
-            conditions[assoc[:id_field]]   = @belongs_to[assoc[:sym]].id
-            conditions[assoc[:type_field]] = @belongs_to[assoc[:sym]].class.name if assoc[:type_field]
+            conditions[assoc[:id_field]]   = belongs_to_object(assoc[:sym]).id
+            conditions[assoc[:type_field]] = belongs_to_object(assoc[:sym]).class.name if assoc[:type_field]
           end
           conditions
         end
@@ -51,11 +55,9 @@ module Ardes
         end
           
         def load_belongs_to
-          @belongs_to = {}
-          self.belongs_to_associations.each do |assoc|
+          belongs_to_associations.each do |assoc|
             belongs_to_class = assoc[:class] || params[assoc[:type_field]].constantize
-            @belongs_to[assoc[:sym]] = belongs_to_class.find(params[assoc[:id_field]])
-            instance_variable_set "@#{assoc[:sym]}", @belongs_to[assoc[:sym]]
+            instance_variable_set "@#{assoc[:sym]}", belongs_to_class.find(params[assoc[:id_field]])
           end
         end
       end
@@ -72,7 +74,7 @@ module Ardes
         
         def controller_id(url = {})
           controller_id = controller_name
-          self.belongs_to_associations.each do |assoc|
+          belongs_to_associations.each do |assoc|
             controller_id += "_#{url[:params][assoc[:id_field]]}"
             controller_id += "_#{url[:params][assoc[:type_field]]}" if assoc[:type_field]
           end
