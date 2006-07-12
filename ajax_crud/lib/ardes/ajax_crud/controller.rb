@@ -1,22 +1,18 @@
 require 'ardes/ajax_crud/helper'
 
-#
-# TODO: make the controller set an instance var @model_name and also use this
-# for params
-#
 module Ardes
   module AjaxCrud
     module Controller
-      def ajax_crud(model = nil)
+      def ajax_crud(model = nil, options = {})
         include Actions
         include InstanceMethods
         extend ClassMethods
 
-        cattr_accessor :model_sym, :model_class, :model_name
-        set_model(model) if model
+        class_inheritable_accessor :model_sym, :model_class, :model_name, :model_list_sym, :model_find_options
+        ajax_crud_model(model, options) if model
         
         helper Ardes::AjaxCrud::Helper
-        
+        layout 'ajax_crud/layouts/ajax_crud'
         inherit_views :ajax_crud
       end
 
@@ -27,23 +23,23 @@ module Ardes
         end
         
         def show
-          @model = self.model_class.find(params[:id])
+          find_model(params[:id])
           render :action => 'open'
         end
         
         def destroy
-          @model = self.model_class.find(params[:id])
-          if @model.destroy
+          obj = find_model(params[:id])
+          if obj.destroy
             @message = "#{model_desc} destroyed"
           end
         end
         
         def edit
-          @model = self.model_class.find_by_id(params[:id]) || self.model_class.new
-          @new_record = @model.new_record?
-          if params[:model]
-            @model.attributes = params[:model]
-            if @model.save
+          obj = self.find_or_new_model(params[:id])
+          @new_record = obj.new_record?
+          if params[self.model_sym]
+            obj.attributes = params[self.model_sym]
+            if obj.save
               @message = model_desc + (@new_record ? ' created' : ' updated')
               render :action => 'edit'
             else
@@ -65,18 +61,17 @@ module Ardes
           self.class.generate_public_id(internal_url(url))
         end
 
-        def model_desc(model = @model)
-          model.respond_to?(:obj_desc) ? model.obj_desc : "#{self.model_name}: #{model.id}"
-        end
-
-        def model_list(reload = false)
-          @models = nil if reload
-          @models ||= load_model_list
+        def model_desc(model = model_object)
+          model.respond_to?(:obj_desc) ? model.obj_desc : "#{model_name}: #{model.id}"
         end
         
-        def model_count(reload = false)
-          @model_count = nil if reload
-          @model_count ||= load_model_list.size
+        def model_object
+          instance_variable_get("@#{model_sym}")
+        end
+        
+        def model_list(reload = false)
+          instance_variable_set("@#{model_list_sym}", load_model_list) if reload or instance_variable_get("@#{model_list_sym}").nil?
+          instance_variable_get("@#{model_list_sym}")
         end
         
         def internal_url(url)
@@ -85,9 +80,24 @@ module Ardes
           url
         end
       
-      private
+      protected
+        def find_model(id)
+          instance_variable_set("@#{model_sym}", model_class.find(id, model_find_options.dup))
+        end                                      
+                                                 
+        def new_model                            
+          instance_variable_set("@#{model_sym}", model_class.new)
+        end
+      
+        def find_or_new_model(id = nil)
+          id = nil if id == "new"
+          return find_model(id)
+        rescue ::ActiveRecord::RecordNotFound
+          return new_model
+        end
+
         def load_model_list
-          self.model_class.find_all
+          model_class.find :all, model_find_options.dup
         end
         
         def default_params
@@ -96,10 +106,12 @@ module Ardes
       end
     
       module ClassMethods
-        def set_model(model)
-          self.model_sym   = model
-          self.model_name  = model.to_s.humanize.downcase
-          self.model_class = model.to_s.classify.constantize
+        def ajax_crud_model(model_sym, find_options = {})
+          self.model_sym          = model_sym
+          self.model_name         = model_sym.to_s.humanize.downcase
+          self.model_class        = model_sym.to_s.classify.constantize
+          self.model_list_sym     = model_sym.to_s.pluralize.to_sym
+          self.model_find_options = find_options.freeze
         end
         
         def public_id(url = {})
