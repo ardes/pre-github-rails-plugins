@@ -3,8 +3,11 @@
   <%= render :partial => 'list_empty' if list.size == 0 %>
   
   <% for item in list %>
-    <li id="item_<%= item.id %>">
-      <div class="item"><%= render :partial => 'item_main', :locals => {:item => item} %></div>
+    <li id="item_<%= item.id %>" class="item">
+      <div class="item_main">
+        <%= render :partial => 'item_main', :locals => {:item => item} %>
+      </div>
+      <div class="actions"></div>
     </li>
   <% end %>
 
