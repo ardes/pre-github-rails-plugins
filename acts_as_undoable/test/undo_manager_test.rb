@@ -26,6 +26,12 @@ class UndoManagerTest < Test::Unit::TestCase
     assert_equal [car_undo_operations(:op3), car_undo_operations(:op2), car_undo_operations(:op1)], @car_manager.undoables
   end
   
+  def test_should_have_correct_undoables_with_find_options
+    assert_equal [car_undo_operations(:op2)], @car_manager.undoables(:limit => 1)
+    assert_equal [car_undo_operations(:op2)], @car_manager.undoables(:to => 2)
+    assert_equal [car_undo_operations(:op2), car_undo_operations(:op1)], @car_manager.undoables(:to => 1)
+  end
+  
   def test_should_have_correct_redoables
     assert_equal [car_undo_operations(:op3)], @car_manager.redoables
     assert(@car_manager.redo)

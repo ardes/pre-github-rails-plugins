@@ -60,7 +60,8 @@ module Ardes
       reset_execute
     end
 
-    # which may be passd :all which undoes all ops, default is to undo most recent (first undoable) op
+    # which may be passd :all which undoes all ops, default is to undo most recent (first undoable) op or :to => id
+    # If you want to undo upto a particular opertaion then call undo() on that operation
     def undo(all = false)
       @operations.find(:not_undone, (all ? :last : :first)).undo
     end
@@ -69,14 +70,16 @@ module Ardes
       @operations.find(:undone, (all ? :last : :first)).redo
     end
 
-    # to may be :first, :all (default), or :to => id
-    def undoables(to = :all)
-      @operations.find :not_undone, to
+    # to may be :first, :all (default), or :to => id (with find options)
+    def undoables(*args)
+      args = [:all] if args.size == 0
+      @operations.find(:not_undone, *args)
     end
 
     # to may be :first, :all (default), or :to => id
-    def redoables(to = :all)
-      @operations.find :undone, to
+    def redoables(*args)
+      args = [:all] if args.size == 0
+      @operations.find(:undone, *args)
     end
 
     # handles nested calls by collapsing all changes into the top level

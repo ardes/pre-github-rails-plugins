@@ -99,7 +99,8 @@ module Ardes# :nodoc:
             
             include ActMethods
             self.undo_all = !!(args.shift.to_s =~ /^(undo_)?all$/)
-
+            
+            options[:keep_versions_on_destroy] = true
             acts_as_versioned(options, &extension)
           end
         end
