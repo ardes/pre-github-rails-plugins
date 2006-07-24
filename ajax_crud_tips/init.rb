@@ -1,2 +1,2 @@
-require 'ardes/ajax_crud_tips/controller'
+require 'ardes/ajax_crud_tips'
 ActionController::Base.class_eval { extend Ardes::AjaxCrudTips::Controller }

@@ -4,13 +4,16 @@ module Ardes
   module AjaxCrudTips
     module Controller
       def ajax_crud_tips(tips_hash)
-        raise 'ajax_crud_tips requires ajax_crud' unless self.included_modules.include?(Ardes::AjaxCrud::Controller::Actions)
-        cattr_accessor :ajax_crud_tips
-        self.ajax_crud_tips = tips_hash
-        helper Ardes::AjaxCrudTips::Helper
+        unless defined?(self.ajax_crud_tips_hash)
+          raise 'ajax_crud_tips requires ajax_crud' unless self.included_modules.include?(Ardes::AjaxCrud::Controller::Actions)
+          class_inheritable_accessor :ajax_crud_tips_hash
+          self.ajax_crud_tips_hash = {}
+          helper Ardes::AjaxCrudTips::Helper
+        end
+        self.ajax_crud_tips_hash.merge! tips_hash
       end
     end
-      
+
     module Helper
       def self.included(base)
         base.class_eval do
@@ -24,7 +27,7 @@ module Ardes
       end
       
       def tip_for(attribute)
-        return unless tip = controller.ajax_crud_tips[attribute]
+        return unless tip = controller.ajax_crud_tips_hash[attribute]
         if tip.is_a? String
           eval "\"#{tip}\""
         elsif tip.is_a? Proc
