@@ -2,14 +2,16 @@ module Ardes
   module AjaxCrudBelongsTo
     module Controller  
       def ajax_crud_belongs_to(association = nil, options = {})
-        raise 'ajax_crud_belongs_to requires ajax_crud' unless self.included_modules.include?(Ardes::AjaxCrud::Controller::Actions)
-    
         unless self.included_modules.include?(Ardes::AjaxCrudBelongsTo::Controller::InstanceMethods)
+          raise 'ajax_crud_belongs_to requires ajax_crud' unless self.included_modules.include?(Ardes::AjaxCrud::Controller::Actions)
           include InstanceMethods
           extend ClassMethods
           class_inheritable_accessor :belongs_to_associations
           self.belongs_to_associations = []
-          inherit_views :ajax_crud_belongs_to
+          
+          inherit_views 'ajax_crud_belongs_to'
+          view_mapping 'ajax_crud_belongs_to' => File.expand_path(File.join(File.dirname(__FILE__), '../../views'))
+          
           before_filter :load_belongs_to
         end
         
@@ -22,11 +24,12 @@ module Ardes
             alias_method_chain :edit,            :belongs_to
             alias_method_chain :default_params,  :belongs_to
             alias_method_chain :load_model_list, :belongs_to
+            hide_action :edit_with_belongs_to, :default_params_with_belongs_to
           end
         end
 
         def edit_with_belongs_to
-          params[:model].merge!(belongs_to_conditions) if params[:model]
+          params[self.model_sym].merge!(belongs_to_conditions) if params[self.model_sym]
           edit_without_belongs_to
         end    
 
