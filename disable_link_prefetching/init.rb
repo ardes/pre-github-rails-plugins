@@ -1,0 +1,1 @@
+require 'ardes/disable_link_prefetching'
