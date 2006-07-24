@@ -41,7 +41,7 @@ module Ardes
           get :index
           assert_response :success
           assert_equal assigns["#{self.ajax_crud_model}".pluralize], self.ajax_crud_model_class.find_all
-          assert_template "#{@controller.controller_name}/index"
+          assert_template "ajax_crud/index"
 
           assert_ajax_crud_div(nil, nil, 'loading', :class => 'loading')
           assert_ajax_crud_div(nil, nil, 'message', :class => 'message')
@@ -61,7 +61,7 @@ module Ardes
           xhr :get, :show, :id => @ajax_crud_model.id
           assert_response :success
           assert_equal @ajax_crud_model, assigns["#{self.ajax_crud_model}"]
-          assert_template "#{@controller.controller_name}/open"
+          assert_template "ajax_crud/open"
 
           assert_rjs :insert_html, :top, "#{self.ajax_crud_model}_#{@ajax_crud_model.id}"
 
@@ -74,7 +74,7 @@ module Ardes
           xhr :get, :edit, :id => @ajax_crud_model.id
           assert_response :success
           assert_equal @ajax_crud_model, assigns["#{self.ajax_crud_model}"]
-          assert_template "#{@controller.controller_name}/open"
+          assert_template "ajax_crud/open"
           
           assert_rjs :insert_html, :top, "#{self.ajax_crud_model}_#{@ajax_crud_model.id}"
           
@@ -90,7 +90,7 @@ module Ardes
           xhr :post, :edit, :id => @ajax_crud_model.id, self.ajax_crud_model => self.ajax_crud_valid
           
           assert_response :success
-          assert_template "#{@controller.controller_name}/edit"
+          assert_template "ajax_crud/edit"
           assert_rjs :replace_html, "#{@controller.controller_name}_#{@ajax_crud_model.id}_item_main"
         
           assert prev_attributes == @ajax_crud_model.attributes
@@ -103,7 +103,7 @@ module Ardes
           xhr :post, :edit, :id => @ajax_crud_model.id, self.ajax_crud_model => self.ajax_crud_invalid
           
           assert_response :success
-          assert_template "#{@controller.controller_name}/error"
+          assert_template "ajax_crud/error"
           assert_rjs :replace_html, "#{@controller.controller_name}_#{@ajax_crud_model.id}_edit"
           
           assert prev_attributes == @ajax_crud_model.attributes
@@ -116,7 +116,7 @@ module Ardes
           xhr :get, :edit, :id => 'new'
           assert_response :success
           assert_kind_of self.ajax_crud_model_class, assigns["#{self.ajax_crud_model}"]
-          assert_template "#{@controller.controller_name}/open"
+          assert_template "ajax_crud/open"
           
           assert_rjs :insert_html, :top, "#{@controller.controller_name}_new"
           
@@ -131,7 +131,7 @@ module Ardes
           xhr :post, :edit, :id => 'new', self.ajax_crud_model => self.ajax_crud_valid
           
           assert_response :success
-          assert_template "#{@controller.controller_name}/edit"
+          assert_template "ajax_crud/edit"
           assert_rjs :insert_html, :bottom, "#{@controller.controller_name}_list"
         
           assert_kind_of self.ajax_crud_model_class, assigns["#{self.ajax_crud_model}"]
@@ -144,7 +144,7 @@ module Ardes
           xhr :post, :edit, :id => 'new', self.ajax_crud_model => self.ajax_crud_invalid
           
           assert_response :success
-          assert_template "#{@controller.controller_name}/error"
+          assert_template "ajax_crud/error"
           assert_rjs :replace_html, "#{@controller.controller_name}_new_edit"
 
           assert_kind_of self.ajax_crud_model_class, assigns["#{self.ajax_crud_model}"]

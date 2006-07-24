@@ -1,9 +1,13 @@
+require 'ardes/ajax_crud/helper_effects'
+
 module Ardes
   module AjaxCrud
     module Helper
+      include HelperEffects
+      
       def loading_link(content, options = {}, html_options = {})
-        add_loading(options)
-        html_options[:onclick] = "#{confirm_link_to}#{html_options[:onclick]}" if options.delete(:safe)
+        options_add_loading(options, "#{public_id}_loading")
+        options_add_confirm(html_options) if options.delete(:safe)
         link_to_remote(content, options, html_options)
       end
       
@@ -17,28 +21,25 @@ module Ardes
       end
         
       def safe_link_to(content, options = {}, html_options = {})
-        html_options[:onclick] = "#{confirm_link_to}#{html_options[:onclick]}"
+        options_add_confirm(html_options)
         link_to(content, options, html_options)
       end
 
       def open_action(content, url, options = {})
         html_options = options.delete(:html) || {}
         html_options[:class] = options.delete(:class) || 'action'
-        add_loading(options)
+        options_add_loading(options, "#{public_id}_loading")
         options[:url] = internal_url(url)
         action_id = public_id(url);
-        options[:before]  = "Element.hide('#{action_id}_open');" + "Element.show('#{action_id}_goto');"
-        # create action link
-        out =  link_to_remote(content, options, html_options.merge({:id => "#{action_id}_open"}))
-        # and create a goto link which is hidden, but turned one when the action is open
-        out << link_to_function(content, "ArdesAjaxCrud.focus('#{action_id}');", html_options.merge({:id => "#{action_id}_goto", :style => "display:none;"}))
+        options[:before] = enable_action_link(false, action_id)
+        create_action_link(action_id, content, options, html_options)
       end
 
       def cancel_action(content, url, options = {})
         html_options = options.delete(:html) || {}
         html_options[:class] = options.delete(:class) || 'action'
-        html_options[:onclick] = "#{confirm_link_to}#{html_options[:onclick]}" if options.delete(:safe)
-        add_loading(options)
+        options_add_confirm(html_options) if options.delete(:safe)
+        options_add_loading(options, "#{public_id}_loading")
         url[:params] ||= {}
         url[:params][:cancel] = url.delete(:action)
         url[:action] = 'cancel'
@@ -47,9 +48,9 @@ module Ardes
       end
 
       def form_for_action(url, options = {}, &block)
-        add_loading(options)
+        options_add_loading(options, "#{public_id}_loading")
         options[:url] = internal_url(url)
-        options[:before] = "Form.disable('#{public_id(url)}_form');"
+        options[:before] = disable_form(public_id(url) + '_form')
         options[:html] ||= {}
         options[:html][:id] = "#{public_id(url)}_form"
         options[:builder] ||= Ardes::AjaxCrud::FormBuilder
@@ -70,33 +71,26 @@ module Ardes
       def rjs_message(page, message, options = {})
         message_div = "#{public_id(options)}_message"
         page.replace_html message_div, message.to_s
-        page.delay(0.5) { page.visual_effect :appear, message_div, {:duration => 0.5, :queue => {:position => 'end', :scope => 'message'}}}
-        page.delay(3)   { page.visual_effect :fade,   message_div, {:queue => {:position => 'end', :scope => 'message'}} }
+        page.message message_div
       end
 
       def rjs_open(page, options)
         action_id = public_id(options)
         action = options.delete(:action)
         container_id = options.delete(:container_id) || public_id(options)
-        page.insert_html :top, container_id, "<div id=\"#{action_id}\" class=\"action\"></div>"
+        page.action_create container_id, action_id
         page.replace_html action_id, :partial => action
-        page << "ArdesAjaxCrud.focus('#{action_id}');"
-        page << "ArdesAjaxCrud.observe('#{action_id}');"
+        page.action_open action_id
       end
 
       def rjs_close(page, options)
-        action_id = public_id(options)
-        page << "ArdesAjaxCrud.setClean('#{action_id}');"
-        page.show "#{action_id}_open"
-        page.hide "#{action_id}_goto"
-        page.remove action_id
+        page.action_close public_id(options)
       end
 
       def rjs_error(page, options)
         action_id = public_id(options)
         page.replace_html action_id, :partial => options[:action]
-        page.visual_effect :highlight, action_id, {:duration => 0.25, :startcolor => '"#FFDDDD"', :queue => 'front'}
-        #page << "ArdesAjaxCrud.focus('#{action_id}');"
+        page.action_error action_id
       end
 
       def rjs_update_item(page, item, new_record, options = {})
@@ -114,7 +108,7 @@ module Ardes
         
         page.insert_html :top, list_id, :partial => "list_empty" if controller.model_list(reload = false).size == 1 
         page.remove item_id
-        page.visual_effect :highlight, list_id
+        page.list_changed list_id
       end
         
       def rjs_refresh_item(page, item, options = {})
@@ -122,7 +116,7 @@ module Ardes
         item_id = "#{public_id(options)}_item"
         item_main_id = "#{item_id}_main"
         page.replace_html item_main_id, :partial => 'item_main', :locals => {:item => item}
-        page.visual_effect :highlight, item_id
+        page.item_changed item_id
       end
 
       def rjs_append_item(page, item, options = {})
@@ -140,18 +134,7 @@ module Ardes
         
         page.insert_html :bottom, list_id, :partial => 'item', :locals => {:item => item}
         page.insert_html :bottom, list_id, :partial => 'list_end'
-        page.visual_effect :highlight, item_id
-      end
-
-    private
-      def add_loading(options)
-        loading_id = "#{public_id}_loading"
-        options[:loading] = "Element.show('#{loading_id}');"
-        options[:loaded]  = "Element.hide('#{loading_id}');"
-      end
-      
-      def confirm_link_to
-        "if (! ArdesAjaxCrud.confirm()) {return false;}"
+        page.item_changed item_id
       end
     end
   end

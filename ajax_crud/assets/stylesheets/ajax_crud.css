@@ -217,10 +217,7 @@
 
 #ajax_crud div.list li.item div.actions {
   border: none;
-}
-
-#ajax_crud div.list li {
-  clear:both;
+  clear: both;
 }
 
 #ajax_crud div.list li.item div.item_main {

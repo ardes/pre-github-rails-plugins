@@ -12,8 +12,11 @@ module Ardes
         ajax_crud_model(model, options) if model
         
         helper Ardes::AjaxCrud::Helper
+        
+        inherit_views 'ajax_crud'
+        view_mapping 'ajax_crud' => File.expand_path(File.join(File.dirname(__FILE__), '../../../views'))
+        
         layout 'ajax_crud/layouts/ajax_crud'
-        inherit_views :ajax_crud
       end
 
       module Actions
