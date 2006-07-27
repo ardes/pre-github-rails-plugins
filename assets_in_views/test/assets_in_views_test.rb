@@ -50,9 +50,7 @@ class AssetsInViewsTest < Test::Unit::TestCase
   
   def test_render_default_asset
     get :asset, {:format => 'rhtml', :source => 'index'}
-    assert_response :success
-    assert_equal '<index />', @response.body
-    assert_equal 'text/plain', @response.headers['Content-Type']
+    assert_response :missing
   end
   
   def test_default_asset_tags

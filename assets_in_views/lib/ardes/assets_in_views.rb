@@ -1,20 +1,22 @@
 module Ardes #:nodoc:
   module ActionController #:nodoc:
+    #
     # Specify this in your controller if you want to serve assets (such as stylesheets and javascripts)
     # from your views directory.  Any such files are parsed as templates before serving.  This means you 
     # may add dynamicity to your css and of asset files.
     #
-    # This comes set up to deal with css and js files - the template extensions are '.rcss' and '.r_js'
+    # This comes set up to deal with css and js files - the template extensions are '.rcss' and '.r_js', but
+    # you can easily add your own asset serving helpers (see Ardes::ActionController::AssetsInViews::InstanceMethods#rcss_asset)
     #
     # NOTE: javascripts served in this way are _not_ .rjs files, they dont; contain instructions on modifying
-    #       the DOM, they're just plain javascript.  To avoid confusion they end in the extension '.r_js'
+    # the DOM, they're just plain javascript.  To avoid confusion they end in the extension '.r_js'
     #
     # This should work out of the box with most browsers, as the 'Content-Type' header is set appropriately
-    # To ensure full compatability add the following route to config/routes.rb
+    # To ensure full compatability add the following route to config/routes.rb
     #
-    #   map.connect ':controller/asset/:format/:source.:extension', :action => 'asset'
+    #   map.connect ':controller/asset/:format/:source.:extension', :action => 'asset', :source => /.*/
     #
-    # This route makes nice pretty urls for the asset action (like /foo/asset/rcss/stylesheet.css)
+    # This route makes nice pretty urls for the asset action (like '/foo/asset/rcss/stylesheet.css')
     #
     # == Usage
     #
@@ -24,7 +26,7 @@ module Ardes #:nodoc:
     #     assets_in_views
     #     ...
     #   
-    # By default any assets served are cached with page caching, if you want to turn this off pass :cache => false
+    # By default any assets served are cached with page caching, if you want to turn this off pass ':cache => false'
     #
     #     assets_in_views :cache => false
     #
@@ -47,23 +49,20 @@ module Ardes #:nodoc:
       # map.connect ':controller/asset/:format/:source.:extension', :action => 'asset'
       #
       def assets_in_views(options = {})
-        include Actions
         include InstanceMethods
         helper Helper
         caches_page(:asset) unless options[:cache] == false
       end
 
-      module Actions
+      module InstanceMethods
         def asset
           if respond_to?(asset_method = "#{params[:format]}_asset")
             send asset_method
           else
-            render_asset
+            render(:nothing => true, :status => 404)
           end
         end
-      end
       
-      module InstanceMethods
       protected
         def render_asset(content_type = "text/plain")
           render :file => "#{self.class.controller_path}/#{params[:source]}.#{params[:format]}",
@@ -85,6 +84,7 @@ module Ardes #:nodoc:
           asset_options = {:controller => options.delete(:controller)}
           sources = ['stylesheet'] if sources.size == 0
           create_views_asset_tags(sources, asset_options.merge(:format => 'rcss', :extension => 'css')) do |source, url|
+            url.sub!('&amp;', '&') # prevent  & in &amp being substituted by stylesheet_link_tag
             stylesheet_link_tag(source, options.merge(:href => url))
           end
         end
@@ -103,16 +103,12 @@ module Ardes #:nodoc:
           url_options = {:action => 'asset', :format => options[:format]}
           url_options[:controller] = options[:controller] if options[:controller]
           sources.each do |source|
-            source, extension = path_and_extension(source)
+            source = source.sub(/\.(\w+)$/, '')
+            extension = $1
             url = url_for(url_options.merge(:source => source, :extension => extension || options[:extension]))
             out << yield(source, url)
           end
           out
-        end    
-        
-        def path_and_extension(path)
-          path_without_extension = path.sub(/\.(\w+)$/, '')
-          [ path_without_extension, $1 ]
         end
       end
     end
