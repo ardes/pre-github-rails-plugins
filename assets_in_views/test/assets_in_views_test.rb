@@ -2,15 +2,15 @@ require File.dirname(__FILE__) + '/test_helper'
 
 module AssetsInViewsTestHelper
 protected
-  def assert_stylesheet_tag(source)
+  def assert_stylesheet_tag(source, options = {})
     assert_tag :tag => 'link', :attributes => {
-      :href => url_for(:action => 'asset', :format => 'rcss', :source => source, :extension => 'css'),
+      :href => url_for(options.merge(:action => 'asset', :format => 'rcss', :source => source, :extension => 'css')),
       :media => 'screen', :rel => 'Stylesheet', :type => 'text/css' }
   end
   
-  def assert_javascript_tag(source)
+  def assert_javascript_tag(source, options = {})
     assert_tag :tag => 'script', :attributes => {
-      :src => url_for(:action => 'asset', :format => 'r_js', :source => source, :extension => 'js'),
+      :src => url_for(options.merge(:action => 'asset', :format => 'r_js', :source => source, :extension => 'js')),
       :type => 'text/javascript' }
   end
 end
@@ -112,8 +112,11 @@ class AssetsInViewsSubdirectoryTest < Test::Unit::TestCase
     assert_response :success
     assert_stylesheet_tag 'stylesheets/one'
     assert_stylesheet_tag 'stylesheets/two'
+    assert_stylesheet_tag 'stylesheet', :controller => 'apples'
     assert_javascript_tag 'javascripts/one'
     assert_javascript_tag 'javascripts/two'
+    assert_javascript_tag 'javascript', :controller => 'apples'
+    
     assert :tag => 'index'
   end
   

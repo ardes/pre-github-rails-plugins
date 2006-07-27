@@ -1,3 +1,6 @@
 <%= views_stylesheet_link_tag 'stylesheets/one', 'stylesheets/two.css' %>
-<%= views_javascript_include_tag 'javascripts/one', 'javascripts/two.js' %>
+<%= views_stylesheet_link_tag :controller => 'apples' %>
+<%= views_javascript_include_tag 'javascripts/one' %>
+<%= views_javascript_include_tag 'javascripts/two.js', :controller => 'oranges' %>
+<%= views_javascript_include_tag 'javascript', :controller => 'apples' %>
 <%= yield %>
