@@ -215,6 +215,10 @@
   display: none;
 }
 
+#ajax_crud div.list li.list_front {
+  display: none;
+}
+
 #ajax_crud div.list li.item div.actions {
   border: none;
   clear: both;

@@ -4,19 +4,30 @@ module Ardes
   module AjaxCrud
     module Controller
       def ajax_crud(model = nil, options = {})
-        include Actions
-        include InstanceMethods
-        extend ClassMethods
+        unless self.included_modules.include?(Ardes::AjaxCrud::Controller::Actions)
+          include Actions
+          include InstanceMethods
+          extend ClassMethods
 
-        class_inheritable_accessor :model_sym, :model_class, :model_name, :model_list_sym, :model_find_options
+          assets_in_views
+
+          class_inheritable_accessor :model_sym, :model_class, :model_name, :model_list_sym, :model_find_options, :child_controller
+        
+          helper Ardes::AjaxCrud::Helper
+        
+          inherit_views 'ajax_crud'
+          view_mapping 'ajax_crud' => File.expand_path(File.join(File.dirname(__FILE__), '../../../views'))
+        
+          layout 'ajax_crud/layouts/ajax_crud'
+        end
+        
+        self.child_controller = options.delete(:child)
         ajax_crud_model(model, options) if model
-        
-        helper Ardes::AjaxCrud::Helper
-        
-        inherit_views 'ajax_crud'
-        view_mapping 'ajax_crud' => File.expand_path(File.join(File.dirname(__FILE__), '../../../views'))
-        
-        layout 'ajax_crud/layouts/ajax_crud'
+      end
+      
+      def ajax_crud_child
+        raise 'ajax_crud_child requires ajax_crud' unless self.included_modules.include?(Ardes::AjaxCrud::Controller::Actions)
+        self.child_controller = true
       end
 
       module Actions

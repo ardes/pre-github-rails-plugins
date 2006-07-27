@@ -78,6 +78,7 @@ module Ardes
         action_id = public_id(options)
         action = options.delete(:action)
         container_id = options.delete(:container_id) || public_id(options)
+        page.try { page.remove action_id }
         page.action_create container_id, action_id
         page.replace_html action_id, :partial => action
         page.action_open action_id
