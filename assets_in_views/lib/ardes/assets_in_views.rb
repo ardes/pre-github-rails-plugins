@@ -96,6 +96,10 @@ module Ardes #:nodoc:
             "<script src=\"#{url}\" type=\"text/javascript\"></script>\n"
           end
         end
+        
+        def render_asset(source)
+          render :file => source, :use_full_path => true
+        end
 
       private
         def create_views_asset_tags(sources, options, &block)
