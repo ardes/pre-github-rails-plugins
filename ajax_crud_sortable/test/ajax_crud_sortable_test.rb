@@ -19,7 +19,7 @@ class AjaxCrudSortableTest < Test::Unit::TestCase
     xhr :get, :sortable, :sort => true
     assert_response :success
     assert_equal assigns["sorting"], true
-    assert_template "ajax_crud_sortable_model/sortable"
+    assert_template "ajax_crud_sortable/sortable"
 
     assert_rjs :replace_html, 'ajax_crud_sortable_model_list'
     assert_rjs :replace_html, 'ajax_crud_sortable_model_nav_links', /Drag the/
@@ -29,7 +29,7 @@ class AjaxCrudSortableTest < Test::Unit::TestCase
     xhr :get, :sortable, :sort => false
     assert_response :success
     assert_equal assigns["sorting"], false
-    assert_template "ajax_crud_sortable_model/sortable"
+    assert_template "ajax_crud_sortable/sortable"
 
     assert_rjs :replace_html, 'ajax_crud_sortable_model_list'
     assert_rjs :replace_html, 'ajax_crud_sortable_model_nav_links'

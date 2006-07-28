@@ -1,2 +1,2 @@
-<%= parent_views { render :partial => "nav_links" } %>
+<%= render_parent %>
 <%= internal_link 'Change order', {:url => {:action => 'sortable', :params => {:sort => true}}, :safe => true}, {:class => 'action'} %>
