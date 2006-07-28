@@ -1,0 +1,100 @@
+/*****************************************************************************
+** Ajax crud container
+*/
+
+#ajax_crud {
+/*  min-height: 1200px; *//* to stop safari scrollbar refresh bug */
+}
+
+/*****************************************************************************
+** Fonts for ajax_crud and headings
+*/
+
+#ajax_crud, #ajax_crud form textarea {
+  font-family: verdana, arial, helvetica, sans-serif;
+  font-size:   12px;
+  line-height: 15px;
+  color: #222;
+}
+
+#ajax_crud h1, #ajax_crud h2, #ajax_crud h3 {
+  font-family: verdana, arial, helvetica, sans-serif;
+  font-size:   15px;
+  line-height: 18px;
+}
+
+#ajax_crud h1 { color: #000; }
+
+#ajax_crud h2 { color: #222; }
+
+
+/*****************************************************************************
+** Nav
+*/
+
+#ajax_crud div.nav {
+  background-color: #EEE;
+  border: 1px solid #999;
+  border-bottom: 0;
+  margin: 0;
+  padding: 7px;
+}
+
+
+/*****************************************************************************
+** Loading
+*/
+
+#ajax_crud div.loading {
+  float: right;
+}
+
+
+/*****************************************************************************
+** Message
+*/
+
+#ajax_crud div.message {
+  float: right;
+  color: green;
+  display: inline;
+}
+
+
+/*****************************************************************************
+** Links, and action links
+*/
+
+#ajax_crud a { color: #000; }
+#ajax_crud a:visited { color: #333; }
+#ajax_crud a:hover { color: #fff; background-color:#000; }
+
+#ajax_crud a.action {
+  margin: 0;
+  padding: 1px 2px 1px 2px;
+  color: #FFF!important;
+  background-color: #997777;
+  text-decoration: none;
+}
+
+#ajax_crud a.action:hover {
+  background-color: #660000;
+}
+
+
+/*****************************************************************************
+** Actions and action containers
+*/
+
+#ajax_crud div.action {
+  margin: 0;
+  padding: 5;
+  border-top: 1px solid #999;
+  background-color: #FFFFDD;
+}
+
+#ajax_crud div.actions {
+  clear: both;
+  border-left: 1px solid #999;
+  border-right: 1px solid #999;
+}

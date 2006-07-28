@@ -1,0 +1,4 @@
+<%= render_asset 'stylesheets/main.rcss' %>
+<%= render_asset 'stylesheets/form.rcss' %>
+<%= render_asset 'stylesheets/list.rcss' %>
+<%= render_asset 'stylesheets/nested.rcss' %>

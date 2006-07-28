@@ -1,0 +1,17 @@
+
+/*****************************************************************************
+** Nested Elements - 1 level deep
+*/
+
+#ajax_crud div.action div.list ul {
+  background-color: #DD9;
+}
+
+#ajax_crud div.action div.list li {
+  background-color: #FFF;
+}
+    
+#ajax_crud div.action div.nav {
+  background-color: #FFD;
+  border: 0;
+}

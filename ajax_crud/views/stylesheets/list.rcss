@@ -1,0 +1,49 @@
+
+/*****************************************************************************
+** List
+*/
+
+#ajax_crud div.list {
+  background-color: #EEDDCC;
+}
+
+#ajax_crud div.list ul {
+  margin: 0;
+  background-color: #AAA;
+  padding: .1em;
+  clear: both;
+}
+
+#ajax_crud div.list li {
+  background-color: #EEE;
+  margin:7px;
+  padding:0px;
+  border: 1px solid #999;
+  list-style: none;
+}
+
+#ajax_crud div.list li.list_end {
+  display: none;
+}
+
+#ajax_crud div.list li.list_front {
+  display: none;
+}
+
+#ajax_crud div.list li.item div.actions {
+  border: none;
+  clear: both;
+}
+
+#ajax_crud div.list li.item div.item_main {
+  margin: 2px;
+  padding: 2px;
+  float: left;
+}
+
+#ajax_crud div.list li.item div.item_links {
+  margin: 2px;
+  padding: 2px;
+  font-size: 10px;
+  float: right;
+}
