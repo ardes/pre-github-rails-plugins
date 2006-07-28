@@ -20,11 +20,11 @@ module Ardes
   
       module InstanceMethods  
         def self.included(base)
+          base.hide_action(*self.public_instance_methods)
           base.class_eval do
             alias_method_chain :edit,            :belongs_to
             alias_method_chain :default_params,  :belongs_to
             alias_method_chain :load_model_list, :belongs_to
-            hide_action :edit_with_belongs_to, :default_params_with_belongs_to
           end
         end
 
@@ -45,22 +45,30 @@ module Ardes
         def belongs_to_conditions
           conditions = {}
           self.belongs_to_associations.each do |assoc|
-            conditions[assoc[:id_field]]   = belongs_to_object(assoc[:sym]).id
-            conditions[assoc[:type_field]] = belongs_to_object(assoc[:sym]).class.name if assoc[:type_field]
+            if assoc[:exclusive]
+              conditions[assoc[:id_field]]   = belongs_to_object(assoc[:sym]).id
+              conditions[assoc[:type_field]] = belongs_to_object(assoc[:sym]).class.name if assoc[:type_field]
+            end
           end
           conditions
         end
         
         def load_model_list_with_belongs_to
-          self.model_class.with_scope(:find => {:conditions => belongs_to_conditions}) do
+          find_options = { :conditions => belongs_to_conditions }
+          find_options.delete(:conditions) if find_options[:conditions].size == 0
+          self.model_class.with_scope(:find => find_options) do
             load_model_list_without_belongs_to
           end
         end
           
         def load_belongs_to
           belongs_to_associations.each do |assoc|
-            belongs_to_class = assoc[:class] || params[assoc[:type_field]].constantize
-            instance_variable_set "@#{assoc[:sym]}", belongs_to_class.find(params[assoc[:id_field]])
+            begin
+              belongs_to_class = assoc[:class] || params[assoc[:type_field]].constantize
+              instance_variable_set "@#{assoc[:sym]}", belongs_to_class.find(params[assoc[:id_field]])
+            rescue Exception => e
+              raise e if assoc[:exclusive]
+            end
           end
         end
       end
@@ -68,10 +76,15 @@ module Ardes
       module ClassMethods
         def add_belongs_to_association(association, options = {})
           assoc = {}
-          assoc[:sym]         = association
-          assoc[:id_field]    = association.to_s.foreign_key.to_sym
-          assoc[:class]       = association.to_s.classify.constantize unless options[:polymorphic]
-          assoc[:type_field]  = "#{association}_type".to_sym if options[:polymorphic]
+          assoc[:sym]       = association
+          assoc[:exclusive] = options[:exclusive].nil? ? true : options[:exclusive]
+          assoc[:id_field]  = association.to_s.foreign_key.to_sym
+          assoc[:find]      = options[:find].freeze || {}.freeze
+          if options[:polymorphic]
+            assoc[:type_field] = "#{association}_type".to_sym
+          else
+            assoc[:class] = association.to_s.classify.constantize
+          end
           self.belongs_to_associations << assoc
         end
         
