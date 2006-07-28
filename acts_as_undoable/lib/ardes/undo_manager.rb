@@ -3,7 +3,7 @@ require 'ardes/undo_operation'
 module Ardes
   class UndoManager
     @@managers = {}
-    attr_reader :no_undo, :last_operation
+    attr_reader :no_undo, :last_operation, :operations
     
     # manager must be registered before the call to acts_as_versioned, to get
     # callbacks working properly, this is handled in acts_as_undoable.
