@@ -12,7 +12,7 @@ module Ardes
     end
   
     def self.for(scope = :application)
-      scope = scope.to_s.tableize.singularize
+      scope = scope.to_s.tableize.singularize.to_sym
       @@managers[scope] ||= self.new(Ardes::UndoOperation.class_for(scope))
     end
     

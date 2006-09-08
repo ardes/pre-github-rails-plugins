@@ -55,8 +55,8 @@ class ActsAsUndoableUseCaseTest < Test::Unit::TestCase
     assert_equal [],                        @car_manager.redoables
     
     # Check the database before undo.  We should have ChangedCar with Wheels 1,2,4 and a Fender
-    assert_equal 'Changed Car', Car.find_first.name
-    assert_equal ['Wheel 1', 'Wheel 2', 'Wheel 4', 'Fender'], Car.find_first.car_parts.collect {|p| p.name}
+    assert_equal 'Changed Car', Car.find(:first).name
+    assert_equal ['Wheel 1', 'Wheel 2', 'Wheel 4', 'Fender'], Car.find(:first).car_parts.collect {|p| p.name}
     
     # Undo change_car
     change_car.undo
@@ -65,8 +65,8 @@ class ActsAsUndoableUseCaseTest < Test::Unit::TestCase
     assert_equal [change_car], @car_manager.redoables
     
     # Check the database to make sure we're back with our car before the change
-    assert_equal 'Car', Car.find_first.name
-    assert_equal ['Wheel 1', 'Wheel 2', 'Wheel 3', 'Wheel 4'], Car.find_first.car_parts.collect {|p| p.name}
+    assert_equal 'Car', Car.find(:first).name
+    assert_equal ['Wheel 1', 'Wheel 2', 'Wheel 3', 'Wheel 4'], Car.find(:first).car_parts.collect {|p| p.name}
     
     # Undo create_car
     create_car.undo
@@ -75,7 +75,7 @@ class ActsAsUndoableUseCaseTest < Test::Unit::TestCase
     assert_equal [create_car, change_car],  @car_manager.redoables
     
     # Check the database to make sure we got nothin!
-    assert_equal [], Car.find_all
+    assert_equal [], Car.find(:all)
     
     # Redo change_car (which will also redo create_car in order to do this)
     change_car.redo
@@ -83,8 +83,8 @@ class ActsAsUndoableUseCaseTest < Test::Unit::TestCase
     assert_equal [],                        @car_manager.redoables
     
     # Check the database before undo.  We should have ChangedCar with Wheels 1,2,4 and a Fender
-    assert_equal 'Changed Car', Car.find_first.name
-    assert_equal ['Wheel 1', 'Wheel 2', 'Wheel 4', 'Fender'], Car.find_first.car_parts.collect {|p| p.name}
+    assert_equal 'Changed Car', Car.find(:first).name
+    assert_equal ['Wheel 1', 'Wheel 2', 'Wheel 4', 'Fender'], Car.find(:first).car_parts.collect {|p| p.name}
   end
   
   # we want this test to run first on an empty table
@@ -98,14 +98,14 @@ class ActsAsUndoableUseCaseTest < Test::Unit::TestCase
     foo_destroy_all = Foo.undoable('destroy all foos') { Foo.destroy_all }
     
     # check there's no foos, and that there's 4 undoables in the right order
-    assert_equal [], Foo.find_all
+    assert_equal [], Foo.find(:all)
     assert_equal ['destroy all foos', "create foo: #{foo2_id}", "update foo: #{foo1_id}", "create foo: #{foo1_id}"],
                  @foo_manager.undoables.collect {|op| op.description}
     
     # now undo foo_change (undoing all ops in between) and check
     foo_change.undo
     
-    assert_equal ['foo'], Foo.find_all.collect {|r| r.name}
+    assert_equal ['foo'], Foo.find(:all).collect {|r| r.name}
     assert_equal ["create foo: #{foo1_id}"], @foo_manager.undoables.collect {|op| op.description}
     assert_equal ["update foo: #{foo1_id}", "create foo: #{foo2_id}", "destroy all foos"],
                  @foo_manager.redoables.collect {|op| op.description}
@@ -113,21 +113,21 @@ class ActsAsUndoableUseCaseTest < Test::Unit::TestCase
     # redo twice (using different idioms) and check
     Foo.undo_manager.redo
     @foo_manager.redo
-    assert_equal ['MOO', 'bar'], Foo.find_all.collect {|r| r.name}
+    assert_equal ['MOO', 'bar'], Foo.find(:all).collect {|r| r.name}
     assert_equal ["create foo: #{foo2_id}", "update foo: #{foo1_id}", "create foo: #{foo1_id}"],
                  @foo_manager.undoables.collect {|op| op.description}
     assert_equal ['destroy all foos'], @foo_manager.redoables.collect {|op| op.description}
     
     # make new change (this will destory the currently undone foo_destroy_all operation) and check
     foo3_id = Foo.create(:name => 'woooo').id
-    assert_equal ['MOO', 'bar', 'woooo'], Foo.find_all.collect {|r| r.name}
+    assert_equal ['MOO', 'bar', 'woooo'], Foo.find(:all).collect {|r| r.name}
     assert_equal ["create foo: #{foo3_id}", "create foo: #{foo2_id}", "update foo: #{foo1_id}", "create foo: #{foo1_id}"],
                  @foo_manager.undoables.collect {|op| op.description}
     assert_equal [], @foo_manager.redoables.collect {|op| op.description}
     
     # try and undo the stale foo_destroy_all operation, it will raise an error and do nothing the the db
     assert_raise(Ardes::UndoOperation::Stale) { foo_destroy_all.undo }
-    assert_equal ['MOO', 'bar', 'woooo'], Foo.find_all.collect {|r| r.name}    
+    assert_equal ['MOO', 'bar', 'woooo'], Foo.find(:all).collect {|r| r.name}    
     assert_equal ["create foo: #{foo3_id}", "create foo: #{foo2_id}", "update foo: #{foo1_id}", "create foo: #{foo1_id}"],
                  @foo_manager.undoables.collect {|op| op.description}
     assert_equal [], @foo_manager.redoables.collect {|op| op.description}

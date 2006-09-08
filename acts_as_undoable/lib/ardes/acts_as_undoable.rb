@@ -1,3 +1,5 @@
+require 'ardes/undo_manager'
+
 module Ardes# :nodoc:
   module ActiveRecord# :nodoc:
     module Acts# :nodoc:
