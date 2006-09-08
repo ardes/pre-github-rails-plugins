@@ -36,18 +36,26 @@ module Ardes #:nodoc:
     # In yor views (say in a layout, you can do this) you can use the helpers provided to easily create the tags
     # required for including javascripts or linking to stylesheets 
     #
-    #   views_stylesheet_link_tag 'foo'                          => link to current controller's view dir/foo.rcss
-    #   views_stylesheet_link_tag 'foo', :controller => 'sheep'  => link to sheep/foo.rcss
+    #   views_stylesheet_link_tag 'foo'                          # => link to current controller's view dir/foo.rcss
+    #   views_stylesheet_link_tag 'foo', :controller => 'sheep'  # => link to sheep/foo.rcss
     #   
-    #   views_javascript_include_tag 'foo', 'bar', 'baz/foo'     => link to current controller's view dir
-    #                                                               foo.r_js, bar.r_js and baz/foo.r_js
-    # 
+    #   views_javascript_include_tag 'foo', 'bar', 'baz/foo'     # => link to current controller's view dir
+    #                                                                 foo.r_js, bar.r_js and baz/foo.r_js
+    #
+    # To render an asset file in your views use
+    #   render_asset 'filename.rcss'     # => renders asset 'filename.rcss' in current controller's view dir
+    #   render_asset 'foo/filename.rcss' # => renders 'views/foo/filename.rcss'
+    #
+    #
+    # == Routes
+    #
+    # If you have caching turned on for assets (the default), you may wish to install the following routes to have all
+    # assets cached in one or two directories.  The following routes will keep css files in public/stylesheets and js files
+    # in 'public/javascripts'
+    #   map.connect 'stylesheets/:controller/:source.:extension', :action => 'asset', :source => /.*/, :format => 'rcss'
+    #   map.connect 'javascripts/:controller/:source.:extension', :action => 'asset', :source => /.*/, :format => 'r_js'
+    #
     module AssetsInViews
-      #
-      # install the following route in routes.rb for maximum browser compatibility
-      #
-      # map.connect ':controller/asset/:format/:source.:extension', :action => 'asset'
-      #
       def assets_in_views(options = {})
         include InstanceMethods
         helper Helper
@@ -69,10 +77,12 @@ module Ardes #:nodoc:
             :content_type => content_type, :use_full_path => true
         end
         
+        # renders an rcss asset
         def rcss_asset
           render_asset 'text/css'
         end
         
+        # renders an r_js asset
         def r_js_asset
           render_asset 'text/javascript'
         end          
@@ -97,7 +107,8 @@ module Ardes #:nodoc:
           end
         end
         
-        def render_asset(source)
+        def render_asset(source, options = {})
+          source = "#{controller.class.controller_path}/#{source}" unless source.include?('/')
           render :file => source, :use_full_path => true
         end
 
