@@ -26,7 +26,7 @@ module Ardes
 
       module InstanceMethods
         def test_has_email_should_read_emails_as_value_objects
-          obj = self.has_email_class.find_first
+          obj = self.has_email_class.find :first
           self.has_email_attrs.each do |attr|
             assert_kind_of Ardes::Email, obj.send(attr) unless obj.send(attr).nil?
           end

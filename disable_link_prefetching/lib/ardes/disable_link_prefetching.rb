@@ -1,7 +1,11 @@
 #
 # Common technique widely available on the web, included here for our own convenience
 #
-
+# Usage
+#   class ApplicationController < ActionController::Base
+#     before_filter disable_link_prefetching
+#   end
+#
 class ActionController::Base
 private
   def disable_link_prefetching

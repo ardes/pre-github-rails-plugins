@@ -26,7 +26,7 @@ module Ardes
 
       module InstanceMethods
         def test_has_uk_postcode_should_read_postcodes_as_value_objects
-          obj = self.has_uk_postcode_class.find_first
+          obj = self.has_uk_postcode_class.find :first
           self.has_uk_postcode_attrs.each do |attr|
             assert_kind_of Ardes::UkPostcode, obj.send(attr) unless obj.send(attr).nil?
           end

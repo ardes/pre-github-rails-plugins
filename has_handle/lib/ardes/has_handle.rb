@@ -11,8 +11,8 @@ module Ardes# :nodoc:
       # This will
       #   - add a validation for the handle
       #   - allow calls like exists('some handle'), find('some_handle') and find(['some_handle', 'other_handle'])
-      #   - works with controllers (and scaffolding) out of the box for more informative urls (people/fred_jones)
-      #     because a handle may be in flux (an id can't) the authoritatve handle is cached.  A
+      #   - works with controllers (and scaffolding) out of the box for more informative urls (people/fred_jones).
+      #     Because a handle may be in flux (an id can't) the authoritatve handle is cached.  A
       #     call to 'to_param' will reveal the authoritative handle (the record in the db's handle)
       # 
       # Example of use:
@@ -93,8 +93,8 @@ module Ardes# :nodoc:
             def find_one_with_handle(id, options)
               return find_one_without_handle(id, options) unless id_is_handle?(id)
           
-              conditions = " AND (#{sanitize_sql(options[:conditions])})" if options[:conditions]
-              options.update :conditions => "#{table_name}.#{handle_column} = #{quote(id,columns_hash[handle_column])}#{conditions}"
+              conditions = options[:conditions] ? " AND (#{sanitize_sql(options[:conditions])})" : ''
+              options.update :conditions => "#{table_name}.#{handle_column} = '#{id}'#{conditions}"
 
               if result = find_initial(options)
                 result
@@ -106,8 +106,8 @@ module Ardes# :nodoc:
             def find_some_with_handle(ids, options)
               return find_some_without_handle(ids, options) unless id_is_handle?(ids.first)
           
-              conditions = " AND (#{sanitize_sql(options[:conditions])})" if options[:conditions]
-              ids_list   = ids.map { |id| quote(id,columns_hash[handle_column]) }.join(',')
+              conditions = options[:conditions] ? " AND (#{sanitize_sql(options[:conditions])})" : ''
+              ids_list   = ids.map{|id| "'#{id}'"}.join(',')
               options.update :conditions => "#{table_name}.#{handle_column} IN (#{ids_list})#{conditions}"
 
               result = find_every(options)
