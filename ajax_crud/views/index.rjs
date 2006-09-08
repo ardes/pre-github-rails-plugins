@@ -1,1 +1,1 @@
-rjs_open page, :action => 'index', :container_id => params[:container_id]
+ajax_crud_open page, controller.ajax_crud_options.merge(:action => 'index')

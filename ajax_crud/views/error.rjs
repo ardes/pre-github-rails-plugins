@@ -1,1 +1,0 @@
-rjs_error page, :action => controller.action_name, :id => @new_record ? 'new' : controller.model_object.id

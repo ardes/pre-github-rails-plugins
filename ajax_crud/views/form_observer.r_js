@@ -21,6 +21,12 @@ Object.extend(ArdesAjaxCrud, {
     this[id] = null;
   },
   
+  setAllCleanIn: function(id) {
+    document.getElementsByClassName("action", $(id)).each(function(element){
+      ArdesAjaxCrud.setClean(element.id);
+    });
+  },
+  
   observe: function(id) {
     form_id = id + '_form';
     if ($(form_id)) {
@@ -42,7 +48,8 @@ Object.extend(ArdesAjaxCrud, {
   },
   
   focus: function(element_id) {
-    Element.scrollTo(element_id);
+    new Effect.ScrollTo(element_id,{offset: -40, duration: 0.25});
+    /* Element.scrollTo(element_id); */
     if (first = Form.findFirstElement(element_id)) {
       Field.focus(first);
     }

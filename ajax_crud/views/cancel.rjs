@@ -1,1 +1,0 @@
-rjs_close page, :action => params[:cancel], :params => params

@@ -1,0 +1,9 @@
+<div id="<%= public_id(:id => model.id, :action => 'panel') %>_nav" class="nav">
+  
+  <%= render :partial => 'info', :locals => {:id => model.id} %>
+  
+  <strong><%= params[:panel_title] %></strong>
+  
+  <%= close_action_link 'Close', :on_complete => false %> &nbsp;
+  <%= render :partial => 'panel_links', :locals => {:model => model} %>
+</div>

@@ -1,0 +1,4 @@
+<%= render :partial => 'panel_nav', :locals => {:model => model} %>
+<div id="<%= public_id(:id => model.id) %>_panel" class="panel">
+  <%= render_panel_action(model) %>
+</div>

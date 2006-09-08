@@ -1,0 +1,9 @@
+update_flash_in_page page
+
+if controller.model_object.valid?  
+  append_item_in_page page, controller.model_object
+  complete_action_in_page page, :action => 'new'
+else
+  action_error_in_page page, :action => 'new'
+end
+

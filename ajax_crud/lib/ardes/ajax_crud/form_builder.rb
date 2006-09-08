@@ -18,19 +18,6 @@ module Ardes
         end
       end
       
-      def summary(method, options = {})
-        label = options.delete(:label) || method.to_s.humanize
-        tip = options.delete(:tip)
-        tip = "<div class=\"tip\">#{tip}</div>" if tip
-        <<-end_summary
-          <div class="summary">
-            <div class="label">#{label}:</div>
-            <div class="content">#{@object.send(method)} &nbsp;</div>
-            #{tip}
-          </div>
-        end_summary
-      end
-      
       def errors_base(message = "There are errors in this form preventing it from being saved.  Please correct the marked fields below.")
         unless @object.errors.empty?
           if errors = @object.errors.on_base

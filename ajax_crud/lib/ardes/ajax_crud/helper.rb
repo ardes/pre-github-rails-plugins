@@ -1,65 +1,117 @@
-require 'ardes/ajax_crud/helper_effects'
-
 module Ardes
   module AjaxCrud
     module Helper
-      include HelperEffects
+      # create the link_to_remote with a wrapper that passes focus to the action_id if it already exists on the page
+      def create_action_link(action_id, content, options, html_options = {})
+        unless options[:url][:replace_id] == action_id
+          html_options[:onclick] = "if($('#{action_id}')){ArdesAjaxCrud.focus('#{action_id}');return false;}#{options[:onclick]}"
+        end
+        link_to_remote(content, options, html_options)
+      end
       
+      def disable_form(form_id)
+        "Form.disable('#{form_id}');"
+      end
+      
+      #
+      # options array
+      #
+      def options_add_confirm(options)
+        options[:onclick] = "if (! ArdesAjaxCrud.confirm()) {return false;}#{options[:onclick]}"
+      end
+      
+      def options_add_loading(options, loading_id)
+        options[:loading] ||= ''
+        options[:loading] += "if($('#{loading_id}')){Element.show('#{loading_id}');}"
+        options[:loaded]  ||= ''
+        options[:loaded]  += "if($('#{loading_id}')){Element.hide('#{loading_id}');}"
+      end
+      
+      # renders a summary of an attribute of the current model object in the same
+      # format as FormBuilder attributes
+      def summary(attribute, options = {})
+        object = options[:object] || controller.model_object
+        label = options.delete(:label) || attribute.to_s.humanize
+        tip = options.delete(:tip)
+        tip = "<div class=\"tip\">#{tip}</div>" if tip
+        <<-end_summary
+          <div class="summary">
+            <div class="label">#{label}:</div>
+            <div class="content">#{object.send(attribute)} &nbsp;</div>
+            #{tip}
+          </div>
+        end_summary
+      end
+      
+      # turns the loading div on while the action is in progress
+      # if options[:url][:id] is passed then that loading div is turned on as well
+      # if :safe is true then the link is made a confirmation link if the 
+      # page contains dirty forms
       def loading_link(content, options = {}, html_options = {})
         options_add_loading(options, "#{public_id}_loading")
+        options_add_loading(options, "#{public_id(:id => options[:url][:id])}_loading") if options[:url][:id]
         options_add_confirm(html_options) if options.delete(:safe)
         link_to_remote(content, options, html_options)
       end
       
-      def internal_link(content, options = {}, html_options = {})
-        options[:url] = internal_url(options[:url])
-        loading_link(content, options, html_options)
-      end
-      
-      def internal_url(url)
-        controller.internal_url(url)
-      end
-        
       def safe_link_to(content, options = {}, html_options = {})
         options_add_confirm(html_options)
         link_to(content, options, html_options)
       end
 
-      def open_action(content, url, options = {})
-        html_options = options.delete(:html) || {}
-        html_options[:class] = options.delete(:class) || 'action'
-        options_add_loading(options, "#{public_id}_loading")
-        options[:url] = internal_url(url)
-        action_id = public_id(url);
-        options[:before] = enable_action_link(false, action_id)
-        create_action_link(action_id, content, options, html_options)
+      # options for url are
+      #   * <tt>:replace</tt> true or string
+      #   * <tt>:append</tt> true or string
+      #   * <tt>:on_complete</tt>
+      def open_action_link(content, url, options = {})
+        html_options = action_extract_html_options(options)
+        action_add_loading(options)
+        create_action_link(public_id(url), content, options.merge(:url => url), html_options)
       end
 
-      def cancel_action(content, url, options = {})
-        html_options = options.delete(:html) || {}
-        html_options[:class] = options.delete(:class) || 'action'
-        options_add_confirm(html_options) if options.delete(:safe)
-        options_add_loading(options, "#{public_id}_loading")
-        url[:params] ||= {}
-        url[:params][:cancel] = url.delete(:action)
-        url[:action] = 'cancel'
-        options[:url] = internal_url(url)
-        link_to_remote(content, options, html_options)
+      def close_action_link(content, url = {}, options = {})
+        html_options = action_extract_html_options(options)
+        action_add_loading(options)
+        
+        if action_id = url.delete(:action_id) || controller.ajax_crud_options[:action_id]
+          url[:ajax_crud_action_id] = action_id
+        else
+          url[:close] = url.delete(:action) || params[:action]
+          url[:id] ||= (controller.model_object.id rescue nil)
+        end
+        url[:action] = 'close'
+        
+        link_to_remote(content, options.merge(:url => url), html_options)
       end
 
-      def form_for_action(url, options = {}, &block)
-        options_add_loading(options, "#{public_id}_loading")
-        options[:url] = internal_url(url)
+      def form_for_action(url = {}, options = {}, &block)
+        action_add_loading(options)
+        
         options[:before] = disable_form(public_id(url) + '_form')
         options[:html] ||= {}
         options[:html][:id] = "#{public_id(url)}_form"
         options[:builder] ||= Ardes::AjaxCrud::FormBuilder
+        
         object_name = options.delete(:object_name) || controller.model_sym
         object = options.delete(:object) || controller.model_object
-        form_remote_for(object_name, object, options, &block)
+
+        url[:id] ||= (controller.model_object.id rescue nil)
+        
+        form_remote_for(object_name, object, options.merge(:url => url), &block)
       end
 
+      # renders the inner part of the view action as if it had been rendered with a
+      # replace 
+      def render_panel_action(model)
+        <<-end_render
+          <div id="#{public_id(:id => model.id, :action => params[:panel_action])}" class="action">
+            #{render :partial => params[:panel_action], :locals => {:model => model}}
+          </div>
+        end_render
+      end
+      
       def public_id(url = {})
+        return url[:action_id] if url[:action_id]
         if url[:controller] && url[:controller] != controller.controller_name
           controller_class = "#{url[:controller]}_controller".classify.constantize
           controller_class.public_id(url)
@@ -68,74 +120,16 @@ module Ardes
         end
       end
       
-      def rjs_message(page, message, options = {})
-        message_div = "#{public_id(options)}_message"
-        page.replace_html message_div, message.to_s
-        page.message message_div
+    protected
+      def action_add_loading(options)
+        options_add_loading(options, "#{public_id}_loading")
+        options_add_loading(options, "#{public_id(:id => (controller.model_object.attributes['id'] rescue nil))}_loading")
       end
-
-      def rjs_open(page, options)
-        action_id = public_id(options)
-        action = options.delete(:action)
-        container_id = options.delete(:container_id) || public_id(options)
-        page.try { page.remove action_id }
-        page.action_create container_id, action_id
-        page.replace_html action_id, :partial => action
-        page.action_open action_id
-      end
-
-      def rjs_close(page, options)
-        page.action_close public_id(options)
-      end
-
-      def rjs_error(page, options)
-        action_id = public_id(options)
-        page.replace_html action_id, :partial => options[:action]
-        page.action_error action_id
-      end
-
-      def rjs_update_item(page, item, new_record, options = {})
-        if new_record # append to list
-          rjs_append_item(page, item, options)
-        else # update item in list
-          rjs_refresh_item(page, item, options)
-        end
-      end
-      
-      def rjs_remove_item(page, item, options = {})
-        list_id = "#{public_id(options)}_list"
-        options[:id] = item.id
-        item_id = "#{public_id(options)}_item"
-        
-        page.insert_html :top, list_id, :partial => "list_empty" if controller.model_list(reload = false).size == 1 
-        page.remove item_id
-        page.list_changed list_id
-      end
-        
-      def rjs_refresh_item(page, item, options = {})
-        options[:id] = item.id
-        item_id = "#{public_id(options)}_item"
-        item_main_id = "#{item_id}_main"
-        page.replace_html item_main_id, :partial => 'item_main', :locals => {:item => item}
-        page.item_changed item_id
-      end
-
-      def rjs_append_item(page, item, options = {})
-        public_id = public_id(options)
-        
-        list_id  = "#{public_id}_list"
-        empty_id = "#{public_id}_list_empty"
-        end_id   = "#{public_id}_list_end"
-        
-        options[:id] = item.id
-        item_id = "#{public_id(options)}_item"
-
-        page.remove end_id
-        page.remove empty_id if controller.model_list(reload = false) == 0
-        
-        page.insert_html :bottom, list_id, :partial => 'item', :locals => {:item => item}
-        page.insert_html :bottom, list_id, :partial => 'list_end'
-        page.item_changed item_id
+    
+      def action_extract_html_options(options)
+        html_options = options.delete(:html) || {}
+        html_options[:class] ||= 'action'
+        html_options
       end
     end
   end

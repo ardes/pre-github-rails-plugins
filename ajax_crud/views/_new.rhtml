@@ -1,0 +1,10 @@
+<% form_for_action :action => 'create', :method => :post do |form| %>
+
+  <%= render :partial => 'form', :locals => {:model => model, :form => form} %>
+
+  <div class="field no_label">
+    <%= submit_tag "Save changes" %>
+    <%= close_action_link 'Cancel', :action => 'new' %>
+  </div>
+
+<% end %>

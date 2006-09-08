@@ -1,1 +1,0 @@
-<%= render_asset 'javascripts/form_observer.r_js' %>

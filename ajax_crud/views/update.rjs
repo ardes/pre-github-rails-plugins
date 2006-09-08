@@ -1,0 +1,10 @@
+update_flash_in_page page
+update_flash_in_page page, :id => controller.model_object.id
+
+if controller.model_object.valid?  
+  refresh_item_in_page page, controller.model_object
+  complete_action_in_page page, :action => 'edit', :id => controller.model_object.id
+else
+  action_error_in_page page, :action => 'edit', :id => controller.model_object.id
+end
+

@@ -1,0 +1,12 @@
+<%
+  @colors ||= {
+    :text           => '#222222',
+    :text_strong    => '#000000',
+    :text_error     => 'red',
+    :text_info      => 'green',
+    :text_other     => '#333333'}
+%>
+<%= render_asset 'main.rcss' %>
+<%= render_asset 'form.rcss' %>
+<%= render_asset 'list.rcss' %>
+<%= render_asset 'nested.rcss' %>

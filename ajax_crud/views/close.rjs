@@ -1,0 +1,1 @@
+complete_action_in_page page, controller.ajax_crud_options.merge(:action => params[:close], :id => params[:id])

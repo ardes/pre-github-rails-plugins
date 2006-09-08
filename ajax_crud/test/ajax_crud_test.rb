@@ -9,6 +9,8 @@ class AjaxCrudModelController < ActionController::Base
   def default_params
     {:foo => 'bar'}
   end
+  
+  def rescue_action(exception); super(exception); raise exception; end
 end
 
 class AjaxCrudTest < Test::Unit::TestCase
@@ -43,15 +45,6 @@ class AjaxCrudTest < Test::Unit::TestCase
     assert_equal 'ajax crud model: 3', @controller.model_desc
   end
   
-  def test_class_sanitize_url
-    assert_equal({:action => 'fred', :params => {:id => 666, :thing => 'here', :b => 'c'}},
-      @controller.class.sanitize_url(:id => 666, :thing => 'here', :action => 'fred', :params => {:b => 'c'}))
-  end
-  
-  def test_internal_url
-    assert_equal({:action => 'fred', :params => {:foo => 'bar', :id => 666}}, @controller.internal_url(:action => 'fred', :id => 666))
-  end
-    
   def test_class_public_id_with_no_args
     assert_equal 'ajax_crud_model', AjaxCrudModelController.public_id
   end
@@ -66,8 +59,8 @@ class AjaxCrudTest < Test::Unit::TestCase
   end
   
   def test_class_public_id_with_action_and_id
-    assert_equal 'ajax_crud_model_666_action', AjaxCrudModelController.public_id(:id => 666, :action => 'action')
-    assert_equal 'ajax_crud_model_666_action', AjaxCrudModelController.public_id(:params => {:id => 666}, :action => 'action')
+    assert_equal 'ajax_crud_model_action_666', AjaxCrudModelController.public_id(:id => 666, :action => 'action')
+    assert_equal 'ajax_crud_model_action_666', AjaxCrudModelController.public_id(:params => {:id => 666}, :action => 'action')
   end  
 end
 

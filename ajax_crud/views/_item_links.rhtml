@@ -1,3 +1,2 @@
-<%= open_action 'show', :action => 'show', :id => item.id %>
-<%= open_action 'edit', :action => 'edit', :id => item.id %>
-<%= open_action 'destroy', {:action => 'destroy', :id => item.id}, :confirm => "Destroy #{controller.model_desc(item)}?" %>
+<%= open_action_link 'edit/view', :action => 'panel', :id => item.id, :panel_action => 'edit', :panel_default => 'show' %>
+<%= open_action_link 'destroy', {:action => 'destroy', :id => item.id}, :confirm => "Destroy #{controller.model_desc(item)}?" %>

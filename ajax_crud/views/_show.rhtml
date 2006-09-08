@@ -1,6 +1,10 @@
-<% form_for_action :action => 'show', :id => controller.model_object.id do |form| %>
-  <%= render :partial => 'show_form', :locals => {:model => controller.model_object, :form => form} %>
-  <div class="no_label field">
-    <%= cancel_action 'Done', :action => 'show', :id => controller.model_object.id %>
-  </div>
-<% end %>
+<div class="form">
+
+  <%= render :partial => 'summary', :locals => {:model => model} %>
+
+  <% unless params[:in_panel] %>
+    <div class="no_label field">
+      <%= close_action_link 'Done' %>
+    </div>
+  <% end %>
+</div>

@@ -3,18 +3,17 @@
 */
 
 #ajax_crud {
-/*  min-height: 1200px; *//* to stop safari scrollbar refresh bug */
 }
 
 /*****************************************************************************
 ** Fonts for ajax_crud and headings
 */
 
-#ajax_crud, #ajax_crud form textarea {
+#ajax_crud, #ajax_crud form textarea, #ajax_crud form input {
   font-family: verdana, arial, helvetica, sans-serif;
   font-size:   12px;
   line-height: 15px;
-  color: #222;
+  color: <%= @colors[:text] %>;
 }
 
 #ajax_crud h1, #ajax_crud h2, #ajax_crud h3 {
@@ -23,9 +22,9 @@
   line-height: 18px;
 }
 
-#ajax_crud h1 { color: #000; }
+#ajax_crud h1 { color: <%= @colors[:text_strong] %>; }
 
-#ajax_crud h2 { color: #222; }
+#ajax_crud h2 { color: <%= @colors[:text] %>; }
 
 
 /*****************************************************************************
@@ -40,6 +39,10 @@
   padding: 7px;
 }
 
+#ajax_crud div.nav div.nav_links {
+  display: inline;
+}
+
 
 /*****************************************************************************
 ** Loading
@@ -51,22 +54,32 @@
 
 
 /*****************************************************************************
-** Message
+** Flash
 */
 
-#ajax_crud div.message {
+#ajax_crud div.flash {
   float: right;
-  color: green;
   display: inline;
 }
 
+#ajax_crud div.flash span.error {
+  color: red;
+}
+
+#ajax_crud div.flash span.warning {
+  color: orange;
+}
+
+#ajax_crud div.flash span.info {
+  color: green;
+}
 
 /*****************************************************************************
 ** Links, and action links
 */
 
-#ajax_crud a { color: #000; }
-#ajax_crud a:visited { color: #333; }
+#ajax_crud a { color: <%= @colors[:text_strong] %>; }
+#ajax_crud a:visited { color: <%= @colors[:text_other] %>; }
 #ajax_crud a:hover { color: #fff; background-color:#000; }
 
 #ajax_crud a.action {
@@ -97,4 +110,8 @@
   clear: both;
   border-left: 1px solid #999;
   border-right: 1px solid #999;
+}
+
+#ajax_crud div.panel div.action {
+  border-top: none;
 }

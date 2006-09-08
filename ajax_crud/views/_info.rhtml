@@ -1,0 +1,3 @@
+<% id = (defined?(id) && id) ? "_#{id}" : id %>
+<div id="<%= "#{public_id}#{id}" %>_loading" class="loading" style="display:none;">loading ...</div>
+<div id="<%= "#{public_id}#{id}" %>_flash" class="flash" style="display:none;"></div>

@@ -1,7 +1,10 @@
-<% form_for_action :action => 'edit', :id => controller.model_object.id || 'new' do |form| %>
-  <%= render :partial => 'edit_form', :locals => {:model => controller.model_object, :form => form} %>
+<% form_for_action :action => 'update', :method => :put do |form| %>
+
+  <%= render :partial => 'form', :locals => {:model => model, :form => form} %>
+
   <div class="field no_label">
-    <%= submit_tag("Save changes")%>
-    <%= cancel_action 'Cancel', :action => 'edit', :id => controller.model_object.id || 'new' %>
+    <%= submit_tag 'Save changes' %>
+    <% unless params[:in_panel] %><%= close_action_link 'Cancel', :action => 'edit' %><% end %>
   </div>
+
 <% end %>
