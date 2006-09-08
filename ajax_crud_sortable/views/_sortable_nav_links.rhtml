@@ -1,3 +1,2 @@
-<strong><%= controller.model_name.pluralize.titleize %></strong> &nbsp;
 Drag the <%= controller.model_name.pluralize %> into the desired order &nbsp;
-<%= internal_link 'Done', {:url => {:action => 'sortable', :sort => false}}, {:class => 'action'} %>
+<%= loading_link 'Done', {:url => {:action => 'sortable', :sort => false}}, {:class => 'action'} %>

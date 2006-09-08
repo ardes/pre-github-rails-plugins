@@ -14,7 +14,7 @@
 </ul>
 
 <% if list.size > 0 %>
-<%= sortable_element "#{public_id}_sortable_list", :url => internal_url({ :action => 'sort' }),
+<%= sortable_element "#{public_id}_sortable_list", :url => {:action => 'sort'},
   :loading  => "Element.show('#{public_id}_loading');",
   :loaded   => "Element.hide('#{public_id}_loading');",
   :complete => visual_effect(:highlight, "#{public_id}_sortable_list") %>

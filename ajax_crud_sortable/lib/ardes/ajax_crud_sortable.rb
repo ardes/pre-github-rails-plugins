@@ -9,7 +9,7 @@ module Ardes
         find_options[:order] ||= "#{model_sym.to_s.tableize}.position"
         self.model_find_options = find_options.freeze
         
-        inherit_views 'ajax_crud_sortable'
+        inherit_views 'ajax_crud_sortable', :at => 'ajax_crud'
         view_mapping 'ajax_crud_sortable' => File.expand_path(File.join(File.dirname(__FILE__), '../../views'))
 
       end
