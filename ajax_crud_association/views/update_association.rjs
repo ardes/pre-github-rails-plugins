@@ -1,0 +1,3 @@
+page.replace_html "#{public_id(:id => controller.model_object.id)}_#{@association}_#{@association_candidate.id}",
+  :partial => 'association_item',
+  :locals => {:item => @association_candidate}

@@ -1,0 +1,2 @@
+<%= render_parent %>
+<%= render_asset 'association.rcss' %>

@@ -1,0 +1,3 @@
+<%= render :partial => 'info', :locals => {:id => controller.model_object.id} %>
+<strong><%= controller.associations[@association][:display] %></strong> for <%= controller.model_desc %> &nbsp;
+<%= close_action_link 'Close', :action => "edit_#{@association}", :id => controller.model_object.id %>

@@ -1,0 +1,11 @@
+<ul id="<%= "#{public_id(:id => controller.model_object.id)}_#{@association}" %>">
+  
+<% instance_variable_get("@#{@association}").each do |item| %>
+  
+  <li id="<%= "#{public_id(:id => controller.model_object.id)}_#{@association}_#{item.id}" %>">
+    <%= render(:partial => 'association_item', :locals => {:item => item}) %>
+  </li>    
+
+<% end %>
+
+</ul>

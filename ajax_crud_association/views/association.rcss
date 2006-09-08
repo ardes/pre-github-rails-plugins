@@ -1,0 +1,34 @@
+
+/*****************************************************************************
+** Association List
+*/
+
+#ajax_crud div.association {
+  background-color: #FFFFDD;
+  font-size: 11px;
+  margin-left: 7px;
+}
+
+#ajax_crud div.association ul {
+  margin: 0;
+  background-color: #FFFFDD;
+  padding: .1em;
+  clear: both;
+}
+
+#ajax_crud div.association li {
+  background-color: #FFFFDD;
+  list-style: none;
+  border: none;
+}
+
+#ajax_crud div.association li a.toggle {
+  text-decoration: none;
+  padding: 5px;
+}
+
+#ajax_crud div.association li a.toggle:hover {
+  background-color: #DDDD99;
+  color: #222;
+}
+
