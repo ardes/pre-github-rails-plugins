@@ -6,10 +6,10 @@ module Ardes
           raise 'ajax_crud_has_many requires ajax_crud' unless self.included_modules.include?(Ardes::AjaxCrud::Controller::Actions)
           include InstanceMethods
           extend ClassMethods
-          class_inheritable_accessor :has_many_associations
-          self.has_many_associations = []
+          cattr_accessor :has_many_associations
+          self.has_many_associations = ::ActiveSupport::OrderedHash.new
           
-          inherit_views 'ajax_crud_has_many'
+          inherit_views 'ajax_crud_has_many', :at => 'ajax_crud'
           view_mapping 'ajax_crud_has_many' => File.expand_path(File.join(File.dirname(__FILE__), '../../views'))
           
           helper Helper
@@ -23,61 +23,40 @@ module Ardes
   
       module ClassMethods
         def add_has_many_association(association, options = {})
-          assoc = {}
-          assoc[:sym] = association
+          assoc_options = {}
+
+          assoc_options[:class] = association.to_s.singularize.classify.constantize
+          assoc_options[:display] = options[:display] || association.to_s.humanize.downcase
+          
           if options[:as]
-            assoc[:id_field] = options[:as].to_s.foreign_key.to_sym
-            assoc[:type_field] = "#{options[:as]}_type".to_sym
+            assoc_options[:id_field] = options[:as].to_s.foreign_key.to_sym
+            assoc_options[:type_field] = "#{options[:as]}_type".to_sym
           else
-            assoc[:id_field] = self.model_sym.to_s.foreign_key.to_sym
+            assoc_options[:id_field] = self.model_sym.to_s.foreign_key.to_sym
           end
-          assoc[:display] = options[:display] if options[:display]
-          assoc[:controller] = options[:controller] if options[:controller]
-          if options[:select_from]
-            assoc[:select_from] = options[:select_from]
-            assoc[:ids] = "#{association.to_s.singularize}_ids".to_sym
-            create_association_action(assoc)
-          end
-          self.has_many_associations << assoc
+
+          assoc_options[:controller] = options[:controller] || association
+          assoc_options[:action] = options[:controller] || 'index'
+          
+          self.has_many_associations[association] = assoc_options
         end
-      end
-      
-      def create_association_action(assoc)
-        logger.debug <<-end_eval
-          def edit_#{assoc[:sym]}
-            obj = find_model(params[:id])
-            instance_variable_set("@#{assoc[:sym]}", obj.#{assoc[:sym]}.find_all(YAML.load("#{assoc[:select_from].to_yaml.inspect}")))
-            if params[:#{assoc[:ids]}]
-              obj.#{assoc[:ids]} = params[:#{assoc[:ids]}]
-              if obj.save
-                @message = "#{assoc[:sym].to_s.humanize.downcase} for \#{model_desc} updated"
-                render :action => 'edit'
-              else
-                render :action => 'error'
-              end
-            else
-              render :action => 'open_association'
-            end
-          end
-        end_eval
-      end
+      end      
     end
     
     module Helper
+      def has_many_link(assoc, obj)
+        assoc_options = controller.has_many_associations[assoc]
+        options = {:controller => assoc_options[:controller], :action => assoc_options[:action]}
+        options[assoc_options[:id_field]] = obj.id
+        options[assoc_options[:type_field]] = obj.class.name if assoc_options[:type_field]
+        options[:append_id] = public_id(:id => obj.id)
+        open_action_link(assoc_options[:display], options)
+      end
+      
       def has_many_links(obj)
-        out = ''
-        controller.has_many_associations.each do |assoc|
-          unless assoc[:select_from]
-            options = {}
-            options[:controller]        = assoc[:controller] || assoc[:sym].to_s
-            options[:action]            = 'index'
-            options[assoc[:id_field]]   = obj.id
-            options[assoc[:type_field]] = obj.class.name if assoc[:type_field]
-            options[:container_id]      = public_id(:id => obj.id)
-            out << open_action(assoc[:display] || assoc[:sym].to_s, options) + ' '
-          end
+        controller.has_many_associations.keys.inject('') do |out, assoc|
+          out << has_many_link(assoc, obj) + ' '
         end
-        out
       end
     end
   end
