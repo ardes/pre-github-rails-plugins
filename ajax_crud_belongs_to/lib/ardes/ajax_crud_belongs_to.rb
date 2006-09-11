@@ -65,9 +65,11 @@ module Ardes# :nodoc:
         
       protected
         def belongs_to_conditions
-          self.belongs_to_associations.inject({}) do |conditions, (assoc, options)| 
-            conditions[options[:id_field]]   = belongs_to_object(assoc).id
-            conditions[options[:type_field]] = belongs_to_object(assoc).class.name if options[:type_field]
+          self.belongs_to_associations.inject({}) do |conditions, (assoc, options)|
+            if belongs_to_object(assoc)
+              conditions[options[:id_field]]   = belongs_to_object(assoc).id
+              conditions[options[:type_field]] = belongs_to_object(assoc).class.name if options[:type_field]
+            end
             conditions
           end
         end
