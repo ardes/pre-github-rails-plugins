@@ -60,7 +60,6 @@ module Ardes
           end
         end
         
-
         def test_ajax_crud_show
           xhr :get, :show, self.ajax_crud_params.merge(:id => @ajax_crud_model.id)
           assert_response :success
@@ -204,11 +203,16 @@ module Ardes
         end
 
         def assert_ajax_crud_action_form(options = {})
-          assert_tag :tag => 'form', :attributes => {:action => url_for({:controller => @controller.controller_name}.merge(options))}
+          exp = Regexp.new('<form.*action.*=.*' + Regexp.escape(url_for({:controller => @controller.controller_name}.merge(options))))
+          assert remove_spurious_amp(@response.body) =~ exp
         end
 
         def convert_xhr_body
           @response.body.gsub!('\"', '"')
+        end
+        
+        def remove_spurious_amp(text)
+          text.gsub(/\&amp;(amp;)*/, '&amp;')
         end
       end
     end
