@@ -7,7 +7,7 @@ module Ardes
 
       module ClassMethods
         # Usage: 
-        #   test_ajax_crud ControllerClass, :model, :fixture, [:valid => {valid data}, :invalid => {invalid data}]
+        #   test_ajax_crud ControllerClass, :model_sym_singular, :fixture [, :valid => {valid data}] [, :invalid => {invalid data}]
         #
         def test_ajax_crud(controller_class, model, fixture, data = {})
           include InstanceMethods
@@ -43,14 +43,16 @@ module Ardes
           assert_equal assigns["#{self.ajax_crud_model}".pluralize], self.ajax_crud_model_class.find(:all)
           assert_template "ajax_crud/index.rhtml"
 
-          assert_ajax_crud_div(nil, nil, 'loading', :class => 'loading')
-          assert_ajax_crud_div(nil, nil, 'flash', :class => 'flash')
+          assert_tag :tag => "div", :attributes => {:id => "#{@controller.public_id}_loading", :class => 'loading'}
+          assert_tag :tag => "div", :attributes => {:id => "#{@controller.public_id}_flash", :class => 'flash'}
+          
           assert_ajax_crud_action_link(:action => 'new')
 
           @controller.model_list.each do |m|
-            assert_ajax_crud_div(m.id, :class => 'actions')
-            assert_ajax_crud_div(m.id, nil, 'item_main', :class => 'item_main')
-            assert_ajax_crud_div(m.id, nil, 'item_links', :class => 'item_links')
+            assert_tag :tag => "div", :attributes => {:id => @controller.public_id(:id => m.id), :class => 'actions'}
+            assert_tag :tag => "div", :attributes => {:id => "#{@controller.public_id(:id => m.id)}_item_main", :class => 'item_main'}
+            assert_tag :tag => "div", :attributes => {:id => "#{@controller.public_id(:id => m.id)}_item_links", :class => 'item_links'}
+            
             assert_ajax_crud_action_link(:id => m.id, :action => 'edit')
             assert_ajax_crud_action_link(:id => m.id, :action => 'show')
             assert_ajax_crud_action_link(:id => m.id, :action => 'destroy')
@@ -63,10 +65,11 @@ module Ardes
           assert_equal @ajax_crud_model, assigns["#{self.ajax_crud_model}"]
           assert_template "ajax_crud/open"
 
-          assert_rjs :insert_html, :top, "#{self.ajax_crud_model}_#{@ajax_crud_model.id}"
+          assert_rjs :insert_html, :top, @controller.public_id(:id => @ajax_crud_model.id)
 
           convert_xhr_body
-          assert_ajax_crud_div @ajax_crud_model.id, 'show', :class => 'action'
+          assert_tag :tag => "div", :attributes => {:id => "#{@controller.public_id(:action => 'show', :id => @ajax_crud_model.id)}", :class => 'action'}
+          
         end
         
         def test_ajax_crud_edit
@@ -76,10 +79,10 @@ module Ardes
           assert_template "ajax_crud/open"
           assert_equal @ajax_crud_model, assigns["#{self.ajax_crud_model}"]
           
-          assert_rjs :insert_html, :top, "#{self.ajax_crud_model}_#{@ajax_crud_model.id}"
+          assert_rjs :insert_html, :top, @controller.public_id(:id => @ajax_crud_model.id)
           
           convert_xhr_body
-          assert_ajax_crud_div @ajax_crud_model.id, 'edit', :class => 'action'
+          assert_tag :tag => "div", :attributes => {:id => "#{@controller.public_id(:action => 'edit', :id => @ajax_crud_model.id)}", :class => 'action'}
           assert_ajax_crud_action_form :id => @ajax_crud_model.id, :action => 'update', :method => 'put'
         end
         
@@ -91,7 +94,7 @@ module Ardes
           
           assert_response :success
           assert_template "ajax_crud/update"
-          assert_rjs :replace_html, "#{@controller.controller_name}_#{@ajax_crud_model.id}_item_main"
+          assert_rjs :replace_html, @controller.public_id(:id => @ajax_crud_model.id) + "_item_main"
         
           assert prev_attributes != @ajax_crud_model.reload.attributes
         end
@@ -104,7 +107,7 @@ module Ardes
           
           assert_response :success
           assert_template "ajax_crud/update"
-          assert_rjs :replace_html, "#{@controller.controller_name}_edit_#{@ajax_crud_model.id}"
+          assert_rjs :replace_html, @controller.public_id(:action => 'edit', :id => @ajax_crud_model.id)
           
           assert prev_attributes == @ajax_crud_model.reload.attributes
           
@@ -118,10 +121,10 @@ module Ardes
           assert_kind_of self.ajax_crud_model_class, assigns["#{self.ajax_crud_model}"]
           assert_template "ajax_crud/open"
           
-          assert_rjs :insert_html, :top, "#{@controller.controller_name}_new"
+          assert_rjs :insert_html, :top, "#{@controller.public_id}_new"
           
           convert_xhr_body
-          assert_ajax_crud_div nil, 'new', :class => 'action'
+          assert_tag :tag => "div", :attributes => {:id => "#{@controller.public_id(:action => 'new')}", :class => 'action'}
           assert_ajax_crud_action_form :action => 'create', :method => 'post'
         end
         
@@ -132,7 +135,7 @@ module Ardes
           
           assert_response :success
           assert_template "ajax_crud/create"
-          assert_rjs :insert_html, :before, "#{@controller.controller_name}_list_end"
+          assert_rjs :insert_html, :before, "#{@controller.public_id}_list_end"
         
           assert_kind_of self.ajax_crud_model_class, assigns["#{self.ajax_crud_model}"]
           assert false == assigns["#{self.ajax_crud_model}"].new_record?
@@ -145,7 +148,7 @@ module Ardes
           
           assert_response :success
           assert_template "ajax_crud/create"
-          assert_rjs :replace_html, "#{@controller.controller_name}_new"
+          assert_rjs :replace_html, "#{@controller.public_id}_new"
 
           assert_kind_of self.ajax_crud_model_class, assigns["#{self.ajax_crud_model}"]
           assert true == assigns["#{self.ajax_crud_model}"].new_record?
@@ -170,8 +173,8 @@ module Ardes
           xhr :get, :destroy, :id => to_destroy.id
           assert_response :success
           assert_template "ajax_crud/destroy"
-          assert_rjs :remove, "#{@controller.controller_name}_#{to_destroy.id}_item"
-          assert_rjs :insert_html, :top, "#{@controller.controller_name}_list", /list_empty/
+          assert_rjs :remove, "#{@controller.public_id}_#{to_destroy.id}_item"
+          assert_rjs :insert_html, :top, "#{@controller.public_id}_list", /list_empty/
           
           assert_equal 0, @controller.model_list(reload = true).size
         end
@@ -185,36 +188,17 @@ module Ardes
           
           assert_response :success
           assert_template "ajax_crud/create"
-          assert_rjs :insert_html, :before, "#{@controller.controller_name}_list_end"
-          assert_rjs :remove, "#{@controller.controller_name}_list_empty"
+          assert_rjs :insert_html, :before, "#{@controller.public_id}_list_end"
+          assert_rjs :remove, "#{@controller.public_id}_list_empty"
         end
           
       private
-        # id, action, suffix, attrs..
-        def assert_ajax_crud_div(*args)
-          attributes = args.last.is_a?(Hash) ? args.pop : {}
-          attributes[:id] = ajax_crud_public_id(*args)
-          assert_tag :tag => "div", :attributes => attributes
-        end
-
         def assert_ajax_crud_action_link(options = {})
           assert_tag :tag => 'a', :attributes => {:onclick => /#{options[:action]}/}
         end
 
         def assert_ajax_crud_action_form(options = {})
           assert_tag :tag => 'form', :attributes => {:action => url_for({:controller => @controller.controller_name}.merge(options))}
-        end
-
-        # [id [, action [, suffix]]]
-        def ajax_crud_public_id(*args)
-          id     = args.shift
-          action = args.shift
-          suffix = args.shift
-
-          ajax_crud_public_id = @controller.public_id(:id => id, :action => action)
-          ajax_crud_public_id += "_#{suffix}" if suffix
-
-          ajax_crud_public_id
         end
 
         def convert_xhr_body

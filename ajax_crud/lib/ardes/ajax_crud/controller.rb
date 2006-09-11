@@ -2,7 +2,6 @@ require 'ardes/ajax_crud/helper'
 require 'ardes/ajax_crud/page_helper'
 
 module Ardes
-  # @TODO: make an association controller (instead of ajax_crud_has_many :foos, :edit => true, action)
   module AjaxCrud
     module Controller
       def ajax_crud(model = nil, options = {})
@@ -144,7 +143,7 @@ module Ardes
           instance_variable_set("@#{model_sym}", model_class.find(id, model_find_options.dup))
         end                                      
                                                  
-        def new_model                            
+        def new_model                       
           instance_variable_set("@#{model_sym}", model_class.new)
         end
       
