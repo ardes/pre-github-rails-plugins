@@ -11,9 +11,12 @@ module Ardes# :nodoc:
       # This will
       #   - add a validation for the handle
       #   - allow calls like exists('some handle'), find('some_handle') and find(['some_handle', 'other_handle'])
-      #   - works with controllers (and scaffolding) out of the box for more informative urls (people/fred_jones).
-      #     Because a handle may be in flux (an id can't) the authoritatve handle is cached.  A
-      #     call to 'to_param' will reveal the authoritative handle (the record in the db's handle)
+      #   - Because a handle may be in flux (an id can't) the authoritatve handle is cached.  @handle
+      #     will reveal the authoritative handle (the record in the db's handle)
+      #   - If you pass :acts_as_param => true, then this works with controllers (and scaffolding) out of the box
+      #     for more informative urls (people/fred_jones).
+      #     
+      #
       # 
       # Example of use:
       #   class MyObject < ActiveRecord::Base
@@ -28,6 +31,10 @@ module Ardes# :nodoc:
       #     has_handle :validate => false   # if you want to provide custom validation
       #   end
       #
+      #   class MyObject < ActiveRecord::Base
+      #     has_handle :acts_as_param => true  # if you want to_param to return the handle rather than the id
+      #   end
+      #
       module Handle
         def self.included(base)
           base.extend(ClassMethods)
@@ -38,8 +45,9 @@ module Ardes# :nodoc:
             options = args.last.is_a?(Hash) ? args.pop : {}
             column  = (args.pop or :handle)
             self.class_eval do
-              cattr_accessor :handle_column
+              cattr_accessor :handle_column, :handle_acts_as_param
               self.handle_column = column.to_s
+              self.handle_acts_as_param = options[:acts_as_param]
               validates_handle self.handle_column unless options[:validate] == false
               include ActMethods
              end
@@ -67,6 +75,7 @@ module Ardes# :nodoc:
                 alias_method_chain :instantiate, :handle
                 alias_method_chain :exists?, :handle
               end
+              alias_method_chain :to_param, :handle
               after_save :cache_handle
             end
           end
@@ -75,8 +84,8 @@ module Ardes# :nodoc:
             @handle = send(self.handle_column)
           end
 
-          def to_param
-            @handle
+          def to_param_with_handle
+            self.handle_acts_as_param ? @handle : to_param_without_handle
           end
               
           module ClassMethods
