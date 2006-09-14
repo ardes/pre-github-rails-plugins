@@ -1,4 +1,4 @@
-<% form_for_action :action => 'update', :method => :put do |form| %>
+<% form_for_action :action => 'update', :id => model.id, :method => :put do |form| %>
 
   <%= render :partial => 'form', :locals => {:model => model, :form => form} %>
 
