@@ -25,7 +25,7 @@ module Ardes
         def add_has_many_association(association, options = {})
           assoc_options = {}
 
-          assoc_options[:class] = association.to_s.singularize.classify.constantize
+          assoc_options[:class] = association.to_s.classify.constantize
           assoc_options[:display] = options[:display] || association.to_s.humanize.downcase
           
           if options[:as]
@@ -36,7 +36,7 @@ module Ardes
           end
 
           assoc_options[:controller] = options[:controller] || association
-          assoc_options[:action] = options[:controller] || 'index'
+          assoc_options[:action] = options[:action] || 'index'
           
           self.has_many_associations[association] = assoc_options
         end
