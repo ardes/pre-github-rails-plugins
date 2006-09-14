@@ -12,7 +12,8 @@ module Ardes
 
           assets_in_views
 
-          class_inheritable_accessor :model_sym, :model_class, :model_name, :model_list_sym, :model_find_options
+          class_inheritable_accessor :model_sym, :model_class, :model_name, :model_list_sym, :model_find_options, 
+            :ajax_crud_allow_destroy, :ajax_crud_allow_show, :ajax_crud_allow_new, :ajax_crud_allow_edit
         
           helper Ardes::AjaxCrud::Helper
           helper Ardes::AjaxCrud::PageHelper
@@ -51,6 +52,10 @@ module Ardes
         
         def show
           find_model(params[:id])
+          respond_to do |type|
+            type.html { render :action => 'show.rhtml' }
+            type.js   { render :action => 'open.rjs' }
+          end
         end
         
         def destroy
@@ -71,6 +76,7 @@ module Ardes
         
         def update
           if find_model(params[:id]).update_attributes(params[model_sym])
+            model_object.reload # to reload any associations which may have changed
             flash[:info] = "#{model_desc} updated"
           else
             flash[:error] = "error updating #{model_desc}"

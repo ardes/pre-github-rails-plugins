@@ -1,1 +1,3 @@
-<%= open_action_link 'New ' + controller.model_name, :action => 'new' %>
+<% unless controller.ajax_crud_allow_new == false %>
+  <%= open_action_link 'New ' + controller.model_name, :action => 'new' %>
+<% end %>

@@ -57,9 +57,9 @@ module Ardes
       
       def remove_item_in_page(page, item, options = {})
         list_id = "#{public_id(options)}_list"
+        page.remove "#{public_id(options.merge(:id => item.id))}_item"
         page.if_id(list_id) do
           page.insert_html :top, list_id, :partial => "list_empty" if controller.model_list.size == 0
-          page.remove "#{public_id(options.merge(:id => item.id))}_item"
           page.list_changed list_id
         end
       end

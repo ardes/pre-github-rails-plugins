@@ -1,2 +1,9 @@
-<%= open_action_link 'edit/view', :action => 'panel', :id => item.id, :panel_action => 'edit', :panel_default => 'show' %>
-<%= open_action_link 'destroy', {:action => 'destroy', :id => item.id}, :confirm => "Destroy #{controller.model_desc(item)}?" %>
+<span class="main">
+  <% unless controller.ajax_crud_allow_edit == false %>
+    <%= open_action_link 'edit', :action => 'edit', :id => item.id, :replace => 'main' %>
+  <% end %>
+  <%= open_action_link 'show', :action => 'show', :id => item.id, :replace => 'main' %>
+  <% unless controller.ajax_crud_allow_destroy == false %>
+    <%= open_action_link 'destroy', {:action => 'destroy', :id => item.id}, :confirm => "Destroy #{controller.model_desc(item)}?" %>
+  <% end %>
+</span>

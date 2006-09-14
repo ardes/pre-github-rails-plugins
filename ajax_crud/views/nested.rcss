@@ -4,7 +4,7 @@
 */
 
 #ajax_crud div.action div.list ul {
-  background-color: #DD9;
+  background-color: #DDCCAA;
 }
 
 #ajax_crud div.action div.list li {
@@ -12,6 +12,18 @@
 }
     
 #ajax_crud div.action div.nav {
-  background-color: #FFD;
+  background-color: #EEDDBB;
   border: 0;
+}
+
+#ajax_crud div.action div.action {
+  background-color: #FFEECC;
+}
+
+#ajax_crud div.action div.item_links span.main a.action {
+  background-color: #998866;
+}
+
+#ajax_crud div.action div.item_links span.main a.action:hover {
+  background-color: #665533;
 }

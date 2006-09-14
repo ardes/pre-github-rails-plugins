@@ -1,0 +1,33 @@
+<% model = controller.model_object %>
+
+<div id="ajax_crud">
+  <h1><%= @title || controller.model_desc(model).capitalize %></h1>
+  
+  <div class="nav">
+    <%= render :partial => 'info' %>
+    <div class="nav_links">
+      <%= render :partial => 'show_nav_links' %>
+    </div>
+  </div>
+  
+  <div class="show">
+    <div class="item" id="<%= public_id :id => model.id %>_item">
+      
+      <div class="item_main" id="<%= public_id :id => model.id %>_item_main">
+        <%= render :partial => "item_main", :locals => {:item => model} %>
+      </div>
+    
+      <div class="item_links">
+        <%= render :partial => 'item_links', :locals => {:item => model} %>
+      </div>
+    
+      <div class="actions main" id="<%= public_id(:id => model.id) %>_main">
+        <div class="action" id="<%= public_id(:id => model.id, :action => 'show') %>">
+          <%= render :partial => 'show', :locals => {:model => controller.model_object} %>
+        </div>
+      </div>
+
+      <div class="actions" id="<%= public_id(:id => model.id) %>"></div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,39 @@
+
+/*****************************************************************************
+** Elements for when showing a single model in a page
+*****************************************************************************/
+
+
+#ajax_crud div.show {
+  background-color: #EEE;
+  border: 1px solid #888;
+  border-top: none;
+  clear:both;
+}
+
+#ajax_crud div.show div.item_main {
+  padding: 10px;
+  float: left;
+}
+
+#ajax_crud div.show div.item_links {
+  padding: 10px;
+  float: right;
+}
+
+#ajax_crud div.show div.action {
+  margin: 10px;
+  border: 1px solid #888;
+}
+
+#ajax_crud div.show div.actions {
+  border: none;
+}
+
+#ajax_crud div.action div.item_links span.main a.action {
+  background-color: #998866;
+}
+
+#ajax_crud div.action div.item_links span.main a.action:hover {
+  background-color: #665533;
+}

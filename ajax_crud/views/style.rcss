@@ -9,4 +9,5 @@
 <%= render_asset 'main.rcss' %>
 <%= render_asset 'form.rcss' %>
 <%= render_asset 'list.rcss' %>
+<%= render_asset 'show.rcss' %>
 <%= render_asset 'nested.rcss' %>

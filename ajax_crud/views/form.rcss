@@ -64,7 +64,7 @@
 ** Errors
 */
 
-#ajax_crud form .error {
+#ajax_crud .error {
   background-color: #FFDDDD;
   color: #990000;
 }

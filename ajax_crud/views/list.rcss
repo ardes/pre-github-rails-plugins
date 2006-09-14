@@ -10,6 +10,7 @@
 #ajax_crud div.list ul {
   margin: 0;
   background-color: #AAA;
+  border-top: 1px solid #999;
   padding: .1em;
   clear: both;
 }

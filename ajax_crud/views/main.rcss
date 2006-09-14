@@ -94,6 +94,14 @@
   background-color: #660000;
 }
 
+#ajax_crud div.item_links span.main a.action {
+  background-color: #888866;
+}
+
+#ajax_crud div.item_links span.main a.action:hover {
+  background-color: #555533;
+}
+
 
 /*****************************************************************************
 ** Actions and action containers

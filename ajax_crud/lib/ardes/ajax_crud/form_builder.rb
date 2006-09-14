@@ -20,7 +20,7 @@ module Ardes
       
       def errors_base(message = "There are errors in this form preventing it from being saved.  Please correct the marked fields below.")
         unless @object.errors.empty?
-          if errors = @object.errors.on_base
+          if errors = @object.errors.full_messages #@object.errors.on_base
             errors = errors.is_a?(Array) ? errors : [errors]
             errors = "<div class=\"error\">#{errors.join('<br />')}</div>"
           end
