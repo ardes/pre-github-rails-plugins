@@ -29,7 +29,7 @@ module Ardes
       base.class_eval do
         cattr_accessor :change_class
         self.change_class = Ardes::UndoChange.class_for(self)
-        has_many :changes, :dependent => true, 
+        has_many :changes, :dependent => :destroy, 
           :class_name  => self.change_class.name,
           :foreign_key => 'operation_id',
           :order       => "#{self.change_class.table_name}.id"

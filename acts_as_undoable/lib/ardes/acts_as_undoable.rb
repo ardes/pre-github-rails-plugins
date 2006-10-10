@@ -10,7 +10,7 @@ module Ardes# :nodoc:
       #
       #   class Vehicle < ActiveRecord::Base
       #     acts_as_undoable :vehicles
-      #     has_many :parts, :dependent => true
+      #     has_many :parts, :dependent => :destroy
       #   end
       #   
       #   class Part < ActiveRecord::Base
