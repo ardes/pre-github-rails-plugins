@@ -25,7 +25,7 @@ module Ardes# :nodoc:
     private
       def full_template_path_with_view_mapping(template_path, extension)
         path = template_path.sub(/\/.*$/, '')
-        if controller.view_mappings.key? path
+        if defined?(controller.view_mappings) and controller.view_mappings.key? path
           template_path = template_path.sub(path, controller.view_mappings[path])
           return "#{template_path}.#{extension}" if template_path.slice(0,1) == '/'
         end
