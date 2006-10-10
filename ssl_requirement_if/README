@@ -1,0 +1,14 @@
+Conditional SSL Requirement 
+===========================
+
+Dependency: ssl_requirement plugin
+
+Simply adds the ability to turn ssl_requirement on or depending of a condition
+
+Example:
+
+  class ApplicationController < ActiveRecord::Base
+    ssl_requirement :if => { |controller| controller.request.host =~ /(.*)\.mydomain.com/ }
+  end
+  
+(c) 2006 Ian White - ian.w.white@ardes.com
