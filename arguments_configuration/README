@@ -1,0 +1,17 @@
+This plugin adds some fetaures to the array class to make working with splats
+(*array) which contain a configuration array easier.
+
+Example
+ 
+  def foo(*args)    # => in this example called with foo(1,2, :foo => false)
+    args.configuration                              # => {:foo => false}
+    args.without_configuration                      # => [1,2]
+    args.apply_defaults(:foo => 'X', :bar => 'X')   # => [1,2,{:foo => false, :bar => 'X'}]
+  end
+  
+The apply_defaults method also has a shebang (!) variant, and can be used to apply default
+value to the array, as well as updating the configuration hash.  For example:
+
+ [].apply_defaults(1, 2, 3)                # -> [1, 2, 3]
+ ['a', 'b'].apply_defaults(1, 2, 3)        # -> ['a', 'b', 3]
+ 
