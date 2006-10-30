@@ -102,38 +102,31 @@ module ActiveRecord
     def define_asym_crypt_methods(attr_name, config)
       crypt_col = config[:as]
       
-      class_eval <<-end_eval
-        # class method accessors for (en/de)cryption keys per attribute
-        #class <<self
-        #  def #{attr_name}_encryption_key; asym_encrypted_attributes[:#{attr_name}][:encryption_key]; end
-        #  def #{attr_name}_decryption_key; asym_encrypted_attributes[:#{attr_name}][:decryption_key]; end
-        #  def #{attr_name}_encryption_key=(key); asym_encrypted_attributes[:#{attr_name}][:encryption_key] = key; end
-        #  def #{attr_name}_decryption_key=(key); asym_encrypted_attributes[:#{attr_name}][:decryption_key] = key; end
-        #end
-        
-        class_inheritable_accessor :#{attr_name}_encryption_key, :#{attr_name}_decryption_key
-        attr_accessor :#{attr_name}_encryption_key, :#{attr_name}_decryption_key
+      class_eval do
+        # key accessors at class and object level
+        class_inheritable_accessor "#{attr_name}_encryption_key", "#{attr_name}_decryption_key"
+        attr_accessor "#{attr_name}_encryption_key", "#{attr_name}_decryption_key"
         
         # accessors for encryption wrapper attribute
-        def #{attr_name}?
-          !!(#{attr_name} rescue nil)
+        define_method "#{attr_name}?" do
+          !!(send(attr_name) rescue nil)
         end
         
-        def #{attr_name}
-          @#{attr_name} or @#{attr_name} = decrypt_attribute(:#{attr_name}, #{crypt_col})
+        define_method attr_name do
+          instance_variable_get("@#{attr_name}") or instance_variable_set("@#{attr_name}", decrypt_attribute(attr_name, send(crypt_col)))
         end
         
-        def #{attr_name}=(plain)
-          write_attribute(:#{crypt_col}, encrypt_attribute(:#{attr_name}, plain))
-          @#{attr_name} = plain
+        define_method "#{attr_name}=" do |plain|
+          write_attribute(crypt_col, encrypt_attribute(attr_name, plain))
+          instance_variable_set("@#{attr_name}", plain)
         end
         
         # writer for encrypted attribute, which clears the cached decrypted attribute
-        def #{crypt_col}=(cryptext)
-          @#{attr_name} = nil
-          write_attribute("#{crypt_col}", cryptext)
+        define_method "#{crypt_col}=" do |cryptext|
+          instance_variable_set("@#{attr_name}", nil)
+          write_attribute(crypt_col, cryptext)
         end
-      end_eval
+      end
     end
         
     module InstanceMethods
