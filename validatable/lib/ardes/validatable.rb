@@ -26,6 +26,9 @@ module Ardes
         # append features to including class
         extend ClassMethods
         alias_method_chain :method_missing, :validatable
+        
+        require 'ardes/valid_for_attributes' rescue nil
+        include Ardes::ActiveRecord::ValidForAttributes rescue nil
       
         # We don't know if we have methods that Validations alias_method_chains
         # so define them to raise NotImplementedError if we don't have them
