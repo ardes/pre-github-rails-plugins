@@ -52,9 +52,11 @@ module ActiveRecord#:nodoc:
   #   end
   #
   #   @secret = Secret.new
-  #   @secret.asym_encrypted_attributes       # => {:secret => {:encrypt => :secret_text, :class => Object}}
+  #   @secret.asym_encrypted_attributes       # => {:secret => {:as => :secret_crypt, :class => Object}}
   # 
-  #   @secret.secret = 'I am green'           # => raises EncryptionKeyRequired
+  #   @secret.secret = 'I am green'           
+  #   @secret.secret_crypt                    # => raises EncryptionKeyRequired
+  #   @secret.save                            # => raises EncryptionKeyRequired
   #
   #   Secret.encryption_key = AsymCrypt.key_from_file('my/key/location.pub')
   #                                           # set public key for encryption on class
@@ -99,11 +101,12 @@ module ActiveRecord#:nodoc:
         include InstanceMethods        
         class_inheritable_accessor :encryption_key, :decryption_key 
         attr_accessor :encryption_key, :decryption_key
+        before_save :encrypt_attributes
       end
     end
     
     def define_asym_crypt_methods(attr_name, config)
-      crypt_col = config[:as]
+      crypt_col = config[:as].to_s
       
       class_eval do
         # key accessors at class and object level
@@ -111,23 +114,30 @@ module ActiveRecord#:nodoc:
         attr_accessor "#{attr_name}_encryption_key", "#{attr_name}_decryption_key"
         
         # accessors for encryption wrapper attribute
+        attr_writer attr_name
+        
         define_method "#{attr_name}?" do
           !!(send(attr_name) rescue nil)
         end
         
+        # returns current plain attr, or attempt to decrypt
         define_method attr_name do
-          instance_variable_get("@#{attr_name}") or instance_variable_set("@#{attr_name}", decrypt_attribute(attr_name, send(crypt_col)))
+          instance_variable_get("@#{attr_name}") or instance_variable_set("@#{attr_name}", decrypt_attribute(attr_name, read_attribute(crypt_col)))
         end
         
-        define_method "#{attr_name}=" do |plain|
-          write_attribute(crypt_col, encrypt_attribute(attr_name, plain))
-          instance_variable_set("@#{attr_name}", plain)
-        end
-        
-        # writer for encrypted attribute, which clears the cached decrypted attribute
+        # writer for encrypted attribute, which clears the cached plain attribute
         define_method "#{crypt_col}=" do |cryptext|
           instance_variable_set("@#{attr_name}", nil)
           write_attribute(crypt_col, cryptext)
+        end
+        
+        # we encrypt every time this is accessed in case the content of the plain attr has changed (i.e. is not value object)
+        define_method crypt_col do
+          if instance_variable_get("@#{attr_name}")
+            write_attribute(crypt_col, encrypt_attribute(attr_name, instance_variable_get("@#{attr_name}")))
+          else
+            read_attribute(crypt_col)
+          end
         end
       end
     end
@@ -149,6 +159,10 @@ module ActiveRecord#:nodoc:
       end
     
     protected
+      def encrypt_attributes
+        encrypted_attributes.each {|_, config| send(config[:as]) }
+      end
+
       # returns the first key found in the following order
       #   1. object instance variable for attribute-specific key
       #   2. class variable for attribute-specific key
