@@ -4,13 +4,17 @@ require 'asym_crypt'
 
 context "AsymCrypt" do
   
-  specify "can create key pairs of various strengths" do
+  specify "can create key pairs of various sizes" do
     (priv, pub) = AsymCrypt.create_keys
-    assert_kind_of AsymCrypt::PrivateKey, priv
-    assert_kind_of AsymCrypt::PublicKey, pub
-    (priv, pub) = AsymCrypt.create_keys(2048)
-    assert_kind_of AsymCrypt::PrivateKey, priv
-    assert_kind_of AsymCrypt::PublicKey, pub
+    assert_kind_of AsymCrypt::Key, priv
+    assert_equal :private, priv.type
+    assert_kind_of AsymCrypt::Key, pub
+    assert_equal :public, pub.type
+    (priv, pub) = AsymCrypt.create_keys(1024)
+    assert_kind_of AsymCrypt::Key, priv
+    assert_equal :private, priv.type
+    assert_kind_of AsymCrypt::Key, pub
+    assert_equal :public, pub.type
   end
   
   specify "can create key files" do
@@ -28,12 +32,13 @@ context "AsymCrypt" do
   end
   
   specify "can instantiate public key from file" do
-    key = AsymCrypt.key_from_file(File.dirname(__FILE__) + '/fixtures/keys/key.pub')
-    assert_kind_of AsymCrypt::PublicKey, key
+    key = AsymCrypt::Key.from_file(File.dirname(__FILE__) + '/fixtures/keys/key.pub')
+    assert_kind_of AsymCrypt::Key, key
+    assert_equal :public, key.type
   end
   
   specify "can instantiate public key from text" do
-    key = AsymCrypt.key(
+    key = AsymCrypt::Key.new(
 <<-end_key
 -----BEGIN RSA PUBLIC KEY-----
 MIGJAoGBALwxXIkH338pqRGwHEh7LJKNgDN/KYNrmWub71jmIEHSTlyyjpF/VMkc
@@ -42,16 +47,18 @@ MIGJAoGBALwxXIkH338pqRGwHEh7LJKNgDN/KYNrmWub71jmIEHSTlyyjpF/VMkc
 -----END RSA PUBLIC KEY-----
 end_key
     )
-    assert_kind_of AsymCrypt::PublicKey, key
+    assert_kind_of AsymCrypt::Key, key
+    assert_equal :public, key.type
   end
   
   specify "can instantiate private key from file" do
-    key = AsymCrypt.key_from_file(File.dirname(__FILE__) + '/fixtures/keys/key')
-    assert_kind_of AsymCrypt::PrivateKey, key
+    key = AsymCrypt::Key.from_file(File.dirname(__FILE__) + '/fixtures/keys/key')
+    assert_kind_of AsymCrypt::Key, key
+    assert_equal :private, key.type
   end
 
   specify "can instantiate private key from text" do
-    key = AsymCrypt.key(
+    key = AsymCrypt::Key.new(
 <<-end_key
 -----BEGIN RSA PRIVATE KEY-----
 MIICXgIBAAKBgQC8MVyJB99/KakRsBxIeyySjYAzfymDa5lrm+9Y5iBB0k5cso6R
@@ -70,13 +77,16 @@ RwVNAZpgui22t3cFgd8W0Gw4qkI1sDfqIuVFchX5huBe7A==
 -----END RSA PRIVATE KEY-----
 end_key
     )
-    assert_kind_of AsymCrypt::PrivateKey, key
+    assert_kind_of AsymCrypt::Key, key
+    assert_equal :private, key.type
   end
   
   specify "can instantiate key pair from files" do
     (priv, pub) = AsymCrypt::keys_from_file(File.dirname(__FILE__) + '/fixtures/keys/key')
-    assert_kind_of AsymCrypt::PrivateKey, priv
-    assert_kind_of AsymCrypt::PublicKey, pub
+    assert_kind_of AsymCrypt::Key, priv
+    assert_equal :private, priv.type
+    assert_kind_of AsymCrypt::Key, pub
+    assert_equal :public, pub.type
   end
   
   specify "should perform digital signing (private encrypt)" do
