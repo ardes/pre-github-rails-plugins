@@ -1,5 +1,4 @@
 require 'openssl'
-require 'yaml'
 require 'base64'
 
 module AsymCrypt
@@ -57,7 +56,7 @@ module AsymCrypt
       key = cipher.random_key
       iv = cipher.random_iv
       
-      ciphertext = cipher.update(object.to_yaml)
+      ciphertext = cipher.update(Marshal.dump(object))
       ciphertext << cipher.final
       
       cipherkey = @key.send("#{type}_encrypt", key.size.chr + key + iv)
@@ -67,7 +66,7 @@ module AsymCrypt
 
     # extract size of rsa key from first two bytes of cryptext, then the cipherkey,
     # then the ciphertext
-    # the cipherkey contains the size of the key (in one byte), followed by the key and iv
+    # the cipherkey contains the size of the aes key (in one byte), followed by the key and iv
     def decrypt(cryptext)
       cryptext = Base64.decode64(cryptext)
       cipherkeysize = cryptext[0]*256 + cryptext[1]
@@ -83,7 +82,7 @@ module AsymCrypt
       plain = cipher.update(ciphertext)
       plain << cipher.final
       
-      YAML::load(plain)
+      Marshal::load(plain)
     end
   end
 end
