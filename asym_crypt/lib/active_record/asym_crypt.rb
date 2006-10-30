@@ -47,11 +47,11 @@ module ActiveRecord
   #
   # === Example
   #   class Secret < ActiveRecord::Base
-  #     asym_crypt :encrypt => :secret_cryptext, :as => :secret
+  #     asym_encrypt :secret, :as => :secret_crypt
   #   end
   #
   #   @secret = Secret.new
-  #   @secret.crypted_attributes              # => {:secret => {:encrypt => :secret_text, :class => Object}}
+  #   @secret.asym_encrypted_attributes       # => {:secret => {:encrypt => :secret_text, :class => Object}}
   # 
   #   @secret.secret = 'I am green'           # => raises EncryptionKeyRequired
   #
@@ -62,7 +62,14 @@ module ActiveRecord
   #   @secret.secret_decryption_key           # => nil
   #   
   #   @secret.secret?                         # => true
-  #   @secret.secret_cryptext                 # => (the cryptext)
+  #   @secret.secret_crypt                    # => (the cryptext)
+  #   @secret.secret                          # => 'I am green'
+  #
+  #   @secret.reload
+  #
+  #   @secret.secret                          # raies DecryptionKeyRequired
+  #   Secret.secret_decryption_key =  AsymCrypt.key_from_file('my/key/location')
+  #                                           # set decryption key for secret attribute
   #   @secret.secret                          # => 'I am green'
   #  
   module AsymCrypt
@@ -76,18 +83,19 @@ module ActiveRecord
     def asym_encrypt(attr_name, options = {})
       append_features_to_active_record unless self.included_modules.include? ActiveRecord::AsymCrypt::InstanceMethods
       raise ArgumentError, 'asym_encrypt requires :as => crypt_col option' unless options[:as]
-      options[:class] ||= Object
-      asym_encrypted_attributes[attr_name] = options.dup
       define_asym_crypt_methods(attr_name, options)
+      asym_encrypted_attributes[attr_name] = {:as => options[:as], :class => options[:class] || Object}
+      send("#{attr_name}_encryption_key=", options[:encryption_key])
+      send("#{attr_name}_decryption_key=", options[:decryption_key])
     end
   
   protected
     def append_features_to_active_record
       self.class_eval do
         extend ClassMethods
-        include InstanceMethods
-        class_inheritable_accessor :encryption_key, :decryption_key
-        write_inheritable_attribute("attr_asym_encrypted", {})
+        include InstanceMethods        
+        class_inheritable_accessor :encryption_key, :decryption_key 
+        attr_accessor :encryption_key, :decryption_key
       end
     end
     
@@ -96,16 +104,19 @@ module ActiveRecord
       
       class_eval <<-end_eval
         # class method accessors for (en/de)cryption keys per attribute
-        class <<self
-          def #{attr_name}_encryption_key; asym_encrypted_attributes[:#{attr_name}][:encryption_key]; end
-          def #{attr_name}_decryption_key; asym_encrypted_attributes[:#{attr_name}][:decryption_key]; end
-          def #{attr_name}_encryption_key=(key); asym_encrypted_attributes[:#{attr_name}][:encryption_key] = key; end
-          def #{attr_name}_decryption_key=(key); asym_encrypted_attributes[:#{attr_name}][:decryption_key] = key; end
-        end
+        #class <<self
+        #  def #{attr_name}_encryption_key; asym_encrypted_attributes[:#{attr_name}][:encryption_key]; end
+        #  def #{attr_name}_decryption_key; asym_encrypted_attributes[:#{attr_name}][:decryption_key]; end
+        #  def #{attr_name}_encryption_key=(key); asym_encrypted_attributes[:#{attr_name}][:encryption_key] = key; end
+        #  def #{attr_name}_decryption_key=(key); asym_encrypted_attributes[:#{attr_name}][:decryption_key] = key; end
+        #end
+        
+        class_inheritable_accessor :#{attr_name}_encryption_key, :#{attr_name}_decryption_key
+        attr_accessor :#{attr_name}_encryption_key, :#{attr_name}_decryption_key
         
         # accessors for encryption wrapper attribute
         def #{attr_name}?
-          !!#{attr_name} rescue nil
+          !!(#{attr_name} rescue nil)
         end
         
         def #{attr_name}
@@ -133,47 +144,59 @@ module ActiveRecord
       end
       
       def reload_with_asym_crypt
-        asym_encrypted_attributes.keys.each {|attr_name| instance_variable_set("@#{attr_name}", nil)}
+        encrypted_attributes.keys.each {|attr_name| instance_variable_set("@#{attr_name}", nil)}
         reload_without_asym_crypt
       end
       
-      # returns the first public key found, first for the specified attribute (not required)
-      # then the class, and finally the ActiveRecord::AsymCrypt
-      def get_encryption_key(attr_name = nil)
-        attr_encryption_key = attr_name ? asym_encrypted_attributes[attr_name][:encryption_key] : nil
-        attr_encryption_key or self.encryption_key or ::ActiveRecord::AsymCrypt.encryption_key
-      end
-      
-      # returns the first private key found, first for the specified attribute (not required)
-      # then the class, and finally the ActiveRecord::AsymCrypt
-      def get_decryption_key(attr_name = nil)
-        attr_decryption_key = attr_name ? asym_encrypted_attributes[attr_name][:decryption_key] : nil
-        attr_decryption_key or self.decryption_key or ::ActiveRecord::AsymCrypt.decryption_key
-      end
-
-      def asym_encrypted_attributes
+      def encrypted_attributes
         self.class.asym_encrypted_attributes
       end
+    
+    protected
+      # returns the first key found in the following order
+      #   1. object instance variable for attribute-specific key
+      #   2. class variable for attribute-specific key
+      #   3. object instance variable for class-specific key
+      #   4. class variable for class-specific key
+      #   5. ActiveRecord::AsymCrypt default key
+      #   6. nil
+      #
+      # The point of storing keys on the ActiveRecord object is so that a key can be
+      # assigned for a tenproary operation, and it goes away when the object goes away.
+      # 
+      # For a public/private scenario described in the module comment,
+      # you would set the encryption keys once, at the class level, and set the
+      # private keys on particular objects that need to decrypt info, when they need it
+      #
       
     protected
+      def get_key(type, attr_name = nil)
+        (attr_name and send "#{attr_name}_#{type}_key") or
+        (attr_name and self.class.send "#{attr_name}_#{type}_key") or
+        send "#{type}_key" or
+        self.class.send "#{type}_key" or
+        ::ActiveRecord::AsymCrypt.send "#{type}_key" 
+      end
 
       def encrypt_attribute(attr_name, plain)  
-        raise EncryptionKeyRequired unless (key = get_encryption_key(attr_name)).is_a?(::AsymCrypt::Key)
-        raise ::ActiveRecord::SerializationTypeMismatch unless plain.is_a?(asym_encrypted_attributes[attr_name][:class])
+        key = get_key(:encryption, attr_name)
+        raise EncryptionKeyRequired unless key.is_a?(::AsymCrypt::Key)
+        raise ::ActiveRecord::SerializationTypeMismatch unless plain.is_a?(encrypted_attributes[attr_name][:class])
         key.encrypt(plain)
       end
       
       def decrypt_attribute(attr_name, cryptext)
         return nil if cryptext.nil?
-        raise DecryptionKeyRequired unless (key = get_decryption_key(attr_name)).is_a?(::AsymCrypt::Key)
-        raise ::ActiveRecord::SerializationTypeMismatch unless (plain = key.decrypt(cryptext)).is_a?(asym_encrypted_attributes[attr_name][:class])
+        raise DecryptionKeyRequired unless (key = get_key(:decryption, attr_name)).is_a?(::AsymCrypt::Key)
+        plain = key.decrypt(cryptext)
+        raise ::ActiveRecord::SerializationTypeMismatch unless plain.is_a?(encrypted_attributes[attr_name][:class])
         plain
       end
     end
     
     module ClassMethods
       def asym_encrypted_attributes
-        read_inheritable_attribute("attr_asym_encrypted")
+        read_inheritable_attribute("attr_asym_encrypted") or write_inheritable_attribute("attr_asym_encrypted", {})
       end
     end
   end
