@@ -64,7 +64,7 @@ module Ardes
           xhr :get, :show, self.ajax_crud_params.merge(:id => @ajax_crud_model.id)
           assert_response :success
           assert_equal @ajax_crud_model, assigns["#{self.ajax_crud_model}"]
-          assert_template "ajax_crud/open"
+          assert_template "ajax_crud/open.rjs"
 
           assert_rjs :insert_html, :top, @controller.public_id(:id => @ajax_crud_model.id)
 
