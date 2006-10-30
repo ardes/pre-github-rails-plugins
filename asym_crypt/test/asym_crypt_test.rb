@@ -28,7 +28,7 @@ context "AsymCrypt" do
   end
   
   specify "can instantiate public key from file" do
-    key = AsymCrypt.key_from_file(File.dirname(__FILE__) + '/fixtures/keys/test_key.pub')
+    key = AsymCrypt.key_from_file(File.dirname(__FILE__) + '/fixtures/keys/key.pub')
     assert_kind_of AsymCrypt::PublicKey, key
   end
   
@@ -46,7 +46,7 @@ end_key
   end
   
   specify "can instantiate private key from file" do
-    key = AsymCrypt.key_from_file(File.dirname(__FILE__) + '/fixtures/keys/test_key')
+    key = AsymCrypt.key_from_file(File.dirname(__FILE__) + '/fixtures/keys/key')
     assert_kind_of AsymCrypt::PrivateKey, key
   end
 
@@ -74,7 +74,7 @@ end_key
   end
   
   specify "can instantiate key pair from files" do
-    (priv, pub) = AsymCrypt::keys_from_file(File.dirname(__FILE__) + '/fixtures/keys/test_key')
+    (priv, pub) = AsymCrypt::keys_from_file(File.dirname(__FILE__) + '/fixtures/keys/key')
     assert_kind_of AsymCrypt::PrivateKey, priv
     assert_kind_of AsymCrypt::PublicKey, pub
   end
