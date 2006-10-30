@@ -1,10 +1,10 @@
 require 'asym_crypt'
 
-module ActiveRecord
+module ActiveRecord#:nodoc:
   # Asymetric encryption of ActiveRecord attributes.
   #
   # This extension allows asymetric encryption both for digital signing (encrypted with private key, and decrypted with public key),
-  # and the more common case of encryption with a public key, only decryptable with a private key.
+  # and the more common case of encryption with a public key, only decryptable with a private key.
   #
   # Using this you can, for example, encrypt your customers credit card details with a public key stored on your webserver.  You can then
   # write a processing application on a different server, which has the private key and can read the data.  Another approach might be
@@ -13,35 +13,36 @@ module ActiveRecord
   # 
   # Both of these approaches keep the encryption and decryption methods separated and the keys are never in the same place (on the server)
   #
-  # === Usage
+  # == Usage
   #
   # asym_encrypt <em>decrypted_attr</em>, :as => <em>crypt_col</em> [, options]
   #
   # Typically <em>crypt_col</em> will be a database column.  <em>decrypted_attr</em> becomes
   # an encryption wrapper for the database column.  The following accessor methods are created:
   #
-  #  * <tt>decrypted_attr=</tt> encrypts the argument with the encryption key (see below for how keys are found).
-  #     Raises EncryptionKeyRequired if none can be found.
-  #  * <tt>decrypted_attr</tt> decrypts (and caches) the argument with the decryption key.  Raises DecryptionKeyRequired if
-  #     none can be found.
-  #  * <tt>decrypted_attr?</tt> returns true if there is a non false, nor nil, decrypted object, without raising any errors
+  # * <tt>decrypted_attr=</tt> encrypts the argument with the encryption key (see below for how keys are found).  Raises EncryptionKeyRequired if none can be found.
+  # * <tt>decrypted_attr</tt> decrypts (and caches) the argument with the decryption key.  Raises DecryptionKeyRequired if none can be found.
+  # * <tt>decrypted_attr?</tt> returns true if there is a non false, nor nil, decrypted object, without raising any errors
   #
   # Unlike serialize, asym_crypt keeps the database column (in this case the cryptext) encoded in its original format.  This
   # allows the possibility of copying a record without knowing how to decrypt all of its attributes.
   #
-  # ==== Options
-  #  * <tt>:encryption_key</tt>: use specified key (an AysmCrypt::Key) to encrypt this attribute
-  #  * <tt>:decryption_key</tt>: use specified key (an AsymCrypt::Key) to decrypt this attribute
-  #  * <tt>:class</tt>: make sure the decrypted object is of the specifed class, raising SerializationTypeMismatch if not
+  # === Options
+  # * <tt>:encryption_key</tt>: use specified key (an AysmCrypt::Key) to encrypt this attribute
+  # * <tt>:decryption_key</tt>: use specified key (an AsymCrypt::Key) to decrypt this attribute
+  # * <tt>:class</tt>: make sure the decrypted object is of the specifed class, raising SerializationTypeMismatch if not
   # 
   # The encryption and decryption keys can be specified on the class, and these will be used for all (en/de)cryption if the
-  # keys are not specified on the attribute
+  # keys are not specified on the attribute.  They can also be specified on a per-object basis (both encryption_key and attr_encryption_key)
+  # which allows for one-time usage of certain keys (probably private ones) without worrying about them beiing kept in the class variables.
   #
   # If you want to set key(s) for your whole application, then do this:
+  #
   #   ActiveRecord::AsymCrypt.encryption_key = (your key)
   #   ActiveRecord::AsymCrypt.decryption_key = (your key)
   #
-  # Keys will be searched first on the object (on an attribute), then on the class, then on ActiveRecord::AsymCrypt
+  # Keys will be searched first for attribute specific keys (on object instance, then class), then for a class specific key
+  # (on object instance, then class), and finally on ActiveRecord::AsymCrypt
   #
   # See AsymCrypt for details on creating and reading keys.
   #
@@ -68,8 +69,10 @@ module ActiveRecord
   #   @secret.reload
   #
   #   @secret.secret                          # raies DecryptionKeyRequired
-  #   Secret.secret_decryption_key =  AsymCrypt.key_from_file('my/key/location')
+  #   @secret.secret_decryption_key =  AsymCrypt.key_from_file('my/key/location')
   #                                           # set decryption key for secret attribute
+  #                                           # this will go away when object does
+  #
   #   @secret.secret                          # => 'I am green'
   #  
   module AsymCrypt
