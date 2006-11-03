@@ -3,7 +3,7 @@ require File.dirname(__FILE__) + '/test_helper'
 # active record with two encrypted attributes, one of which is encyrypted with its
 # own key (:time attr), the other is encrypted with the default key
 class Secret < ActiveRecord::Base
-  (TimePrivateKey, TimePublicKey) = Ardes::AsymCrypt::create_keys 
+  (TimePrivateKey, TimePublicKey) = AsymCrypt::create_keys 
 
   asym_encrypt :text, :as => :text_crypt
   asym_encrypt :time, :as => :time_crypt, :class => Time, :encryption_key => TimePublicKey
@@ -11,7 +11,7 @@ end
 
 context "ActiveRecord AsymCrypt" do
   
-  (PublicKey, PrivateKey) = Ardes::AsymCrypt::create_keys
+  (PublicKey, PrivateKey) = AsymCrypt::create_keys
   SecretText = "I wanted to be a ballerina"
   SecretTime = Time.mktime(1971,8,27)
   
@@ -41,8 +41,8 @@ context "ActiveRecord AsymCrypt" do
   end
   
   specify "should raise error when decrypting if no decryption key available" do
-    assert_raises(Ardes::ActiveRecord::AsymCrypt::DecryptionKeyRequired) { @secret.text }
-    assert_raises(Ardes::ActiveRecord::AsymCrypt::DecryptionKeyRequired) { @secret.time }
+    assert_raises(ActiveRecord::AsymCrypt::DecryptionKeyRequired) { @secret.text }
+    assert_raises(ActiveRecord::AsymCrypt::DecryptionKeyRequired) { @secret.time }
   end
   
   specify "should decrypt when only class decryption key available" do
@@ -52,9 +52,9 @@ context "ActiveRecord AsymCrypt" do
   end
   
   specify "should decrypt when only ActiveRecord decryption key available" do
-    Ardes::ActiveRecord::AsymCrypt.decryption_key = PrivateKey
+    ActiveRecord::AsymCrypt.decryption_key = PrivateKey
     assert_equal SecretText, @secret.text
-    Ardes::ActiveRecord::AsymCrypt.decryption_key = nil
+    ActiveRecord::AsymCrypt.decryption_key = nil
   end
   
   specify "should attempt decyrpt and fail when decrypting with wrong key" do
@@ -70,7 +70,7 @@ context "ActiveRecord AsymCrypt" do
   end
   
   specify "should raise error when encrypting with no encryption key available" do
-    assert_raises(Ardes::ActiveRecord::AsymCrypt::EncryptionKeyRequired) do
+    assert_raises(ActiveRecord::AsymCrypt::EncryptionKeyRequired) do
       s = Secret.new
       s.text = 'a secret'
       s.text_crypt
@@ -113,8 +113,8 @@ context "ActiveRecord AsymCrypt Keys" do
   end
   
   def setup
-    Ardes::ActiveRecord::AsymCrypt.encryption_key = nil
-    Ardes::ActiveRecord::AsymCrypt.decryption_key = nil
+    ActiveRecord::AsymCrypt.encryption_key = nil
+    ActiveRecord::AsymCrypt.decryption_key = nil
     Crypt.encryption_key = nil
     Crypt.decryption_key = nil
     Crypt.text_encryption_key = nil
@@ -123,7 +123,7 @@ context "ActiveRecord AsymCrypt Keys" do
   end
   
   specify "should search for keys in order: instance attribute, attribute, instance, class, active_record" do
-    Ardes::ActiveRecord::AsymCrypt.encryption_key = :active_record
+    ActiveRecord::AsymCrypt.encryption_key = :active_record
     assert_equal :active_record, @crypt.send(:get_key, :encryption, :text)
     Crypt.encryption_key = :class_class
     assert_equal :class_class, @crypt.send(:get_key, :encryption, :text)
