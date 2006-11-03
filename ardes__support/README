@@ -1,0 +1,2 @@
+Various support classes and modules for ardes_* plugins
+This is named 'ardes__support' so that it loads before any of the ardes_* plugins
