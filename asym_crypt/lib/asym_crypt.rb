@@ -73,7 +73,7 @@ module AsymCrypt
       File.open(filename, "w+") { |fp| fp << self.to_s }
     end
   
-    # generate an AES-256-CBC key and iv, encrypt the data with that, and then RSA encrypt the key/iv
+    # generate an AES-256-CBC key and iv, encrypt the data with that, and then RSA encrypt the key/iv
     # Assumption: the size of the RSA key, in bytes, is no greater than 65535 as the first two
     # bytes of the cryptext are used to store the rsa key size.
     # this poses no security risk if using decent sized keys - like: 2048 bits, the default.
