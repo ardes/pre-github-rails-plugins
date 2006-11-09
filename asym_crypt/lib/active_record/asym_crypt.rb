@@ -7,11 +7,14 @@ module ActiveRecord#:nodoc:
   # and the more common case of encryption with a public key, only decryptable with a private key.
   #
   # Using this you can, for example, encrypt your customers credit card details with a public key stored on your webserver.  You can then
-  # write a processing application on a different server, which has the private key and can read the data.  Another approach might be
-  # to have the appropriate user paste the private key into a form, which is then kept for the session in the user's browser via a
-  # cookie (*not* in the session, or server).
-  # 
-  # Both of these approaches keep the encryption and decryption methods separated and the keys are never in the same place (on the server)
+  # write a processing application which resides a different server, which has the private key and can read the database
+  # (this server need not be on the net).
+  #
+  # Another approach might be to have the appropriate user paste the private key into a form,
+  # which is then kept in the user's browser via a cookie (and therefore the private key stays off the server).
+  #
+  # Both of these approaches keep the private key away from the public key, so if your site gets compromised, all your encrypted data
+  # is safe(er).
   #
   # == Usage
   #
@@ -159,6 +162,7 @@ module ActiveRecord#:nodoc:
       end
   
     protected
+      # read the encrypted attributes, triggering the encryption
       def encrypt_attributes
         encrypted_attributes.each {|_, config| send(config[:as]) }
       end
@@ -178,8 +182,6 @@ module ActiveRecord#:nodoc:
       # you would set the encryption keys once, at the class level, and set the
       # private keys on particular objects that need to decrypt info, when they need it
       #
-    
-    protected
       def get_key(type, attr_name = nil)
         (attr_name and send "#{attr_name}_#{type}_key") or
         (attr_name and self.class.send "#{attr_name}_#{type}_key") or
