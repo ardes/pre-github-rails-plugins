@@ -13,14 +13,17 @@
 # 
 # With this plugin you can do this in your views:
 # 
+#   <%= text_field :customer, :email %>
 #   <%= confirmation_text_field :customer, :email %>
+#
+#   <%= password_field :customer, :pass %>
 #   <%= confirmation_password_field :customer, :pass %>
 #   
 # or
 # 
 #   <% form_for :customer, @customer do |f| %>  
+#     <%= f.text_field :email %>
 #     <%= f.confirmation_text_field :email %>
-#     <%= f.confirmation_password_field :pass %>
 #   <% end %>
 #   
 # The logic of this helper is as follows (example :email):
