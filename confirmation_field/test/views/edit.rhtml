@@ -1,0 +1,23 @@
+<html>
+<head></head>
+<body>
+  <div id="old_style">
+    <%= form_tag :action => :update %>
+      <%= text_field :model, :name %>
+      <%= text_field :model, :email %>
+      <%= confirmation_text_field :model, :email %>
+      <%= password_field :model, :password %>
+      <%= confirmation_password_field :model, :password %>
+    <%= end_form_tag %>
+  </div>
+  <div id="block_style">
+    <% form_for :model, @model, :url => { :action => "update" } do |f| %>
+      <%= f.text_field :name %>
+      <%= f.text_field :email %>
+      <%= f.confirmation_text_field :email %>
+      <%= f.password_field :password %>
+      <%= f.confirmation_password_field :password %>
+    <% end %>
+  </div>
+</body>
+</html>
