@@ -1,32 +1,6 @@
-This plugin helps with handling confirmation attributes at the view level.
+confirmation_field
+==================
 
-A confirmation attribute is a virtual attribute that is used with
+Adds some helpers for dealing with confirmation fields (a la validates_confirmation_of) at the view level.
 
-  validates_confirmation_of :email
-
-:email_confirmation being the virtual attribute in question.
-
-There's a small but annoying view logic issue with this, when you are presenting an update view of a model with a confirmation attribute, the 
-confirmation field will initially be left blank.  When the form is submitted, the above validation will fail, unless the user types in the confirmation field - very annoying for when you're only updating your phone number for example.
-
-This means that you have to write some view logic to deal with this (a worse idea would be to change the *model* to deal with this view issue).
-
-With this plugin you can do this in your views:
-
-  <%= confirmation_text_field :customer, :email %>
-  <%= confirmation_password_field :customer, :pass %>
-  
-or
-
-  <% form_for :customer, @customer do |f| %>  
-    <%= f.confirmation_text_field :email %>
-    <%= f.confirmation_password_field :pass %>
-  <% end %>
-  
-The logic of this helper is as follows (example :email):
-  * if there's an :email_confirmation non-nil value set on the model use that
-  * otherwise use the value of :email
-  
-See the tests for more details.
-
-ian.w.white@ardes.com
+See init.rb and tests for more info
