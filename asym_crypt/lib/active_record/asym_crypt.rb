@@ -21,11 +21,7 @@ module ActiveRecord#:nodoc:
   # asym_encrypt <em>decrypted_attr</em>, :as => <em>crypt_col</em> [, options]
   #
   # Typically <em>crypt_col</em> will be a database column.  <em>decrypted_attr</em> becomes
-  # an encryption wrapper for the database column.  The following accessor methods are created:
-  #
-  # * <tt>decrypted_attr=</tt> encrypts the argument with the encryption key (see below for how keys are found).  Raises EncryptionKeyRequired if none can be found.
-  # * <tt>decrypted_attr</tt> decrypts (and caches) the argument with the decryption key.  Raises DecryptionKeyRequired if none can be found.
-  # * <tt>decrypted_attr?</tt> returns true if there is a non false, nor nil, decrypted object, without raising any errors
+  # an encryption wrapper for the database column.
   #
   # Unlike serialize, asym_crypt keeps the database column (in this case the cryptext) encoded in its original format.  This
   # allows the possibility of copying a record without knowing how to decrypt all of its attributes.
@@ -37,7 +33,7 @@ module ActiveRecord#:nodoc:
   # 
   # The encryption and decryption keys can be specified on the class, and these will be used for all (en/de)cryption if the
   # keys are not specified on the attribute.  They can also be specified on a per-object basis (both encryption_key and attr_encryption_key)
-  # which allows for one-time usage of certain keys (probably private ones) without worrying about them beiing kept in the class variables.
+  # which allows for one-time usage of certain keys (probably private ones) without worrying about them being kept in the class variables.
   #
   # If you want to set key(s) for your whole application, then do this:
   #
@@ -152,6 +148,12 @@ module ActiveRecord#:nodoc:
         end
       end
     
+      # reload removes the decrypted attributes - thus requiring a decryption key for access.  For example:
+      #   card.details = {:number => '10000000', :expiry => Time.now}
+      #   card.save
+      #   card.details # => {:number => '10000000', :expiry => Time.now}
+      #   card.reload
+      #   card.details # => raises DecryptionKeyRequired
       def reload_with_asym_crypt
         encrypted_attributes.keys.each {|attr_name| instance_variable_set("@#{attr_name}", nil)}
         reload_without_asym_crypt
