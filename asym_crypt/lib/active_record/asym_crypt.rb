@@ -121,7 +121,7 @@ module ActiveRecord#:nodoc:
       
         # returns current plain attr, or attempt to decrypt
         define_method attr_name do
-          instance_variable_get("@#{attr_name}") or instance_variable_set("@#{attr_name}", decrypt_attribute(attr_name, read_attribute(crypt_col)))
+          instance_variable_get("@#{attr_name}") or instance_variable_set("@#{attr_name}", decrypt_for_attribute(attr_name, read_attribute(crypt_col)))
         end
       
         # writer for encrypted attribute, which clears the cached plain attribute
@@ -133,7 +133,7 @@ module ActiveRecord#:nodoc:
         # we encrypt every time this is accessed in case the content of the plain attr has changed (i.e. is not value object)
         define_method crypt_col do
           if instance_variable_get("@#{attr_name}")
-            write_attribute(crypt_col, encrypt_attribute(attr_name, instance_variable_get("@#{attr_name}")))
+            write_attribute(crypt_col, encrypt_for_attribute(attr_name, instance_variable_get("@#{attr_name}")))
           else
             read_attribute(crypt_col)
           end
@@ -192,14 +192,14 @@ module ActiveRecord#:nodoc:
         ActiveRecord::AsymCrypt.send "#{type}_key" 
       end
 
-      def encrypt_attribute(attr_name, plain)  
+      def encrypt_for_attribute(attr_name, plain)  
         key = get_key(:encryption, attr_name)
         raise EncryptionKeyRequired unless key.is_a?(::AsymCrypt::Key)
         raise ActiveRecord::SerializationTypeMismatch unless plain.is_a?(encrypted_attributes[attr_name][:class])
         key.encrypt(plain)
       end
     
-      def decrypt_attribute(attr_name, cryptext)
+      def decrypt_for_attribute(attr_name, cryptext)
         return nil if cryptext.nil?
         raise DecryptionKeyRequired unless (key = get_key(:decryption, attr_name)).is_a?(::AsymCrypt::Key)
         plain = key.decrypt(cryptext)
