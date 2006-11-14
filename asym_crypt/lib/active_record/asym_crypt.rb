@@ -151,7 +151,7 @@ module ActiveRecord#:nodoc:
       # reload removes the decrypted attributes - thus requiring a decryption key for access.  For example:
       #   card.details = {:number => '10000000', :expiry => Time.now}
       #   card.save
-      #   card.details # => {:number => '10000000', :expiry => Time.now}
+      #   card.details # => {:number=>'10000000', :expiry=>Fri Nov 10 08:35:50 +0000 2006}
       #   card.reload
       #   card.details # => raises DecryptionKeyRequired
       def reload_with_asym_crypt
