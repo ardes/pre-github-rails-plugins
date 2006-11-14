@@ -5,6 +5,10 @@ require 'test_help'
 
 load(File.dirname(__FILE__) + "/schema.rb")
 
+if defined?(Ardes::TeslyReporter)
+  Ardes::TeslyReporter.plugin_name = File.basename(File.expand_path(File.join(__FILE__, '../..')))
+end
+
 class Test::Unit::TestCase
   self.use_transactional_fixtures = true
   self.use_instantiated_fixtures  = false
