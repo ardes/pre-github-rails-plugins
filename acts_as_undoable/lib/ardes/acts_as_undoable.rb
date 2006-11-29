@@ -102,7 +102,7 @@ module Ardes# :nodoc:
             include ActMethods
             self.undo_all = !!(args.shift.to_s =~ /^(undo_)?all$/)
             
-            options[:dependent] = nil
+            options[:dependent] = false
             acts_as_versioned(options, &extension)
           end
         end
