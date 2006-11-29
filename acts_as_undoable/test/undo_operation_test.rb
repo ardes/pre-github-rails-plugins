@@ -107,8 +107,8 @@ class UndoOperationTest < Test::Unit::TestCase
   end
   
   def test_should_delete_currently_undone_changes_when_changes_pushed
-    assert_equal 1, CarUndoOperation.count(["undone = ?", true])
+    assert_equal 1, CarUndoOperation.count(:conditions => ["undone = ?", true])
     CarUndoOperation.push([CarUndoChange.new])
-    assert_equal 0, CarUndoOperation.count(["undone = ?", true])
+    assert_equal 0, CarUndoOperation.count(:conditions => ["undone = ?", true])
   end
 end
