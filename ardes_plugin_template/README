@@ -1,0 +1,22 @@
+= plugin_name
+
+Plugin Description
+
+== Specs and Coverage
+* {SPECDOC}[link:files/SPECDOC.html] lists the specifications
+* {RSpec Report}[link:rspec_report.html] is a report of any failing specs
+* {RCov Report}[link:coverage/index.html] is the rcov report
+
+== Dependencies
+* RCov
+* RSpec
+
+== Testing
+*RSpec* is used for testing so grab a copy from http://rspec.rubyforge.org
+
+To run the tests you need a test database set up, edit <tt>spec/database.yml</tt> to provide the details.
+
+Run the tests by doing:
+  rake spec
+or simply
+  rake
