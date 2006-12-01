@@ -25,7 +25,7 @@ Spec::Rake::SpecTask.new(:rcov) do |t|
 end
 
 desc "Generate RDoc specdoc for #{plugin_name}"
-Spec::Rake::SpecTask.new(:rspec_doc) do |t|
+Spec::Rake::SpecTask.new(:rspec_rdoc) do |t|
   t.spec_files  = FileList['spec/**/*_spec.rb']
   t.spec_opts   = ["--format", "rdoc"]
   t.out         = 'SPECDOC'
@@ -40,7 +40,7 @@ Spec::Rake::SpecTask.new(:rspec_rep) do |t|
 end
 
 desc "Generate documentation for #{plugin_name}"
-task :rdoc => :rspec_doc
+task :rdoc => :rspec_rdoc
 Rake::RDocTask.new(:rdoc) do |t|
   t.rdoc_dir = 'doc'
   t.main     = 'README'
