@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE html
+     PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <title>RSpec results</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+  <meta http-equiv="Content-Script-Type" content="text/javascript" />
+  <script type="text/javascript">
+  function moveProgressBar(percentDone) {
+    document.getElementById("header").style.width = percentDone +"%";
+  }
+  function makeRed(element_id) {
+    document.getElementById(element_id).style.background = '#C40D0D';
+  }
+  </script>
+  <style type="text/css">
+  body {
+    margin: 0; padding: 0;
+    background: #fff;
+  }
+
+  #header {
+    background: #65C400; color: #fff;
+  }
+
+  h1 {
+    margin: 0 0 10px;
+    padding: 10px;
+    font: bold 18px "Lucida Grande", Helvetica, sans-serif;
+  }
+
+  #summary {
+    margin: 0; padding: 5px 10px;
+    font: bold 10px "Lucida Grande", Helvetica, sans-serif;
+    text-align: right;
+    position: absolute;
+    top: 0px;
+    right: 0px;
+  }
+
+  #summary p {
+    margin: 0 0 2px;
+  }
+
+  #summary #totals {
+    font-size: 14px;
+  }
+
+  .context {
+    margin: 0 10px 5px;
+    background: #fff;
+  }
+
+  dl {
+    margin: 0; padding: 0 0 5px;
+    font: normal 11px "Lucida Grande", Helvetica, sans-serif;
+  }
+
+  dt {
+    padding: 3px;
+    background: #65C400;
+    color: #fff;
+    font-weight: bold;
+  }
+
+  dd {
+    margin: 5px 0 5px 5px;
+    padding: 3px 3px 3px 18px;
+  }
+
+  dd.spec.passed {
+    border-left: 5px solid #65C400;
+    border-bottom: 1px solid #65C400;
+    background: #DBFFB4; color: #3D7700;
+  }
+
+  dd.spec.failed {
+    border-left: 5px solid #C20000;
+    border-bottom: 1px solid #C20000;
+    color: #C20000; background: #FFFBD3;
+  }
+
+  div.backtrace {
+    color: #000;
+    font-size: 12px;
+  }
+
+  a {
+    color: #BE5C00;
+  }
+  </style>
+</head>
+<body>
+
+<div id="header">
+  <h1>RSpec Results</h1>
+
+  <div id="summary">
+    <p id="duration">&nbsp;</p>
+    <p id="totals">&nbsp;</p>
+  </div>
+</div>
+
+<div id="results">
+<div class="context">
+  <dl>
+  <dt id="context_1">ActiveRecord::Singleton class (in general)</dt>
+    <script type="text/javascript">moveProgressBar('7.1');</script>
+    <dd class="spec passed"><span class="passed_spec_name">should only create one instance</span></dd>
+    <script type="text/javascript">moveProgressBar('14.2');</script>
+    <dd class="spec passed"><span class="passed_spec_name">should not be able to create instances via new</span></dd>
+    <script type="text/javascript">moveProgressBar('21.4');</script>
+    <dd class="spec passed"><span class="passed_spec_name">should not be able to destroy the instance</span></dd>
+  </dl>
+</div>
+<div class="context">
+  <dl>
+  <dt id="context_2">ActiveRecord::Singleton class (with an empty table)</dt>
+    <script type="text/javascript">moveProgressBar('28.5');</script>
+    <dd class="spec passed"><span class="passed_spec_name">should insert a single row when getting the instance</span></dd>
+  </dl>
+</div>
+<div class="context">
+  <dl>
+  <dt id="context_3">An ActiveRecord::Singleton class (with a row in its table)</dt>
+    <script type="text/javascript">moveProgressBar('35.7');</script>
+    <dd class="spec passed"><span class="passed_spec_name">should find the single row when getting the instance</span></dd>
+    <script type="text/javascript">moveProgressBar('42.8');</script>
+    <dd class="spec passed"><span class="passed_spec_name">should only have one row in table after multiple saves</span></dd>
+    <script type="text/javascript">moveProgressBar('50.0');</script>
+    <dd class="spec passed"><span class="passed_spec_name">should get the instance via find</span></dd>
+    <script type="text/javascript">moveProgressBar('57.1');</script>
+    <dd class="spec passed"><span class="passed_spec_name">should get the instance in an array via find(:all)</span></dd>
+    <script type="text/javascript">moveProgressBar('64.2');</script>
+    <dd class="spec passed"><span class="passed_spec_name">should not find the instance when conditions don't match</span></dd>
+    <script type="text/javascript">moveProgressBar('71.4');</script>
+    <dd class="spec passed"><span class="passed_spec_name">should return empty array with find(:all) when conditions don't match</span></dd>
+  </dl>
+</div>
+<div class="context">
+  <dl>
+  <dt id="context_4">An ActiveRecord::Singleton class (concurrent usage)</dt>
+    <script type="text/javascript">moveProgressBar('78.5');</script>
+    <dd class="spec passed"><span class="passed_spec_name">should instantiate the same object with multiple threads</span></dd>
+    <script type="text/javascript">moveProgressBar('85.7');</script>
+    <dd class="spec passed"><span class="passed_spec_name">should insert only one row with multiple threads</span></dd>
+    <script type="text/javascript">moveProgressBar('92.8');</script>
+    <dd class="spec passed"><span class="passed_spec_name">should insert only one row with multiple threads (faking multiple processes)</span></dd>
+    <script type="text/javascript">moveProgressBar('100.0');</script>
+    <dd class="spec passed"><span class="passed_spec_name">should insert only one row with multiple processes (real)</span></dd>
+  </dl>
+</div>
+<script type="text/javascript">document.getElementById('duration').innerHTML = "Finished in <strong>3.641541 seconds</strong>";</script>
+<script type="text/javascript">document.getElementById('totals').innerHTML = "14 specifications, 0 failures";</script>
+</div>
+</body>
+</html>

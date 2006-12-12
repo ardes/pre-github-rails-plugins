@@ -7,7 +7,7 @@ module ActiveRecord#:nodoc:
   # A Singleton still has a primary key id column, for the following reasons:
   # * the ActiveRecord finders and updaters will work untouched, and
   # * so you can reference the singleton record from other classes (or if the singleton record
-  #  might have a has_many relationship) in the usual way.
+  # might have a has_many relationship) in the usual way.
   #
   # The finders work as expected, but always return the same object (if it is found).
   # 
@@ -22,16 +22,10 @@ module ActiveRecord#:nodoc:
       require 'singleton'
       base.class_eval do
         include ::Singleton
+        extend ClassMethods
         alias_method_chain :initialize, :singleton
         protected :destroy
-        
-        class<<self
-          def instantiate(record)
-            instance.instance_variable_set("@attributes", record) unless instance_variable_get("@__instance__")
-            instance
-          end
-        end
-      end
+       end
     end
     
     # initializing the instance finds the first (only) record, if the record does not exist
@@ -40,7 +34,7 @@ module ActiveRecord#:nodoc:
     def initialize_with_singleton(*args)
       initialize_without_singleton(*args)
       transaction do
-        if attributes = read_singleton_attributes
+        if attributes = self.class.read_singleton_attributes
           instance_variable_set("@attributes", attributes)
           instance_variable_set("@new_record", false)
         else
@@ -49,8 +43,15 @@ module ActiveRecord#:nodoc:
       end
     end
     
-    def read_singleton_attributes
-      connection.select_one("SELECT * FROM #{self.class.table_name} LIMIT 1 FOR UPDATE")
+    module ClassMethods
+      def read_singleton_attributes
+        connection.select_one("SELECT * FROM #{table_name} LIMIT 1 FOR UPDATE")
+      end
+      
+      def instantiate(record)
+        instance.instance_variable_set("@attributes", record) unless instance_variable_get("@__instance__")
+        instance
+      end
     end
   end
 end
