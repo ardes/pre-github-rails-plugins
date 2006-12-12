@@ -21,7 +21,7 @@ Spec::Rake::SpecTask.new(:rcov) do |t|
   t.spec_files  = FileList['spec/**/*_spec.rb']
   t.rcov        = true
   t.rcov_dir    = 'doc/coverage'
-  t.rcov_opts   = ['--rails', '--exclude', 'spec\/,\/app\/']
+  t.rcov_opts   = ['--exclude', 'config\/,spec\/,\/app\/']
 end
 
 desc "Generate RDoc specdoc for #{plugin_name}"
