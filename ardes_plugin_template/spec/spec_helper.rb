@@ -13,6 +13,7 @@ ActiveRecord::Base.establish_connection(config['db'])
 module Spec
   module Rails
     class EvalContext < Test::Unit::TestCase
+      cattr_accessor :fixture_path, :use_transactional_fixtures, :use_instantiated_fixtures
       self.use_transactional_fixtures = true
       self.use_instantiated_fixtures  = false
       self.fixture_path = File.join(File.dirname(__FILE__), 'fixtures')
