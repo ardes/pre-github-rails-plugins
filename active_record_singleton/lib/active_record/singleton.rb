@@ -6,8 +6,7 @@ module ActiveRecord#:nodoc:
   #
   # A Singleton still has a primary key id column, for the following reasons:
   # * the ActiveRecord finders and updaters will work untouched, and
-  # * so you can reference the singleton record from other classes (or if the singleton record
-  # might have a has_many relationship) in the usual way.
+  # * so you can reference the singleton record from other classes (or if the singleton record might have a has_many relationship) in the usual way.
   #
   # The finders work as expected, but always return the same object (if it is found).
   # 
