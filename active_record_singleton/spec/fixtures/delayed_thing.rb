@@ -1,7 +1,7 @@
 require File.join(File.dirname(__FILE__), 'thing')
 
 # add a delay after the singleton attributes are read.  This will expose any
-# concurrency issues as concurrrent processes will all perform the read before an
+# concurrency issues as concurrrent processes will all (most) perform the read before an
 # update or insert is performed
 class DelayedThing < Thing
   class<<self

@@ -9,8 +9,8 @@ module ActiveRecord#:nodoc:
     #     include ActiveRecord::Singleton::Properties
     #   end
     # 
-    #   PropertyStore.name = "fred" # => updates name property in the row in the table
-    #   PropertyStore.instance      # => an instance which contains the row
+    #   PropertyStore.winner = "fred" # => updates winner property in the row in the table
+    #   PropertyStore.winner          # => selects winner attribute from the row in the table
     #
     # Use Case: <em>meta-data for another ActiveRecord</em>
     #
@@ -44,16 +44,19 @@ module ActiveRecord#:nodoc:
         end
       end
       
+      # write the named property with a single column update
       def write_property(name, value)
-        update_attributes self.class.read_singleton_attributes.merge(name.to_s => value)
+        column = column_for_attribute(name)
+        connection.update "UPDATE #{self.class.table_name} SET #{column.name}=#{quote_value(value, column)}", "#{self.class.name} Write Property"
+        send "#{name}=", value
       end
       
-      
+      # read the named property into attributes with a single column update and return the attribute
       def read_property(name)
-        reload
+        instance_variable_get("@attributes")[name] = connection.select_value "SELECT #{column_for_attribute(name).name} FROM #{self.class.table_name} LIMIT 1", "#{self.class.name} Read Property"
         send name
       end
-      
+
       module ClassMethods
         def self.extended(base)
           base.class_eval do
@@ -74,13 +77,23 @@ module ActiveRecord#:nodoc:
         
         def method_missing_with_singleton_properties(method, *args)
           if content_column_names.include?(property = method.to_s.sub(/(=|\?)$/,''))
-            case $1
-            when "?" then return !!instance.read_property(property, *args)
-            when "=" then return instance.write_property(property, *args)
-            else          return instance.read_property(property, *args)
+            define_property_accessors
+            send(method, *args)
+          else
+            method_missing_without_singleton_properties(method, *args)
+          end
+        end
+        
+        def define_property_accessors
+          meta = class<<self;self;end
+          content_column_names.each do |property|
+            raise "Conflicting property name '#{property}'" if meta.instance_methods.include? property
+            meta.instance_eval do
+              define_method(property)       { instance.read_property(property) }
+              define_method("#{property}?") { !!instance.read_property(property) }
+              define_method("#{property}=") {|v| instance.write_property(property, v) }
             end
           end
-          method_missing_without_singleton_properties(method, *args)
         end
       end
     end

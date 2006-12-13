@@ -13,31 +13,32 @@ context "An ActiveRecord::Singleton::Properties class" do
     Props.instance_variable_get("@content_column_names").should == ["foo_name", "rating"]
   end
   
-  specify "should respond to column accessor methods" do
-    [:foo_name, :rating].each do |column|
-      Props.should_respond_to column
-      Props.should_respond_to "#{column}="
-      Props.should_respond_to "#{column}?"
+  specify "should respond to property accessor methods" do
+    [:foo_name, :rating].each do |property|
+      Props.should_respond_to property
+      Props.should_respond_to "#{property}="
+      Props.should_respond_to "#{property}?"
     end
   end
   
-  specify "should pass column getter to the instance" do
+  specify "should pass property getter to the instance" do
     Props.instance.should_receive(:read_property).with("foo_name").and_return(nil)
     Props.foo_name.should == nil
   end
   
-  specify "should pass column boolean (?) to the instance" do
+  specify "should pass property question (?) to the instance" do
     Props.instance.should_receive(:read_property).with("foo_name").and_return(nil)
     Props.foo_name?.should == false
   end
 
-  specify "should pass column setter to the instance" do
+  specify "should pass property setter to the instance" do
     Props.instance.should_receive(:write_property).with("foo_name", "fred").and_return("fred")
     Props.foo_name = "fred"
   end
 
-  specify "should raise MethindMissing on a non-column accessor" do
+  specify "should raise MethindMissing on a non-property accessor" do
     lambda{Proc.foo_bar}.should_raise NoMethodError
+    lambda{Proc.id = 9}.should_raise NoMethodError
   end
   
   specify "should read property from the row and reload instance on property read" do

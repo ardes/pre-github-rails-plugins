@@ -80,7 +80,7 @@ context "An ActiveRecord::Singleton class (with a row in its table)" do
 end
 
 # These tests use a modified Singleton class with a delay between the select
-# and insert for creating a new singleton row, see the fixtures/delayed_thing.rb
+# and insert for creating a new singleton row, see fixtures/delayed_thing.rb
 context "An ActiveRecord::Singleton class (concurrent usage)" do
   include ActiveRecordSingletonSpecHelper
   

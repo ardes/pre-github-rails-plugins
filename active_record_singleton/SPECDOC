@@ -1,10 +1,10 @@
 # An ActiveRecord::Singleton::Properties class
 # * should provide content_column_names (and cache it)
-# * should respond to column accessor methods
-# * should pass column getter to the instance
-# * should pass column boolean (?) to the instance
-# * should pass column setter to the instance
-# * should raise MethindMissing on a non-column accessor
+# * should respond to property accessor methods
+# * should pass property getter to the instance
+# * should pass property question (?) to the instance
+# * should pass property setter to the instance
+# * should raise MethindMissing on a non-property accessor
 # * should read property from the row and reload instance on property read
 # * should write property to the row and reload instance on property write
 # An ActiveRecord::Singleton class (in general)
