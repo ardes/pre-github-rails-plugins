@@ -36,9 +36,9 @@ context "An ActiveRecord::Singleton::Properties class" do
     Props.foo_name = "fred"
   end
 
-  specify "should raise MethindMissing on a non-property accessor" do
-    lambda{Proc.foo_bar}.should_raise NoMethodError
-    lambda{Proc.id = 9}.should_raise NoMethodError
+  specify "should raise NoMethodError on a non-property accessor" do
+    lambda{Props.foo_bar}.should_raise NoMethodError
+    lambda{Props.id = 9}.should_raise NoMethodError
   end
   
   specify "should read property from the row and reload instance on property read" do

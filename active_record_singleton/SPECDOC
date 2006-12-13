@@ -4,7 +4,7 @@
 # * should pass property getter to the instance
 # * should pass property question (?) to the instance
 # * should pass property setter to the instance
-# * should raise MethindMissing on a non-property accessor
+# * should raise NoMethodError on a non-property accessor
 # * should read property from the row and reload instance on property read
 # * should write property to the row and reload instance on property write
 # An ActiveRecord::Singleton class (in general)

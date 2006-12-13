@@ -51,7 +51,7 @@ module ActiveRecord#:nodoc:
         send "#{name}=", value
       end
       
-      # read the named property into attributes with a single column update and return the attribute
+      # read the named property into attributes with a single column select and return the attribute
       def read_property(name)
         instance_variable_get("@attributes")[name] = connection.select_value "SELECT #{column_for_attribute(name).name} FROM #{self.class.table_name} LIMIT 1", "#{self.class.name} Read Property"
         send name
