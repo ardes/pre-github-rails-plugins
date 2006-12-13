@@ -41,14 +41,14 @@ context "An ActiveRecord::Singleton::Properties class" do
     lambda{Props.id = 9}.should_raise NoMethodError
   end
   
-  specify "should read property from the row and reload instance on property read" do
+  specify "should read property from the row on property read" do
     Props.instance.update_attributes :foo_name => "fred"
     Props.instance.foo_name = "wilma" # <= without save
     Props.foo_name.should == "fred"
     Props.instance.foo_name.should == "fred"
   end
   
-  specify "should write property to the row and reload instance on property write" do
+  specify "should write property to the row and on property write" do
     Props.foo_name = "wilma"
     Props.connection.select_value("SELECT foo_name FROM #{Props.table_name}").should == "wilma"
   end
