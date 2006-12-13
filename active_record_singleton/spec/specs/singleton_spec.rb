@@ -1,18 +1,10 @@
-require File.join(File.dirname(__FILE__), '../singleton_reset_instance')
 require File.join(File.dirname(__FILE__), '../spec_helper')
 require File.join(File.dirname(__FILE__), '../fixtures/thing')
 require File.join(File.dirname(__FILE__), '../fixtures/delayed_thing')
 
 ActiveRecord::Migration.suppress_messages { require File.join(File.dirname(__FILE__), '../fixtures/thing_schema') }
 
-module ActiveRecordSingletonSpecHelper
-  def reset_singleton(klass)
-    klass.reset_instance
-    klass.delete_all
-  end
-end
-
-context "ActiveRecord::Singleton class (in general)" do
+context "An ActiveRecord::Singleton class (in general)" do
   include ActiveRecordSingletonSpecHelper
 
   setup { reset_singleton Thing }
@@ -30,7 +22,7 @@ context "ActiveRecord::Singleton class (in general)" do
   end
 end
 
-context "ActiveRecord::Singleton class (with an empty table)" do
+context "An ActiveRecord::Singleton class (with an empty table)" do
   include ActiveRecordSingletonSpecHelper
   
   setup { reset_singleton Thing }
@@ -47,7 +39,7 @@ context "An ActiveRecord::Singleton class (with a row in its table)" do
 
   setup do
     reset_singleton Thing
-    Thing.connection.execute "INSERT into things SET name = 'fred'"
+    Thing.connection.execute "INSERT into #{Thing.table_name} SET name = 'fred'"
   end
   
   specify "should find the single row when getting the instance" do
@@ -78,6 +70,12 @@ context "An ActiveRecord::Singleton class (with a row in its table)" do
 
   specify "should return empty array with find(:all) when conditions don't match" do
     Thing.find(:all, :conditions => {:name => 'wilma'}).should == []
+  end
+  
+  specify "should update the attributes of the instance when finding" do
+    Thing.instance.name = "wilma" # not saved
+    Thing.find(:first).name.should == "fred"
+    Thing.instance.name.should == "fred"
   end
 end
 

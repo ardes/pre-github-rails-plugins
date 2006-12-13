@@ -8,7 +8,7 @@ module ActiveRecord#:nodoc:
   # * the ActiveRecord finders and updaters will work untouched, and
   # * so you can reference the singleton record from other classes (or if the singleton has a has_many relationship) in the usual way.
   #
-  # The finders work as expected, but always return the same object (if it is found).
+  # The finders work as expected, but always return the same object (if one is found by the query).
   # 
   # You cannot call destroy on a singleton object
   #
@@ -43,12 +43,14 @@ module ActiveRecord#:nodoc:
     end
     
     module ClassMethods
+      # returns a hash of attributes from the row, or nil if there is no row
       def read_singleton_attributes
         connection.select_one("SELECT * FROM #{table_name} LIMIT 1 FOR UPDATE")
       end
       
+      # instantiating the record is now simply a matter of copying the record to the instance's attributes (no STI)
       def instantiate(record)
-        instance.instance_variable_set("@attributes", record) unless instance_variable_get("@__instance__")
+        instance.instance_variable_set("@attributes", record)
         instance
       end
     end
