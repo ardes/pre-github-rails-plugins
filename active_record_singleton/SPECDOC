@@ -5,8 +5,8 @@
 # * should pass property question (?) to the instance
 # * should pass property setter to the instance
 # * should raise NoMethodError on a non-property accessor
-# * should read property from the row and reload instance on property read
-# * should write property to the row and reload instance on property write
+# * should read property from the row on property read
+# * should write property to the row and on property write
 # An ActiveRecord::Singleton class (in general)
 # * should only create one instance
 # * should not be able to create instances via new
@@ -24,5 +24,4 @@
 # An ActiveRecord::Singleton class (concurrent usage)
 # * should instantiate the same object with multiple threads
 # * should insert only one row with multiple threads
-# * should insert only one row with multiple threads (faking multiple processes)
-# * should insert only one row with multiple processes (real)
+# * should insert only one row with multiple processes
