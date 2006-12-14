@@ -32,6 +32,15 @@ module ActiveRecord#:nodoc:
     #       find Properties.focus_id
     #     end
     #   end
+    #
+    # Note: if you want to read some properties with a pessimistic lock then lock the instance
+    # and use the instance attributes.  For example:
+    # 
+    #   transaction do
+    #     PropertyStore.instance.lock!
+    #     User.find PropertyStore.instance.winner
+    #     User.so_something_to_winner
+    #   end
     # 
     module Properties
       def self.included(base)
@@ -52,8 +61,8 @@ module ActiveRecord#:nodoc:
       end
       
       # read the named property into attributes with a single column select and return the attribute
-      def read_property(name)
-        instance_variable_get("@attributes")[name] = connection.select_value "SELECT #{column_for_attribute(name).name} FROM #{self.class.table_name} LIMIT 1", "#{self.class.name} Read Property"
+      def read_property(name, options = {})
+        instance_variable_get("@attributes")[name] = connection.select_value "SELECT #{column_for_attribute(name).name} FROM #{self.class.table_name} LIMIT 1 #{options[:lock] ? ' FOR UPDATE' : ''}", "#{self.class.name} Read Property"
         send name
       end
 
@@ -87,13 +96,14 @@ module ActiveRecord#:nodoc:
       protected
         def define_property_accessors
           meta = class<<self;self;end
+          inner = 0
           content_column_names.each do |property|
             raise "Conflicting property name '#{property}'" if meta.instance_methods.include? property
-            meta.instance_eval do
-              define_method(property)       { instance.read_property(property) }
-              define_method("#{property}?") { !!instance.read_property(property) }
-              define_method("#{property}=") {|v| instance.write_property(property, v) }
-            end
+            meta.class_eval <<-end_eval
+              def #{property}(options = {});  instance.read_property('#{property}', options); end
+              def #{property}?(options = {}); !!instance.read_property('#{property}', options); end
+              def #{property}=(value);        instance.write_property('#{property}',value); end
+            end_eval
           end
         end
       end

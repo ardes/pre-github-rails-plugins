@@ -14,11 +14,11 @@ context "An ActiveRecord::Singleton class (in general)" do
   end
   
   specify "should not be able to create instances via new" do
-    lambda {Thing.instance.new}.should_raise NoMethodError
+    lambda { Thing.instance.new }.should_raise NoMethodError
   end
 
   specify "should not be able to destroy the instance" do
-    lambda {Thing.instance.destroy}.should_raise NoMethodError
+    lambda { Thing.instance.destroy }.should_raise NoMethodError
   end
 end
 
@@ -105,16 +105,5 @@ context "An ActiveRecord::Singleton class (concurrent usage)" do
     ActiveRecord::Base.establish_connection(config)
     pids.each {|pid| Process.waitpid pid}
     DelayedThing.count.should == 1
-  end
- 
-  def fork_with_new_connection(config, klass = ActiveRecord::Base)
-    fork do
-      begin
-        klass.establish_connection(config)
-        yield
-      ensure
-        klass.remove_connection
-      end
-    end
   end
 end

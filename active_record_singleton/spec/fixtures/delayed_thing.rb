@@ -5,8 +5,8 @@ require File.join(File.dirname(__FILE__), 'thing')
 # update or insert is performed
 class DelayedThing < Thing
   class<<self
-    def read_singleton_attributes_with_delay(lock = false)
-      read_singleton_attributes_without_delay(lock)
+    def read_singleton_attributes_with_delay(options = {})
+      read_singleton_attributes_without_delay(options)
     ensure
       sleep 0.2
     end
