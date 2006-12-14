@@ -33,7 +33,7 @@ module ActiveRecord#:nodoc:
     def initialize_with_singleton(*args)
       initialize_without_singleton(*args)
       transaction do
-        if attributes = self.class.read_singleton_attributes
+        if attributes = self.class.read_singleton_attributes(true)
           instance_variable_set("@attributes", attributes)
           instance_variable_set("@new_record", false)
         else
@@ -44,8 +44,8 @@ module ActiveRecord#:nodoc:
     
     module ClassMethods
       # returns a hash of attributes from the row, or nil if there is no row
-      def read_singleton_attributes
-        connection.select_one("SELECT * FROM #{table_name} LIMIT 1 FOR UPDATE")
+      def read_singleton_attributes(lock = false)
+        connection.select_one("SELECT * FROM #{table_name} LIMIT 1 #{lock ? ' FOR UPDATE' : ''}")
       end
       
       # instantiating the record is now simply a matter of copying the record to the instance's attributes (no STI)
