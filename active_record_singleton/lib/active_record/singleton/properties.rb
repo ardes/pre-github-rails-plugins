@@ -9,8 +9,8 @@ module ActiveRecord#:nodoc:
     #     include ActiveRecord::Singleton::Properties
     #   end
     # 
-    #   PropertyStore.winner = "fred" # => updates winner property in the row in the table
-    #   PropertyStore.winner          # => selects winner attribute from the row in the table
+    #   PropertyStore.winner = "fred" # => updates winner column in the row in the table
+    #   PropertyStore.winner          # => selects winner column from the row in the table
     #
     # Use Case: <em>meta-data for another ActiveRecord</em>
     #
@@ -33,13 +33,14 @@ module ActiveRecord#:nodoc:
     #     end
     #   end
     #
-    # Note: if you want to read some properties with a pessimistic lock then lock the instance
-    # and use the instance attributes.  For example:
-    # 
-    #   transaction do
-    #     PropertyStore.instance.lock!
-    #     User.find PropertyStore.instance.winner
-    #     User.so_something_to_winner
+    # Note: if you want to read some properties with a pessimistic lock then you 
+    # pass <tt>:lock => true</tt> when reading the property. For example:
+    #
+    #   # do something to the current cursor - make sure the cursor can't change
+    #   # in this transaction by using :lock => true
+    #   Focusable.transaction do
+    #     cursor = Focusable::Properties.cursor :lock => true
+    #     Focusable.find(cursor).update_attributes :some_thing => true
     #   end
     # 
     module Properties
