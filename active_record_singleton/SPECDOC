@@ -1,5 +1,5 @@
 # An ActiveRecord::Singleton::Properties class
-# * should provide content_column_names (and cache it)
+# * should provide (and cache) property_columns and property_column_names
 # * should respond to property accessor methods
 # * should pass property getter to the instance
 # * should pass property question (?) to the instance

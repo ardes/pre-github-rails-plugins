@@ -77,16 +77,20 @@ module ActiveRecord#:nodoc:
           end
         end
         
-        def content_column_names
-          instance_variable_get("@content_column_names") or instance_variable_set("@content_column_names", content_columns.map {|column| column.name })
+        def property_columns
+          instance_variable_get("@property_columns") or instance_variable_set("@property_columns", columns.reject { |c| c.primary || c.name == inheritance_column })
+        end
+        
+        def property_column_names
+          instance_variable_get("@property_column_names") or instance_variable_set("@property_column_names", property_columns.map {|column| column.name })
         end
           
         def respond_to_with_singleton_properties?(method)
-          respond_to_without_singleton_properties?(method) || content_column_names.include?(method.to_s.sub(/(=|\?)$/,''))
+          respond_to_without_singleton_properties?(method) || property_column_names.include?(method.to_s.sub(/(=|\?)$/,''))
         end
         
         def method_missing_with_singleton_properties(method, *args)
-          if content_column_names.include?(property = method.to_s.sub(/(=|\?)$/,''))
+          if property_column_names.include?(property = method.to_s.sub(/(=|\?)$/,''))
             define_property_accessors
             send(method, *args)
           else
@@ -98,7 +102,7 @@ module ActiveRecord#:nodoc:
         def define_property_accessors
           meta = class<<self;self;end
           inner = 0
-          content_column_names.each do |property|
+          property_column_names.each do |property|
             raise "Conflicting property name '#{property}'" if meta.instance_methods.include? property
             meta.class_eval <<-end_eval
               def #{property}(options = {});  instance.read_property('#{property}', options); end

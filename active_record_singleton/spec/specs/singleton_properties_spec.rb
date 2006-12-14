@@ -7,11 +7,12 @@ context "An ActiveRecord::Singleton::Properties class" do
   
   setup { reset_singleton Props }
   
-  specify "should provide content_column_names (and cache it)" do
-    Props.content_column_names.should == ["foo_name", "rating", "ratings"]
-    Props.instance_variable_get("@content_column_names").should == ["foo_name", "rating", "ratings"]
+  specify "should provide (and cache) property_columns and property_column_names" do
+    Props.property_column_names.should == ["foo_name", "rating", "ratings"]
+    Props.instance_variable_get("@property_columns").should_not_be(nil)
+    Props.instance_variable_get("@property_column_names").should_not_be(nil)
   end
-  
+
   specify "should respond to property accessor methods" do
     [:foo_name, :rating, :ratings].each do |property|
       Props.should_respond_to property
