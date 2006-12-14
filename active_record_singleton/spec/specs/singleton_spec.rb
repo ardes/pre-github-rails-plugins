@@ -88,28 +88,20 @@ context "An ActiveRecord::Singleton class (concurrent usage)" do
     
   specify "should instantiate the same object with multiple threads" do
     instances = []
-    threads = (1..3).to_a.collect { Thread.new { instances << DelayedThing.instance } }
+    threads = (1..4).to_a.collect { Thread.new { instances << DelayedThing.instance } }
     threads.each {|thread| thread.join}
     instances.each {|i| i.should_equal DelayedThing.instance }
   end
   
   specify "should insert only one row with multiple threads" do
-    threads = (1..3).to_a.collect { Thread.new { DelayedThing.instance } }
+    threads = (1..4).to_a.collect { Thread.new { DelayedThing.instance } }
     threads.each {|thread| thread.join }
     DelayedThing.count.should == 1   
   end
   
-  specify "should insert only one row with multiple threads (faking multiple processes)" do
-    ActiveRecord::Base.allow_concurrency = true
-    threads = (1..3).to_a.collect { Thread.new { DelayedThing.reset_instance.instance } }
-    threads.each {|thread| thread.join }
-    DelayedThing.count.should == 1   
-    ActiveRecord::Base.allow_concurrency = false
-  end
-  
-  specify "should insert only one row with multiple processes (real)" do
+  specify "should insert only one row with multiple processes" do
     config = ActiveRecord::Base.remove_connection
-    pids = (1..3).to_a.collect { fork_with_new_connection(config) { DelayedThing.instance } }
+    pids = (1..4).to_a.collect { fork_with_new_connection(config) { DelayedThing.instance } }
     ActiveRecord::Base.establish_connection(config)
     pids.each {|pid| Process.waitpid pid}
     DelayedThing.count.should == 1
