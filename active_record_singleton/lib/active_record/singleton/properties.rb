@@ -84,6 +84,7 @@ module ActiveRecord#:nodoc:
           end
         end
         
+      protected
         def define_property_accessors
           meta = class<<self;self;end
           content_column_names.each do |property|
