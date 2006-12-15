@@ -2,7 +2,7 @@ module ActiveRecord#:nodoc:
   # Mixin to make an ActiveRecord class behave in a singleton fashion, having
   # only one row in its associated table.
   #
-  # ActiveRecord::Sinigleton does not, by its nature, support STI (single table inheritance).
+  # ActiveRecord::Singleton does not, by its nature, support STI (single table inheritance).
   #
   # A Singleton still has a primary key id column, for the following reasons:
   # * the ActiveRecord finders and updaters will work untouched, and

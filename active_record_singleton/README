@@ -2,7 +2,7 @@
 Mixin to make an ActiveRecord class behave in a singleton fashion, having
 only one row in its associated table.
  
-See the ActiveRecord::Singleton for usage and examples.
+See the ActiveRecord::Singleton RDoc for usage and examples.
 
 === Specs and Coverage
 * {SPECDOC}[link:files/SPECDOC.html] lists the specifications
