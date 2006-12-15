@@ -66,8 +66,7 @@ context "An ActiveRecord::Singleton::Properties class" do
   # For testing concurrency issues
   # this operation should be atomic, and also block any reading of the ratings until it
   # is done.  This will ensure that 5 successive calls always results in ratings being a 
-  # string equal to '12345', no matter in what temporal order the operations obatin the lock, and
-  # then update the database.
+  # string equal to '12345', no matter in what temporal order the operations occur.
   def increment_rating_and_append_to_ratings
     Props.transaction do
       r = Props.rating(:lock => true)

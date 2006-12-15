@@ -33,7 +33,8 @@ module ActiveRecord#:nodoc:
     #     end
     #   end
     #
-    # Note: if you want to read some properties with a pessimistic lock then you 
+    # === Pessimistic Locking
+    # If you want to read some properties with a pessimistic lock then you 
     # pass <tt>:lock => true</tt> when reading the property. For example:
     #
     #   # do something to the current cursor - make sure the cursor can't change
@@ -42,7 +43,9 @@ module ActiveRecord#:nodoc:
     #     cursor = Focusable::Properties.cursor :lock => true
     #     Focusable.find(cursor).update_attributes :some_thing => true
     #   end
-    # 
+    #
+    # === Accessing cached properties
+    #  
     module Properties
       def self.included(base)
         base.class_eval do

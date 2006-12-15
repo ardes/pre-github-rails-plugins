@@ -1,12 +1,8 @@
 = active_record_singleton
 Mixin to make an ActiveRecord class behave in a singleton fashion, having
 only one row in its associated table.
-
-Usage:
-* include ActiveRecord::Singleton to make your class a singleton
-* include ActiveRecord::Singleton::Properties to make your class a singleton property container
  
-See the Rdoc for usage and examples.
+See the ActiveRecord::Singleton for usage and examples.
 
 === Specs and Coverage
 * {SPECDOC}[link:files/SPECDOC.html] lists the specifications
