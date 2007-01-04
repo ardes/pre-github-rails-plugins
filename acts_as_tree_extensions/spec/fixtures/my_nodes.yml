@@ -1,0 +1,24 @@
+a:
+  id: 1
+  parent_id: NULL
+  name: a
+
+ab:
+  id: 2
+  parent_id: 1
+  name: ab
+
+abc:
+  id: 3
+  parent_id: 2
+  name: abc
+
+ad:
+  id: 4
+  parent_id: 1
+  name: ad
+
+e:
+  id: 5
+  parent_id: NULL
+  name: e

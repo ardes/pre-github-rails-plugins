@@ -1,0 +1,28 @@
+# acts_as_tree_extensions predicate methods (? methods)
+# * should be root? when node has no parent
+# * should be branch? when node has more than one child
+# * should be child? when node has a parent
+# * should be leaf? when node has no children
+# * should be ancestor_of? when argument is ancestor of self
+# * should allow self to be ancestor_of? self when called with :include_self => true
+# * should be descendent_of? when argument is descendent of self
+# * should allow self to be descendent_of? self when called with :include_self => true
+# acts_as_tree_extensions ancestor methods
+# * should return ancestors of self (in leaf to root order)
+# * should return empty array if there are no ancestors
+# * should include self in ancestors when called with :include_self => true
+# * should stop at specified node when getting ancestors with :to => node
+# * should stop at child of specified node when getting ancestors with :to_child_of => node
+# * should return nil when getting ancestors with :to(_child_of) => node, where node is not an ancestor of self
+# acts_as_tree_extensions descendent methods
+# * should return descenents of self (in recursive child order)
+# * should include self in descendents when called with :include_self => true
+# * should return empty array if there are no descendents
+# * should return leaves of self (descendent nodes with no children) with leaves
+# acts_as_tree_extension class
+# * should return leaves
+# * should return roots_and_leaves
+# * should return roots_and_leaves associated with each other
+# * should return common_ancestor_of two nodes
+# * should return nil when getting common_ancestor_of nodes without a common ancestor
+# * should include nodes when getting common_ancestor_of with :include_self => true
