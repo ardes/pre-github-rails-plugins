@@ -197,6 +197,12 @@ module ActiveRecord #:nodoc:
             nil
           end
 
+          # Returns the child (or nil if there is none) of the passed node that is an ancestor of
+          # this node.  If passed nil, the root of self is returned
+          def child_of_ancestor(node)
+            self.ancestor_enumerator(:include_self => true).select{|n| n.parent == node}.first
+          end
+          
         protected
           # return the ancestors up to the child of specified node
           def ancestors_to_child_of(node, options = {})

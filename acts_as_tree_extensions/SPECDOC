@@ -4,6 +4,9 @@
 # * should return nil when getting common_ancestor_of nodes without a common ancestor
 # * should include nodes when getting common_ancestor_of with :include_self => true
 # * should return leaves of self (descendent nodes with no children) with leaves
+# * should return child of specified node if node is an ancestor of self with child_of_ancestor(node)
+# * should return root node in branch with child_of_ancestor(nil)
+# * should return nil if node is not an ancestor of self with child_of_ancestor
 # acts_as_tree_extensions predicate methods (? methods)
 # * should be root? when node has no parent
 # * should be branch? when node has more than one child

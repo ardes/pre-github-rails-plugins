@@ -46,6 +46,19 @@ context "acts_as_tree_extensions (in general)" do
     @a.leaves.should == [@abc, @ad]
     @e.leaves.should == [@e]
   end
+  
+  specify "should return child of specified node if node is an ancestor of self with child_of_ancestor(node)" do
+    @abc.child_of_ancestor(@a).should == @ab
+    @abc.child_of_ancestor(@ab).should == @abc
+  end
+
+  specify "should return root node in branch with child_of_ancestor(nil)" do
+    @abc.child_of_ancestor(nil).should == @a
+  end
+  
+  specify "should return nil if node is not an ancestor of self with child_of_ancestor" do
+    @abc.child_of_ancestor(@e).should == nil
+  end
 end
 
 context "acts_as_tree_extensions predicate methods (? methods)" do
