@@ -19,6 +19,35 @@ module ActsAsTreeExtensionsSpecHelper
   end
 end
 
+context "acts_as_tree_extensions (in general)" do
+  include ActsAsTreeExtensionsSpecHelper
+  fixtures :my_nodes
+  
+  setup { load_tree }
+  
+  specify "should preload parent association in children" do
+    @a.children.first.parent.should_be @a
+  end
+  
+  specify "should return common_ancestor_of two nodes" do
+    @abc.common_ancestor_of(@ad).should == @a
+  end
+  
+  specify "should return nil when getting common_ancestor_of nodes without a common ancestor" do
+    @abc.common_ancestor_of(@e).should == nil
+    @ad.common_ancestor_of(@a).should == nil
+  end
+  
+  specify "should include nodes when getting common_ancestor_of with :include_self => true" do
+    @ad.common_ancestor_of(@a, :include_self => true).should == @a
+  end
+  
+  specify "should return leaves of self (descendent nodes with no children) with leaves" do
+    @a.leaves.should == [@abc, @ad]
+    @e.leaves.should == [@e]
+  end
+end
+
 context "acts_as_tree_extensions predicate methods (? methods)" do
   include ActsAsTreeExtensionsSpecHelper
   fixtures :my_nodes
@@ -130,14 +159,8 @@ context "acts_as_tree_extensions descendent methods" do
     @a.descendents(:include_self => true).should == [@a, @ab, @abc, @ad]
   end
   
-  
   specify "should return empty array if there are no descendents" do
     @e.descendents.should == []
-  end
-  
-  specify "should return leaves of self (descendent nodes with no children) with leaves" do
-    @a.leaves.should == [@abc, @ad]
-    @e.leaves.should == [@e]
   end
 end
 
@@ -158,19 +181,7 @@ context "acts_as_tree_extension class" do
   specify "should return roots_and_leaves associated with each other" do
     roots, leaves = MyNode.roots_and_leaves
     roots[0].children[1].should_be leaves[1]
+    leaves[1].parent.should_be roots[0]
     roots[1].should_be leaves[2]
-  end
-  
-  specify "should return common_ancestor_of two nodes" do
-    MyNode.common_ancestor_of(@abc, @ad).should == @a
-  end
-  
-  specify "should return nil when getting common_ancestor_of nodes without a common ancestor" do
-    MyNode.common_ancestor_of(@abc, @e).should == nil
-    MyNode.common_ancestor_of(@ad, @a).should == nil
-  end
-  
-  specify "should include nodes when getting common_ancestor_of with :include_self => true" do
-    MyNode.common_ancestor_of(@ad, @a, :include_self => true).should == @a
   end
 end

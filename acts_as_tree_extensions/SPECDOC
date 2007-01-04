@@ -1,3 +1,9 @@
+# acts_as_tree_extensions (in general)
+# * should preload parent association in children
+# * should return common_ancestor_of two nodes
+# * should return nil when getting common_ancestor_of nodes without a common ancestor
+# * should include nodes when getting common_ancestor_of with :include_self => true
+# * should return leaves of self (descendent nodes with no children) with leaves
 # acts_as_tree_extensions predicate methods (? methods)
 # * should be root? when node has no parent
 # * should be branch? when node has more than one child
@@ -18,11 +24,7 @@
 # * should return descenents of self (in recursive child order)
 # * should include self in descendents when called with :include_self => true
 # * should return empty array if there are no descendents
-# * should return leaves of self (descendent nodes with no children) with leaves
 # acts_as_tree_extension class
 # * should return leaves
 # * should return roots_and_leaves
 # * should return roots_and_leaves associated with each other
-# * should return common_ancestor_of two nodes
-# * should return nil when getting common_ancestor_of nodes without a common ancestor
-# * should include nodes when getting common_ancestor_of with :include_self => true
