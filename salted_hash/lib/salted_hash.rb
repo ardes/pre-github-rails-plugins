@@ -4,8 +4,10 @@ require 'digest/sha2'
 
 # Set of convenience methods for computing salted hash passwords.
 #
-# The return values for the hash, and salt are 8-bit binary strings.
-# If you wish, you can convert these to hexadecimal strings using binary_to_hex
+# The return values for the hash, and salt are hex pair strings (although the salt is converted to
+# binary for the computation of the hash).
+# If you wish, you can convert these to 8-bit binary strings using hex_to_binary
+#
 module SaltedHash
   SALT_LENGTH = 20
   
@@ -19,16 +21,16 @@ module SaltedHash
     raise ArgumentError, "Unsupported algorithm '#{algorithm}'" unless algorithms.include?(algorithm.to_s.downcase)
   end
   
-  # computes a hash given a digest algorithm name (see algorithms), salt string and password string
+  # computes a hash (hex pair format) given a digest algorithm name (see algorithms), salt string (hex pair format) and password string
   def self.compute(algorithm, salt, password)
     assert_supported_algorithm(algorithm)
     digest = "Digest::#{algorithm.upcase}".constantize
-    hex_to_binary(digest.hexdigest("#{salt}#{password}"))
+    digest.hexdigest("#{hex_to_binary(salt)}#{password}")
   end
   
-  # creates a random 8-bit binary string of SALT_LENGTH
-  def self.salt
-    (1..SALT_LENGTH).inject('') {|s,_| s << rand(256)}
+  # creates a random salt (a hex pair string) of given length (default SALT_LENGTH)
+  def self.salt(length = SALT_LENGTH)
+    (1..length).inject(''){|s,_| s << '%02x' % rand(256)}
   end
   
   # takes a string of hexadecimal pairs and converts it to a string of 8-bit bytes

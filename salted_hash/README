@@ -4,7 +4,7 @@ A small module containing convenience methods for creating salted hash passwords
 
 Usage:
   require 'salted_hash'
-  SaltedHash.compute('sha1', 'somesalt', 'thesecret')
+  SaltedHash.compute('sha1', '0f9a08ab', 'thesecret')
   
   
 === Specs and Coverage
