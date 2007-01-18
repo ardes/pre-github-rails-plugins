@@ -13,7 +13,7 @@ module SaltedHash
   
   # return array of the supported algorithms
   def self.algorithms
-    ['md5', 'sha1', 'sha256', 'sha384', 'sha512']
+    @algorithms ||= ['md5', 'sha1', 'sha256', 'sha384', 'sha512']
   end
   
   # raise an error if the argument is not a supported algorithm
