@@ -44,6 +44,11 @@ module ActiveRecord
           end_eval
         end
         
+        # @TODO: add this an an option to associations
+        #
+        # @TODO: make the preloading work later for has_many associations?
+        #
+        #
         # Use this to preload self as the belongs_to association when a has_one, or has_many association
         # is created.
         #
@@ -70,18 +75,16 @@ module ActiveRecord
             child_assoc = reflect_on_association(child_name)
             parent_assoc = child_assoc.klass.reflect_on_association(parent_name)
             
-            puts [child_name, child_assoc, parent_assoc, parent_name].inspect
-            
             if parent_assoc && [:belongs_to, :has_one].include?(parent_assoc.macro)
               parent_assoc_class = "::ActiveRecord::Associations::#{parent_assoc.macro.to_s.classify}Association"
               
-              puts parent_assoc_class
               class_eval <<-end_eval
                 def #{child_name}_with_preload(*args)
                   if assoc = #{child_name}_without_preload(*args)
                     children = assoc.is_a?(Array) ? assoc : [assoc]
+                    parent_assoc = children.first.class.reflect_on_association(:#{parent_name})
                     children.each do |child|
-                      parent = #{parent_assoc_class}.new(child, child.class.reflect_on_association(:#{parent_name}))
+                      parent = #{parent_assoc_class}.new(child, parent_assoc)
                       parent.target = self
                       child.instance_variable_set("@#{parent_name}", parent)
                     end
