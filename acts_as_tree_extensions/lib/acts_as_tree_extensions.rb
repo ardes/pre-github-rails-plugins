@@ -3,12 +3,6 @@ module ActiveRecord #:nodoc:
     module Tree #:nodoc:
       # adds extra functionality (all backward compatible) to acts_as_tree
       #
-      # Summary:
-      # * children association is preloaded with parent, to minimize database access when traversing the tree
-      # * various predicate methods for telling what type a node is?
-      # * enumerator objects for ancestors and descendents
-      # * methods to find leaves, and common nodes of different branches
-      #
       # Usage is the same as for <tt>acts_as_tree</tt>
       #
       # If you want to use acts_as_tree without the extensions for some of your classes, 
@@ -21,30 +15,21 @@ module ActiveRecord #:nodoc:
         end
           
         # Specifies that the ActiveRecord acts_as_tree, with some extra functionality
-        def acts_as_tree_with_extensions(options = {})
+        def acts_as_tree_with_extensions(*args)
           self.class_eval do
-            acts_as_tree_without_extensions(options)
+            acts_as_tree_without_extensions(*args)
             include InstanceMethods
             extend ClassMethods
           end
         end
-
-        # Enumerable object representing a node's ancestors.
-        #
-        # One use for this, over an array, is doing tree operations on large trees - you might
-        # want to visit only a subset of the tree.
+        
         class AncestorEnumerator
           include Enumerable
           
-          # Create a new AncestorEnumerator with a node
-          #
-          # Optionally takes the following argument:
-          # * <tt>:include_self</tt>: (boolean) include the node itself as an ancestor
           def initialize(node, options = {})
             @node = options[:include_self] ? node : node.parent
           end
           
-          # Visit each of the ancestors in leaf to root order
           def each
             node = @node
             while node
@@ -54,30 +39,13 @@ module ActiveRecord #:nodoc:
           end
         end
         
-        # Enumerable object representing a node's descendents
         class DescendentEnumerator
           include Enumerable
           
-          # Create a new DescendentEnumerator with a node
-          #
-          # Optionally takes the following argument:
-          # * <tt>:include_self</tt>: (boolean) include the node itself as a descendent
           def initialize(node, options = {})
             @nodes = options[:include_self] ? [node] : node.children
           end
           
-          # Visit each of the descendents recursively in order of each node's child.
-          # 
-          # For example, a descendent enumerator on node (a) in the following tree:
-          #   a
-          #   +-ab
-          #   | +-abc
-          #   | +-abd
-          #   +-ae
-          #     +-aef
-          #
-          # Would yield nodes in the following order:
-          #   ab, abc, abd, ae, aef
           def each
             visit = proc do |node|
               yield(node)
@@ -95,7 +63,7 @@ module ActiveRecord #:nodoc:
               alias_method_chain :children, :parent
             end
           end
-          
+
           # children association is preloaded with parent association target == self
           def children_with_parent(*args)
             children = children_without_parent(*args)
@@ -107,21 +75,16 @@ module ActiveRecord #:nodoc:
             children
           end
           
-          # return an AncestorEnumerator for self
           def ancestor_enumerator(options = {})
             AncestorEnumerator.new(self, options)
           end
           
-          # is an ancestor of the specified node
-          #
-          # Optionally takes the following argument:
-          # * <tt>:include_self</tt>: (boolean) include self in the ancestor check
-          def ancestor_of?(node, options = {})
-            node.ancestor_enumerator(options).include? self
+          def descendent_enumerator(options = {})
+            DescendentEnumerator.new(self, options)
           end
           
-          # Return the ancestors of the current node in an Array in the order
-          # defined by AncestorEnumerator
+          # Return the ancestors of the current node.  The ancestors are in leaf to
+          # root order.
           #
           # Optionally takes the following argument:
           # * <tt>:include_self</tt>: (boolean) include self in the returned array.
@@ -133,32 +96,37 @@ module ActiveRecord #:nodoc:
           # If the node specified by either of the above options is not present in the
           # ancestors of the current node, then return nil
           def ancestors(options = {})
-            return ancestors_to_child_of(options[:to_child_of], :include_self => options[:include_self]) if options[:to_child_of]
-            return ancestors_to(options[:to], :include_self => options[:include_self]) if options[:to]
-            ancestor_enumerator(:include_self => options[:include_self]).to_a
+            
+            options[:to_child_of] = options[:to].parent if options[:to]
+            nodes = []
+            if options[:to_child_of]
+              stop_at = options[:to_child_of]
+            elsif options[:to]
+              stop_at = options[:to].parent
+            else
+              stop_at = false
+            end
+            ancestor_enumerator(:include_self => options[:include_self]).each do |node|
+              return nodes if node == stop_at
+              nodes << node
+            end
+            stop_at == false ? nodes : nil
           end
           
-          # return an DescendentEnumeratorEnumerator for self
-          def descendent_enumerator(options = {})
-            DescendentEnumerator.new(self, options)
+          # is an ancestor of the specified node
+          #
+          # Optionally takes the following argument:
+          # * <tt>:include_self</tt>: (boolean) include self in the ancestor check
+          def ancestor_of?(node, options = {})
+            node.ancestor_enumerator(options).include? self
           end
-         
+          
           # is a descendent of the specified node
           #
           # Optionally takes the following argument:
           # * <tt>:include_self</tt>: (boolean) include self in the descendent check
           def descendent_of?(node, options = {})
             self.ancestor_enumerator(options).include? node
-          end
-          
-          # Return the descendents of the current node in an Array in the order
-          # defined by DescendentEnumerator
-          #
-          # Optionally takes the following argument:
-          # * <tt>:include_self</tt>: (boolean) include self in the returned array.
-          #
-          def descendents(options = {})
-            descendent_enumerator(options).to_a
           end
           
           # is a leaf node (has no children)
@@ -186,35 +154,14 @@ module ActiveRecord #:nodoc:
           def leaves
             descendent_enumerator(:include_self => true).select {|n| n.leaf? }
           end
-          
-          # Returns the ancestor in common with passed nodes, or nil if
-          # there is no common ancestor.
-          #
-          # Optionally takes the following argument:
-          # * <tt>:include_self</tt>: (boolean) include the self, and passed node, as ancestor candidates
-          def common_ancestor_of(node, options = {})
-            self.ancestor_enumerator(options).each {|i| node.ancestor_enumerator(options).each {|j| return i if i == j }}
-            nil
-          end
 
-          # Returns the child (or nil if there is none) of the passed node that is an ancestor of
-          # this node.  If passed nil, the root of self is returned
-          def child_of_ancestor(node)
-            self.ancestor_enumerator(:include_self => true).select{|n| n.parent == node}.first
-          end
-          
         protected
-          # return the ancestors up to the child of specified node
-          def ancestors_to_child_of(node, options = {})
-            ancestors = []
-            ancestor_enumerator(options).each {|n| return ancestors if n == node; ancestors << n}
-            nil
-          end
-          
-          # return the ancestors up to the specified node
-          def ancestors_to(node, options = {})
-            ancestors = []
-            ancestor_enumerator(options).each {|n| ancestors << n; return ancestors if n == node}
+          def ancestors_to_child_of(to_child_of, options)
+            nodes = []
+            ancestor_enumerator(options) do |node|
+              return nodes if to_child_of == node
+              nodes << node
+            end
             nil
           end
         end
@@ -232,6 +179,16 @@ module ActiveRecord #:nodoc:
           # return the tree's leaves
           def leaves
             roots_and_leaves.last
+          end
+          
+          # Returns the common ancestor of the passed nodes, or nil if
+          # there is no common ancestor.
+          #
+          # Optionally takes the following argument:
+          # * <tt>:include_self</tt>: (boolean) include the nodes as ancestor candidates
+          def common_ancestor_of(n1, n2, options = {})
+            n1.ancestor_enumerator(options).each {|i| n2.ancestor_enumerator(options).each {|j| return i if i == j }}
+            nil
           end
         end
       end
