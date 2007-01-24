@@ -9,7 +9,7 @@ module ActiveRecord#:nodoc:
       #
       # For example:
       #  class Signup < ActiveRecord::Base
-      #    has_one :user
+      #    belongs_to :user
       #    
       #    when_nil :user do |record|
       #      record.build_user
@@ -22,8 +22,10 @@ module ActiveRecord#:nodoc:
       #  s = Signup.new
       #  s.user # user is nil, so execute the block, and then call user again which returns
       #         # => #<User:0x347bb0 ...
-      # s.user # user is not nil, so just return
+      #  s.user # user is not nil, so just return
       #         # => #<User:0x347bb0 ...
+      #
+      # Implementation details
       def when_nil(association, &block)
         procs = (read_inheritable_attribute(:when_nil) or write_inheritable_attribute(:when_nil, {}))
         procs[association.to_sym] = block
@@ -38,6 +40,50 @@ module ActiveRecord#:nodoc:
           end
           alias_method_chain :#{association}, :when_nil
         end_eval
+      end
+      
+      # Usage
+      #  when_method :user, :is => :nil? do |result, object|
+      #    object.foo
+      #  end
+      def when_method(method, options, &when_true)
+        raise ArgumentError 'requires :is => Proc|Object' unless is = options[:is]
+
+        when_true_str = case when_true.arity
+          when -1 then 'when_true.call'
+          when 1  then 'when_true.call(result)'
+          when 2  then 'when_true.call(result, self)'
+          else raise ArgumentError '&when_true block should have 0,1 (result) or 2 (result, object) arguments'
+        end
+        when_true_str = "return #{when_true_str}" unless options[:return] == false
+
+        storage = (read_inheritable_attribute(:when_method) or write_inheritable_attribute(:when_method, {}))
+        
+        method = method.to_sym
+        
+        condition = is.is_a?(Proc) ? is : proc{|r| r == is}
+
+        storage[method] ||= []
+        storage[method] << [condition, when_true]
+        index = storage[method].length - 1
+        index_str = index > 0 ? index.to_s : ''
+        
+        class_eval <<-end_eval
+          def #{method}_with_when_method#{index_str}(*args, &block)
+            result = #{method}_without_when_method#{index_str}(*args, &block)
+            condition, when_true = self.class.read_inheritable_attribute(:when_method)[:#{method}][#{index}]
+            if condition.call(result)
+              #{when_true_str}
+            end
+            result
+          end
+          alias_method_chain :#{method}, :when_method#{index_str}
+        end_eval
+      end
+      
+      # observe_method :method, :when => lambda{|x|x}, :return => lambda
+      def observe_method(method, options, &when_true)
+        when_method(method, options.merge(:return => false), &when_true)
       end
       
       # Use this to preload self as the belongs_to association when a has_one, or has_many association
