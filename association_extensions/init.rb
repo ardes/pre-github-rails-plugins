@@ -1,3 +1,3 @@
 require 'association_extensions'
 
-ActiveRecord::Base.send :include, ActiveRecord::Associations::Extensions
+ActiveRecord::Base.send :extend, ActiveRecord::Associations::Extensions

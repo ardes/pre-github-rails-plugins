@@ -1,6 +1,7 @@
-= plugin_name
+= association_extensions
 
-Plugin Description
+This plugin adds so class methods to ActiveRecord which add functionality to associations.
+See ActiveRecord::Associations::Extensions.
 
 === Specs and Coverage
 * {SPECDOC}[link:files/SPECDOC.html] lists the specifications
