@@ -1,0 +1,3 @@
+= resources_controller_lte_1_2_2
+
+Include this in you plugins directory if using resources_controller and you have Rails <= 1.2.2
