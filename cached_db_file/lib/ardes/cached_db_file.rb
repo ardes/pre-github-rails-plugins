@@ -29,7 +29,7 @@ module Ardes
     # returns the full path and filename of the (possibly non-existent) cached file
     def cached_filename
       raise RuntimeError, "Can't get cached_filename of a new record, save the record first" if id.nil?
-      @cached_filename ||= File.expand_path(File.join(cached_db_file_root, cached_db_file_path, id_path, filename))
+      @cached_filename ||= File.expand_path(File.join(cached_db_file_root, cached_db_file_path, id_path, timestamped_filename))
     end
   
     # returns the full path of the cached filename, writing the file if it is not there
@@ -66,6 +66,11 @@ module Ardes
       db_file.destroy
     end
   
+    def timestamped_filename
+      return filename unless time = (respond_to?(:updated_at) && updated_at) || (respond_to?(:updated_on) && updated_on)
+      filename.sub(/(\.\w+)?$/) {|ext| "_#{time.strftime("%Y%m%d%H%M%S")}#{ext}"}
+    end
+    
     def sanitize_filename(filename)
       # taken from attachment_fu by Rick Olson
       returning filename.strip do |name|
@@ -90,13 +95,13 @@ module Ardes
     # Destroys the file, and any empty enclosing directories.
     # Called in the after_destroy, and after_save callback
     def remove_cached_file
-      return unless File.exist?(cached_filename)
-      FileUtils.rm cached_filename
-      path = File.dirname(cached_filename).sub(File.join(cached_db_file_root, cached_db_file_path),'')
-      while path != '' && Dir["#{path}/*"].empty?
+      FileUtils.rm_r path = File.dirname(cached_filename)
+      path.sub! File.join(cached_db_file_root, cached_db_file_path), ''
+
+      while (path = File.dirname(path)) != '' && Dir["#{path}/*"].empty?
         FileUtils.rmdir File.join(cached_db_file_root, cached_db_file_path, path)
-        path = File.dirname(path)
       end
+
     rescue
       logger.info "Exception destroying  #{cached_filename.inspect}: [#{$!.class.name}] #{$1.to_s}"
       logger.warn $!.backtrace.collect { |b| " > #{b}" }.join("\n")

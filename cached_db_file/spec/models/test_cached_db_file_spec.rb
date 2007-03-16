@@ -1,5 +1,43 @@
 require File.dirname(__FILE__) + '/../spec_helper'
 
+context "A TestCachedDbFile timestamped_filename" do
+  setup do
+    @cache = TestCachedDbFile.new
+  end
+  
+  specify "should be 'filename_timestamp' for filename WITHOUT extension" do
+    @cache.attributes = {:filename => 'foo', :updated_at => Time.mktime(2000,1,2,3,4,5)}
+    @cache.send(:timestamped_filename).should == 'foo_20000102030405'
+  end
+  
+  specify "should be 'filename_timestamp.ext' for filename WITH extension" do
+    @cache.attributes = {:filename => 'foo.jpg', :updated_at => Time.mktime(2000,1,2,3,4,5)}
+    @cache.send(:timestamped_filename).should == 'foo_20000102030405.jpg'
+  end
+
+  specify "should be 'filename' when there is no timestamp (updated_on or updated_at)" do
+    @cache.attributes = {:filename => 'foo', :updated_at => nil}
+    @cache.send(:timestamped_filename).should == 'foo'
+  end
+end
+
+
+context "An TestCachedDbFile (in general)" do
+  fixtures :db_files, :test_cached_db_files
+ 
+  setup do
+    @cache = test_cached_db_files(:first)
+  end
+
+  specify 'should have full_filename == #{cached_db_file_root}/test_cached_db_files/0/0/1/first_#{timestamp}.txt' do
+    @cache.full_filename.should == "#{@cache.cached_db_file_root}/test_cached_db_files/0/0/1/first_20070101100000.txt"
+  end
+  
+  specify 'should have public_filename == /test_cached_db_files/0/0/1/first_#{timestamp}.txt' do
+    @cache.public_filename.should == "/test_cached_db_files/0/0/1/first_20070101100000.txt"
+  end
+end
+
 context "A new TestCachedDbFile" do
   fixtures :db_files, :test_cached_db_files
   
@@ -41,22 +79,6 @@ context "A new TestCachedDbFile" do
   end
 end
 
-context "An existing TestCachedDbFile (:first)" do
-  fixtures :db_files, :test_cached_db_files
- 
-  setup do
-    @cache = test_cached_db_files(:first)
-  end
-
-  specify 'should have full_filename == #{cached_db_file_root}/test_cached_db_files/0/0/1/first.txt' do
-    @cache.full_filename.should == "#{@cache.cached_db_file_root}/test_cached_db_files/0/0/1/first.txt"
-  end
-  
-  specify 'should have public_filename == /test_cached_db_files/0/0/1/first.txt' do
-    @cache.public_filename.should == "/test_cached_db_files/0/0/1/first.txt"
-  end
-end
-
 context "An existing TestCachedDbFile WITHOUT a cached file present" do
   fixtures :db_files, :test_cached_db_files
  
@@ -88,6 +110,7 @@ context "An existing TestCachedDbFile WITH a cached file present" do
   fixtures :db_files, :test_cached_db_files
  
   setup do
+    TestCachedDbFile.remove_cache
     TestCachedDbFile.find(1).send :write_cached_file
     @cache = test_cached_db_files(:first)
   end
@@ -122,7 +145,7 @@ context "An existing TestCachedDbFile WITH a cached file present" do
     File.exist?(path = File.dirname(path)).should == true
   end
   
-  specify "should not remove NON-empty enclosing id dirs on remove_cached_file" do
+  specify "should NOT remove NON-empty enclosing id dirs on remove_cached_file" do
     TestCachedDbFile.create(:filename => 'foobar.txt').full_filename
     @cache.send :remove_cached_file
     path = @cache.cached_filename
@@ -134,5 +157,11 @@ context "An existing TestCachedDbFile WITH a cached file present" do
     @cache.data = 'FOOOO'
     @cache.save 
     File.read(@cache.full_filename).should == 'FOOOO'
+  end
+  
+  specify "should re-cache when timestamp (updated_on, updated_at) has changed" do
+    @cache.should_receive(:db_file).once.and_return(db_files(:first))
+    TestCachedDbFile.connection.update("UPDATE test_cached_db_files SET updated_at='2008-02-02 12:00:00'")
+    @cache.reload.full_filename
   end
 end

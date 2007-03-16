@@ -4,6 +4,11 @@ ENV["RAILS_ENV"] ||= "test"
 require File.expand_path(File.join(File.dirname(__FILE__), "../../../../config/environment.rb"))
 require 'spec/rails'
 
+config = YAML::load(IO.read(File.join(File.dirname(__FILE__), 'database.yml')))
+ActiveRecord::Base.establish_connection(config['db'])
+
+require File.expand_path(File.join(File.dirname(__FILE__), "app.rb"))
+
 # Even if you're using RSpec, RSpec on Rails is reusing some of the
 # Rails-specific extensions for fixtures and stubbed requests, response
 # and other things (via RSpec's inherit mechanism). These extensions are 
@@ -21,33 +26,6 @@ module Spec
         #
         #self.global_fixtures = :table_a, :table_b
       end
-    end
-  end
-end
-
-### APP SETUP
-
-ActiveRecord::Migration.suppress_messages do
-  ActiveRecord::Schema.define(:version => 0) do
-    create_table :db_files, :force => true do |t|
-      t.column "data", :binary
-    end
-
-    create_table :test_cached_db_files, :force => true do |t|
-      t.column "db_file_id", :integer
-      t.column "filename", :string
-    end
-  end
-end
-
-require 'ardes/cached_db_file'
-class TestCachedDbFile < ActiveRecord::Base
-  include Ardes::CachedDbFile
-  self.cached_db_file_root = File.expand_path(File.join(File.dirname(__FILE__), 'fixtures/public'))
-  
-  class<<self
-    def remove_cache
-      FileUtils.rm_rf self.cached_db_file_root
     end
   end
 end

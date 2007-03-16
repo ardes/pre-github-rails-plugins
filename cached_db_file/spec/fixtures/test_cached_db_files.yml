@@ -2,3 +2,4 @@ first:
   id: 1
   db_file_id: 1
   filename: 'first.txt'
+  updated_at: 2007-01-01 10:00:00
