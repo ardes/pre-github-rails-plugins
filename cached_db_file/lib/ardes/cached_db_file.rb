@@ -95,7 +95,8 @@ module Ardes
     # Destroys the file, and any empty enclosing directories.
     # Called in the after_destroy, and after_save callback
     def remove_cached_file
-      FileUtils.rm_r path = File.dirname(cached_filename)
+      return unless File.exist?(path = File.dirname(cached_filename))
+      FileUtils.rm_r path
       path.sub! File.join(cached_db_file_root, cached_db_file_path), ''
 
       while (path = File.dirname(path)) != '' && Dir["#{path}/*"].empty?
@@ -103,7 +104,7 @@ module Ardes
       end
 
     rescue
-      logger.info "Exception destroying  #{cached_filename.inspect}: [#{$!.class.name}] #{$1.to_s}"
+      logger.info "Exception destroying  #{path.inspect}: [#{$!.class.name}] #{$1.to_s}"
       logger.warn $!.backtrace.collect { |b| " > #{b}" }.join("\n")
     end
   end
