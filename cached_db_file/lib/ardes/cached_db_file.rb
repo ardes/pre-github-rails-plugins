@@ -2,15 +2,16 @@ module Ardes
   module CachedDbFile
     def self.included(base)
       base.class_eval do
-        cattr_accessor :cached_db_file_path, :cached_db_file_root
+        cattr_accessor :cached_db_file_root, :cached_db_file_path
         self.cached_db_file_root = "#{RAILS_ROOT}/public"
-        self.cached_db_file_path = "#{self.name.underscore.pluralize}"
+        self.cached_db_file_path = name.underscore.pluralize
         
         Object.const_set(:DbFile, Class.new(ActiveRecord::Base)) unless Object.const_defined?(:DbFile)
         base.belongs_to  :db_file, :class_name => '::DbFile', :foreign_key => 'db_file_id'
 
         validates_presence_of :filename
         validates_presence_of :db_file, :on => :create
+        # we don't want to load the :db_file by accessing it when validating update
         validates_presence_of :db_file_id, :on => :update
         
         after_destroy :remove_cached_file, :destroy_db_file
@@ -21,7 +22,7 @@ module Ardes
         alias_method_chain :db_file, :build
       end
     end
-    
+       
     def db_file_with_build(*args)
       db_file_without_build(*args) || build_db_file
     end
@@ -83,8 +84,10 @@ module Ardes
       end
     end
   
-    # writes the db_file.data to the cached_filename
+    # writes the db_file.data to the cached_filename, first destroying the directory
+    # to remove any old files
     def write_cached_file
+      remove_cached_file
       FileUtils.mkdir_p File.dirname(cached_filename)
       File.open(cached_filename, File::CREAT|File::TRUNC|File::WRONLY, 0644) do |f|
         f.write data
