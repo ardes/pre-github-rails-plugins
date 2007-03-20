@@ -3,7 +3,7 @@ module Ardes
     def self.included(base)
       base.class_eval do
         cattr_accessor :cached_db_file_root, :cached_db_file_path
-        self.cached_db_file_root = "#{RAILS_ROOT}/public"
+        self.cached_db_file_root = File.expand_path("#{RAILS_ROOT}/public")
         self.cached_db_file_path = name.underscore.pluralize
         
         Object.const_set(:DbFile, Class.new(ActiveRecord::Base)) unless Object.const_defined?(:DbFile)
@@ -15,8 +15,9 @@ module Ardes
         validates_presence_of :db_file_id, :on => :update
         
         after_destroy :remove_cached_file, :destroy_db_file
-        after_save :remove_cached_file, :save_db_file
-      
+        after_save :remove_cached_file
+        after_create :save_db_file
+        
         delegate :data, :data=, :to => :db_file
         
         alias_method_chain :db_file, :build
@@ -85,7 +86,7 @@ module Ardes
     end
   
     # writes the db_file.data to the cached_filename, first destroying the directory
-    # to remove any old files
+    # to remove any old files (files with old timestamps)
     def write_cached_file
       remove_cached_file
       FileUtils.mkdir_p File.dirname(cached_filename)
@@ -95,7 +96,7 @@ module Ardes
       end
     end
   
-    # Destroys the file, and any empty enclosing directories.
+    # Removes the file, and any empty enclosing directories.
     # Called in the after_destroy, and after_save callback
     def remove_cached_file
       return unless File.exist?(path = File.dirname(cached_filename))
@@ -103,7 +104,7 @@ module Ardes
       path.sub! File.join(cached_db_file_root, cached_db_file_path), ''
 
       while (path = File.dirname(path)) != '' && Dir["#{path}/*"].empty?
-        FileUtils.rmdir File.join(cached_db_file_root, cached_db_file_path, path)
+        (FileUtils.rmdir File.join(cached_db_file_root, cached_db_file_path, path)) rescue nil
       end
 
     rescue
