@@ -1,4 +1,11 @@
-# A new TestCachedDbFile
+# A CachedDbFile timestamped_filename
+# * should be 'filename_timestamp' for filename WITHOUT extension
+# * should be 'filename_timestamp.ext' for filename WITH extension
+# * should be 'filename' when there is no timestamp (updated_on or updated_at)
+# A CachedDbFile (in general)
+# * should have full_filename == #{cached_db_file_root}/#{plural_model_name}/0/0/1/first_#{timestamp}.txt
+# * should have public_filename == /#{plural_model_name}/0/0/1/first_#{timestamp}.txt
+# A new CachedDbFile
 # * should be invalid without a filename
 # * should be valid with filename
 # * should build db_file on demand
@@ -6,19 +13,19 @@
 # * should delegate data= to db_file
 # * should delegate data to db_file
 # * should create db_file on save
-# An existing TestCachedDbFile (:first)
-# * should have full_filename == #{cached_db_file_root}/test_cached_db_files/0/0/1/first.txt
-# * should have public_filename == /test_cached_db_files/0/0/1/first.txt
-# An existing TestCachedDbFile WITHOUT a cached file present
+# An existing CachedDbFile WITHOUT a cached file present
 # * should access db_file when full_filename called
 # * should create cached file when full_filename called
 # * should create cached file when public_filename called
 # * should create the cached file with db_file.data
-# An existing TestCachedDbFile WITH a cached file present
+# An existing CachedDbFile WITH a cached file present
 # * should not access db_file when full_filename called
 # * should remove cached file on destroy
 # * should remove cached file, and empty enclosing dirs, on update
 # * should destroy db_file on destroy
 # * should remove empty enclosing id dirs on remove_cached_file
-# * should not remove NON-empty enclosing id dirs on remove_cached_file
+# * should NOT remove NON-empty enclosing id dirs on remove_cached_file
 # * should update the cached file when data updated
+# * should re-cache when timestamp (updated_on, updated_at) has changed
+# An existing cache file with bad permissions
+# * should log exceptions when destroying the cached file

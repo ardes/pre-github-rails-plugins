@@ -6,7 +6,7 @@ ActiveRecord::Migration.suppress_messages do
       t.column "data", :binary
     end
 
-    create_table :test_cached_db_files, :force => true do |t|
+    create_table :spec_cached_db_files, :force => true do |t|
       t.column "db_file_id", :integer
       t.column "filename", :string
       t.column "updated_at", :datetime
@@ -15,10 +15,11 @@ ActiveRecord::Migration.suppress_messages do
 end
 
 require 'ardes/cached_db_file'
-class TestCachedDbFile < ActiveRecord::Base
+
+class SpecCachedDbFile < ActiveRecord::Base
   include Ardes::CachedDbFile
   self.cached_db_file_root = File.expand_path(File.join(File.dirname(__FILE__), 'fixtures/public'))
-  
+
   class<<self
     def remove_cache
       FileUtils.rm_rf self.cached_db_file_root
