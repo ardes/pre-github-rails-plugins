@@ -1,0 +1,14 @@
+<%= file = File.join(RAILS_ROOT, "config", "connect.yml")
+    IO.read(file) %>
+
+development:
+  <<: *local
+  database: dd_development
+  
+test:
+  <<: *local
+  database: dd_test
+
+production:
+  <<: *local
+  database: dd_production
