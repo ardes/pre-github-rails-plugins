@@ -3,11 +3,11 @@ module Spec
     unless defined? MAJOR
       MAJOR  = 0
       MINOR  = 9
-      TINY   = 0
-      RELEASE_CANDIDATE = "beta-3"
+      TINY   = 2
+      RELEASE_CANDIDATE = nil
       
-      # RANDOM_TOKEN: 0.936127692228456
-      REV = "$LastChangedRevision: 1813 $".match(/LastChangedRevision: (\d+)/)[1]
+      # RANDOM_TOKEN: 0.000534406916384178
+      REV = "$LastChangedRevision: 1886 $".match(/LastChangedRevision: (\d+)/)[1]
 
       STRING = [MAJOR, MINOR, TINY].join('.')
       TAG = "REL_#{[MAJOR, MINOR, TINY, RELEASE_CANDIDATE].compact.join('_')}".upcase.gsub(/\.|-/, '_')

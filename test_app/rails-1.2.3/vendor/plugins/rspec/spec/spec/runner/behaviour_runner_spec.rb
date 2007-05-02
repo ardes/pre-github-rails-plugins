@@ -2,9 +2,9 @@ require File.dirname(__FILE__) + '/../../spec_helper.rb'
 
 module Spec
   module Runner
-    context BehaviourRunner do
+    describe BehaviourRunner do
 
-      specify "should only run behaviours with at least one example" do
+      it "should only run behaviours with at least one example" do
         desired_context = mock("desired context")
         desired_context.should_receive(:run)
         desired_context.should_receive(:retain_examples_matching!)
@@ -16,7 +16,7 @@ module Spec
         other_context.should_receive(:number_of_examples).and_return(0)
 
         reporter = mock("reporter")
-        options = OpenStruct.new
+        options = Options.new
         options.reporter = reporter
         options.examples = ["desired context legal spec"]
 
@@ -29,9 +29,9 @@ module Spec
         runner.run([], false)
       end
 
-      specify "should dump even if Interrupt exception is occurred" do
+      it "should dump even if Interrupt exception is occurred" do
         behaviour = Spec::DSL::Behaviour.new("context") do
-          specify "no error" do
+          it "no error" do
           end
 
           it "should interrupt" do
@@ -49,14 +49,14 @@ module Spec
         reporter.should_receive(:end)
         reporter.should_receive(:dump)
 
-        options = OpenStruct.new
+        options = Options.new
         options.reporter = reporter
         runner = Spec::Runner::BehaviourRunner.new(options)
         runner.add_behaviour(behaviour)
         runner.run([], false)
       end
 
-      specify "should heckle when options have heckle_runner" do
+      it "should heckle when options have heckle_runner" do
         context = mock("context", :null_object => true)
         context.should_receive(:number_of_examples).twice.and_return(1)
         context.should_receive(:run).and_return(0)
@@ -69,7 +69,7 @@ module Spec
         heckle_runner = mock("heckle_runner")
         heckle_runner.should_receive(:heckle_with)
 
-        options = OpenStruct.new
+        options = Options.new
         options.reporter = reporter
         options.heckle_runner = heckle_runner
 
@@ -78,8 +78,8 @@ module Spec
         runner.run([], false)
       end
 
-      specify "should run specs backward if options.reverse is true" do
-        options = OpenStruct.new
+      it "should run specs backward if options.reverse is true" do
+        options = Options.new
         options.reverse = true
 
         reporter = mock("reporter")

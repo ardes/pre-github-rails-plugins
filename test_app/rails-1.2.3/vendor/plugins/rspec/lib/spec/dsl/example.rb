@@ -3,51 +3,14 @@ require 'timeout'
 module Spec
   module DSL
     class Example
-      module ClassMethods
-        def before(&block)
-          before_callbacks << block
-        end
-
-        def after(&block)
-          after_callbacks << block
-        end
-        protected
-        def before_callbacks
-          @before_callbacks ||= []
-        end
-
-        def after_callbacks
-          @after_callbacks ||= []
-        end        
-      end
-      extend ClassMethods
-
-      def before(&block)
-        before_callbacks << block
-      end
-
-      def after(&block)
-        after_callbacks.unshift block
-      end
-
       def initialize(description, options={}, &example_block)
         @from = caller(0)[3]
         @options = options
         @example_block = example_block
         @description = description
-        setup_auto_generated_description
+        @description_generated_proc = lambda { |desc| @generated_description = desc }
       end
       
-      def setup_auto_generated_description
-        description_generated = lambda { |desc| @generated_description = desc }
-        before do
-          Spec::Matchers.register_callback(:description_generated, description_generated)
-        end
-        after do
-          Spec::Matchers.unregister_callback(:description_generated, description_generated)
-        end
-      end
-
       def run(reporter, before_each_block, after_each_block, dry_run, execution_context, timeout=nil)
         reporter.example_started(description)
         return reporter.example_finished(description) if dry_run
@@ -55,10 +18,10 @@ module Spec
         errors = []
         location = nil
         Timeout.timeout(timeout) do
-          setup_ok = setup_example(execution_context, errors, &before_each_block)
-          example_ok = run_example(execution_context, errors) if setup_ok
-          teardown_ok = teardown_example(execution_context, errors, &after_each_block)
-          location = failure_location(setup_ok, example_ok, teardown_ok)
+          before_each_ok = setup_example(execution_context, errors, &before_each_block)
+          example_ok = run_example(execution_context, errors) if before_each_ok
+          after_each_ok = teardown_example(execution_context, errors, &after_each_block)
+          location = failure_location(before_each_ok, example_ok, after_each_ok)
         end
 
         ExampleShouldRaiseHandler.new(@from, @options).handle(errors)
@@ -71,22 +34,6 @@ module Spec
       end
       
     private
-      def before_callbacks
-        @before_callbacks ||= []
-      end
-
-      def class_before_callbacks
-        self.class.send(:before_callbacks)
-      end
-
-      def after_callbacks
-        @after_callbacks ||= []
-      end
-
-      def class_after_callbacks
-        self.class.send(:after_callbacks)
-      end
-
       def description
         @description == :__generate_description ? generated_description : @description
       end
@@ -97,10 +44,9 @@ module Spec
       
       def setup_example(execution_context, errors, &behaviour_before_block)
         setup_mocks(execution_context)
+        Spec::Matchers.description_generated(&@description_generated_proc)
         
-        builder = CompositeProcBuilder.new(self)
-        builder.push(*class_before_callbacks)
-        builder.push(*before_callbacks)
+        builder = CompositeProcBuilder.new
         before_proc = builder.proc(&append_errors(errors))
         execution_context.instance_eval(&before_proc)
         
@@ -130,9 +76,9 @@ module Spec
           teardown_mocks(execution_context)
         end
 
-        builder = CompositeProcBuilder.new(self)
-        builder.push(*after_callbacks)
-        builder.push(*class_after_callbacks)
+        Spec::Matchers.unregister_description_generated(@description_generated_proc)
+
+        builder = CompositeProcBuilder.new
         after_proc = builder.proc(&append_errors(errors))
         execution_context.instance_eval(&after_proc)
 
@@ -158,10 +104,10 @@ module Spec
         proc {|error| errors << error}
       end
       
-      def failure_location(setup_ok, example_ok, teardown_ok)
-        return 'setup' unless setup_ok
+      def failure_location(before_each_ok, example_ok, after_each_ok)
+        return 'before(:each)' unless before_each_ok
         return description unless example_ok
-        return 'teardown' unless teardown_ok
+        return 'after(:each)' unless after_each_ok
       end
     end
   end

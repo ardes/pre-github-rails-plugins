@@ -3,7 +3,7 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 module Spec
   module DSL
     describe CompositeProcBuilder do
-      setup do
+      before(:each) do
         @klass = Class.new do
           attr_reader :an_attribute
 
@@ -13,17 +13,13 @@ module Spec
         end
 
         @parent = @klass.new
-        @builder = CompositeProcBuilder.new(@parent) {}
-      end
-
-      it "has a link to parent" do
-        @builder.parent.should == @parent
+        @builder = CompositeProcBuilder.new {}
       end
 
       it "calls all of its child procs" do
         @builder << proc {:proc1}
         @builder << proc {:proc2}
-        @builder.call.should == [:proc1, :proc2]
+        @builder.proc.call.should == [:proc1, :proc2]
       end
 
       it "calls block on exceptions" do
@@ -34,9 +30,7 @@ module Spec
         @builder << proc {:successful}
 
         errors = []
-        @builder.call do |e|
-          errors << e
-        end.should == [exception1, exception2, :successful]
+        @builder.proc {|e| errors << e }.call.should == [exception1, exception2, :successful]
 
         errors.should == [exception1, exception2]
       end
@@ -55,12 +49,6 @@ module Spec
         unbound_method = @klass.instance_method(:an_attribute_setter)
         unbound_method.class.should == UnboundMethod
         @builder << unbound_method
-        @parent.instance_eval &@builder.proc
-        @parent.an_attribute.should == :the_value
-      end
-
-      it "adds instance method from another class" do
-        @builder.add_instance_method_from(@klass, :an_attribute_setter)
         @parent.instance_eval &@builder.proc
         @parent.an_attribute.should == :the_value
       end

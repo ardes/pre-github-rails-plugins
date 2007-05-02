@@ -1,4 +1,3 @@
-require 'spec/callback'
 require 'spec/matchers/be'
 require 'spec/matchers/be_close'
 require 'spec/matchers/change'
@@ -124,13 +123,27 @@ module Spec
   #     ...
   #   end
   module Matchers
-    
-    class << self
-      callback_events :description_generated
+    module ModuleMethods
+      def description_generated(&callback)
+        description_generated_callbacks << callback
+      end
+
+      def unregister_description_generated(callback)
+        description_generated_callbacks.delete(callback)
+      end
+
       def generated_description=(name)
-        notify_callbacks(:description_generated, name)
+        description_generated_callbacks.each do |callback|
+          callback.call(name)
+        end
+      end
+
+      private
+      def description_generated_callbacks
+        @description_generated_callbacks ||= []
       end
     end
+    extend ModuleMethods
     
     def method_missing(sym, *args, &block) # :nodoc:
       return Matchers::Be.new(sym, *args) if sym.starts_with?("be_")

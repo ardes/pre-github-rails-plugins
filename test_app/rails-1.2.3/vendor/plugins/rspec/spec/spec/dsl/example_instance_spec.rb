@@ -19,19 +19,19 @@ module Spec
         example.run(@reporter, nil, nil, false, nil)
       end
 
-      specify "should report its name for dry run" do
+      it "should report its name for dry run" do
         example=Example.new("example") {}
         @reporter.should_receive(:example_finished).with("example")
         example.run(@reporter, nil, nil, true, nil) #4th arg indicates dry run
       end
 
-      specify "should report success" do
+      it "should report success" do
         example=Example.new("example") {}
         @reporter.should_receive(:example_finished).with("example", nil, nil)
         example.run(@reporter, nil, nil, nil, nil)
       end
 
-      specify "should report failure due to failure" do
+      it "should report failure due to failure" do
         example=Example.new("example") do
           (2+2).should == 5
         end
@@ -39,7 +39,7 @@ module Spec
         example.run(@reporter, nil, nil, nil, nil)
       end
 
-      specify "should report failure due to error" do
+      it "should report failure due to error" do
         error=RuntimeError.new
         example=Example.new("example") do
           raise(error)
@@ -48,7 +48,7 @@ module Spec
         example.run(@reporter, nil, nil, nil, nil)
       end
 
-      specify "should run example in scope of supplied object" do
+      it "should run example in scope of supplied object" do
         scope_class = Class.new
         example=Example.new("should pass") do
           self.instance_of?(Example).should == false
@@ -58,93 +58,71 @@ module Spec
         example.run(@reporter, nil, nil, nil, scope_class.new)
       end
 
-      specify "should not run example block if setup fails" do
+      it "should not run example block if before_each fails" do
         example_ran = false
         example=Example.new("should pass") {example_ran = true}
-        setup = lambda {raise "Setup error"}
-        example.run(@reporter, setup, nil, nil, Object.new)
+        before_each = lambda {raise "Setup error"}
+        example.run(@reporter, before_each, nil, nil, Object.new)
         example_ran.should == false
       end
 
-      specify "should run teardown block if setup fails" do
-        teardown_ran = false
+      it "should run after_each block if before_each fails" do
+        after_each_ran = false
         example=Example.new("should pass") {}
-        setup = lambda {raise "Setup error"}
-        teardown = lambda {teardown_ran = true}
-        example.run(@reporter, setup, teardown, nil, Object.new)
-        teardown_ran.should == true
+        before_each = lambda {raise "Setup error"}
+        after_each = lambda {after_each_ran = true}
+        example.run(@reporter, before_each, after_each, nil, Object.new)
+        after_each_ran.should == true
       end
 
-      specify "should run teardown block when example fails" do
+      it "should run after_each block when example fails" do
         example=Example.new("example") do
           raise("in body")
         end
-        teardown=lambda do
-          raise("in teardown")
+        after_each=lambda do
+          raise("in after_each")
         end
         @reporter.should_receive(:example_finished) do |example, error, location|
           example.should eql("example")
           location.should eql("example")
           error.message.should eql("in body")
         end
-        example.run(@reporter, nil, teardown, nil, nil)
+        example.run(@reporter, nil, after_each, nil, nil)
       end
 
-      specify "should report failure location when in setup" do
+      it "should report failure location when in before_each" do
         example=Example.new("example") {}
-        setup=lambda { raise("in setup") }
+        before_each=lambda { raise("in before_each") }
         @reporter.should_receive(:example_finished) do |name, error, location|
           name.should eql("example")
-          error.message.should eql("in setup")
-          location.should eql("setup")
+          error.message.should eql("in before_each")
+          location.should eql("before(:each)")
         end
-        example.run(@reporter, setup, nil, nil, nil)
+        example.run(@reporter, before_each, nil, nil, nil)
       end
 
-      specify "should report failure location when in teardown" do
+      it "should report failure location when in after_each" do
         example = Example.new("example") {}
-        teardown = lambda { raise("in teardown") }
+        after_each = lambda { raise("in after_each") }
         @reporter.should_receive(:example_finished) do |name, error, location|
           name.should eql("example")
-          error.message.should eql("in teardown")
-          location.should eql("teardown")
+          error.message.should eql("in after_each")
+          location.should eql("after(:each)")
         end
-        example.run(@reporter, nil, teardown, nil, nil)
+        example.run(@reporter, nil, after_each, nil, nil)
       end
 
-      specify "should accept an options hash following the example name" do
+      it "should accept an options hash following the example name" do
         example = Example.new("name", :key => 'value')
       end
 
-      specify "should notify before callbacks before setup" do
-        example = Example.new("example")
-
-        call_order = []
-        example.before {call_order << :before}
-        setup = lambda {call_order << :setup}
-        example.run(@reporter, setup, nil, nil, Object.new)
-
-        call_order.should == [:before, :setup]
-      end
-
-      specify "should notify after callbacks after teardown" do
-        example = Example.new("example")
-
-        call_order = []
-        example.after {call_order << :after}
-        teardown = proc {call_order << :teardown}
-        example.run(@reporter, nil, teardown, nil, Object.new)
-
-        call_order.should == [:teardown, :after]
-      end
-
-      specify "should report NAME NOT GENERATED when told to use generated description but none is generated" do
+      it "should report NAME NOT GENERATED when told to use generated description but none is generated" do
         example = Example.new(:__generate_description)
         @reporter.should_receive(:example_finished).with("NAME NOT GENERATED", :anything, :anything)
         example.run(@reporter, nil, nil, nil, Object.new)
       end
 
-      specify "should report generated description when told to and it is available" do
+      it "should report generated description when told to and it is available" do
         example = Example.new(:__generate_description) {
           5.should == 5
         }
@@ -152,9 +130,9 @@ module Spec
         example.run(@reporter, nil, nil, nil, Object.new)
       end
 
-      specify "should unregister description_generated callback (lest a memory leak should build up)" do
+      it "should unregister description_generated callback (lest a memory leak should build up)" do
         example = Example.new("something")
-        Spec::Matchers.should_receive(:unregister_callback).with(:description_generated, is_a(Proc))
+        Spec::Matchers.should_receive(:unregister_description_generated).with(is_a(Proc))
         example.run(@reporter, nil, nil, nil, Object.new)
       end
     end

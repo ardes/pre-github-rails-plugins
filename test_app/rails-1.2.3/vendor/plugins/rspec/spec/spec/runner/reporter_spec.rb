@@ -18,7 +18,7 @@ module Spec
     
     describe Reporter do
       include ReporterSpecHelper
-      setup {setup}
+      before(:each) {setup}
       
       it "should tell formatter when behaviour is added" do
         @formatter.should_receive(:add_behaviour).with("behaviour")
@@ -82,7 +82,7 @@ module Spec
     
     describe Reporter, " reporting one passing example" do
       include ReporterSpecHelper
-      setup {setup}
+      before(:each) {setup}
 
       it "should tell formatter example passed" do
         @formatter.should_receive(:example_passed)
@@ -106,7 +106,7 @@ module Spec
 
     describe Reporter, " reporting one failing example" do
       include ReporterSpecHelper
-      setup {setup}
+      before(:each) {setup}
 
       it "should tell formatter that example failed" do
         @formatter.should_receive(:example_failed)
@@ -130,17 +130,6 @@ module Spec
         @reporter.dump
       end
       
-      it "should write a failure file when given a filename" do
-        io = StringIO.new('')
-        File.should_receive(:open).with("some_file_name.txt", "w").and_yield(io)
-        @reporter = Reporter.new([@formatter], @backtrace_tweaker, 'some_file_name.txt')
-        @formatter.stub!(:add_behaviour)
-        @formatter.stub!(:example_failed)
-        @reporter.add_behaviour('behaviour')
-        @reporter.example_finished('example', Exception.new, 'setup')
-        @reporter.end
-        io.string.should match(/behaviour example/)
-      end
     end
   end
 end

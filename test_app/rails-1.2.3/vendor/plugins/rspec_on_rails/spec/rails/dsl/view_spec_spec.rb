@@ -1,7 +1,7 @@
 require File.dirname(__FILE__) + '/../../spec_helper'
 
-describe "Given a view with an implicit helper", :rails_component_type => :view do
-  setup do
+describe "Given a view with an implicit helper", :behaviour_type => :view do
+  before(:each) do
     render "view_spec/show"
   end
 
@@ -14,8 +14,8 @@ describe "Given a view with an implicit helper", :rails_component_type => :view 
   end
 end
 
-describe "Given a view requiring an explicit helper", :rails_component_type => :view do
-  setup do
+describe "Given a view requiring an explicit helper", :behaviour_type => :view do
+  before(:each) do
     render "view_spec/explicit_helper", :helper => 'explicit'
   end
 
@@ -28,8 +28,8 @@ describe "Given a view requiring an explicit helper", :rails_component_type => :
   end
 end
 
-describe "Given a view requiring multiple explicit helpers", :rails_component_type => :view do
-  setup do
+describe "Given a view requiring multiple explicit helpers", :behaviour_type => :view do
+  before(:each) do
     render "view_spec/multiple_helpers", :helpers => ['explicit', 'more_explicit']
   end
 
@@ -43,8 +43,8 @@ describe "Given a view requiring multiple explicit helpers", :rails_component_ty
   end
 end
 
-describe "Given a view that includes a partial", :rails_component_type => :view do
-  setup do
+describe "Given a view that includes a partial", :behaviour_type => :view do
+  before(:each) do
     render "view_spec/partial_including_template"
   end
 
@@ -61,8 +61,8 @@ describe "Given a view that includes a partial", :rails_component_type => :view 
   end
 end
 
-describe "Given a view that includes a partial using :collection and :spacer_template", :rails_component_type => :view  do
-  setup do
+describe "Given a view that includes a partial using :collection and :spacer_template", :behaviour_type => :view  do
+  before(:each) do
     render "view_spec/partial_collection_including_template"
   end
 
@@ -74,8 +74,8 @@ describe "Given a view that includes a partial using :collection and :spacer_tem
 
 end
 
-describe "Given a view that includes a partial using an array as partial_path", :rails_component_type => :view do
-  setup do
+describe "Given a view that includes a partial using an array as partial_path", :behaviour_type => :view do
+  before(:each) do
     module ActionView::Partials
       def render_partial_with_array_support(partial_path, local_assigns = nil, deprecated_local_assigns = nil)
         if partial_path.is_a?(Array)
@@ -93,7 +93,7 @@ describe "Given a view that includes a partial using an array as partial_path", 
     assigns[:array] = @array
   end
 
-  teardown do
+  after(:each) do
     module ActionView::Partials
       alias :render_partial_with_array_support :render_partial
       alias :render_partial :render_partial_without_array_support
@@ -107,15 +107,15 @@ describe "Given a view that includes a partial using an array as partial_path", 
   end
 end
 
-describe "Different types of renders (not :template)", :rails_component_type => :view do
+describe "Different types of renders (not :template)", :behaviour_type => :view do
   it "partial with local" do
     render :partial => "view_spec/partial_with_local_variable", :locals => {:x => "Ender"}
     response.should have_tag('div', :content => "Ender")
   end
 end
 
-describe "A view", :rails_component_type => :view do
-  setup do
+describe "A view", :behaviour_type => :view do
+  before(:each) do
     session[:key] = "session"
     params[:key] = "params"
     flash[:key] = "flash"
@@ -136,7 +136,7 @@ describe "A view", :rails_component_type => :view do
 end
 
 unless Rails::VERSION::STRING == "1.1.6" #1.1.6 did not have form_tag
-  describe "A view with a form_tag", :rails_component_type => :view do
+  describe "A view with a form_tag", :behaviour_type => :view do
     it "should render the right action" do
       render "view_spec/entry_form"
       response.should have_tag("form[action=?]","/view_spec/entry_form")

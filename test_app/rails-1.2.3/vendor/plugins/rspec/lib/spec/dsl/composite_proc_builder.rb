@@ -1,20 +1,8 @@
 module Spec
   module DSL
     class CompositeProcBuilder < Array
-      # TODO - is this necessary for anything other than a spec?
-      attr_reader :parent
-
-      def initialize(parent, callbacks=[])
-        @parent = parent
+      def initialize(callbacks=[])
         push(*callbacks)
-      end
-
-      def call(&error_handler)
-        proc(&error_handler).call
-      end
-
-      def add_instance_method_from(source, method_name)
-        push(source.instance_method(method_name)) if source.instance_methods.include?(method_name.to_s)
       end
 
       def proc(&error_handler)

@@ -2,32 +2,74 @@ module Spec
   module DSL
     class EvalModule < Module; end
     class Behaviour
-      
-      def initialize(description, &context_block)
-        @description = description
+      extend BehaviourCallbacks
 
+      class << self
+        def add_shared_behaviour(behaviour)
+          raise ArgumentError.new("Shared Behaviour '#{behaviour.description}' already exists") if find_shared_behaviour(behaviour.description)
+          shared_behaviours << behaviour
+        end
+
+        def find_shared_behaviour(behaviour_description)
+          shared_behaviours.find { |b| b.description == behaviour_description }
+        end
+
+        def shared_behaviours
+          # TODO - this needs to be global, or at least accessible from
+          # from subclasses of Behaviour in a centralized place. I'm not loving
+          # this as a solution, but it works for now.
+          $shared_behaviours ||= []
+        end
+      end
+
+      def initialize(*args, &behaviour_block)
+        init_description(*args)
+        init_eval_module
+        before_eval
+        eval_behaviour(&behaviour_block)
+      end
+      
+    private
+
+      def init_description(*args)
+        @description = Description.new(*args)
+      end
+      
+      def init_eval_module
         @eval_module = EvalModule.new
         @eval_module.extend BehaviourEval::ModuleMethods
         @eval_module.include BehaviourEval::InstanceMethods
-        before_eval
-        @eval_module.class_eval(&context_block)
+        @eval_module.behaviour = self
+        @eval_module.description = @description
       end
 
+      def eval_behaviour(&behaviour_block)
+        @eval_module.class_eval(&behaviour_block)
+      end
+      
+    protected
+    
       def before_eval
       end
       
+    public
+
       def run(reporter, dry_run=false, reverse=false, timeout=nil)
+        return if shared?
         reporter.add_behaviour(description)
         prepare_execution_context_class
         errors = run_before_all(reporter, dry_run)
 
         specs = reverse ? examples.reverse : examples
         example_execution_context = nil
-        specs.each do |example|
-          example_execution_context = execution_context(example)
-          example_execution_context.copy_instance_variables_from(@before_and_after_all_context_instance) unless before_all_proc.nil?
-          example.run(reporter, before_each_proc, after_each_proc, dry_run, example_execution_context, timeout)
-        end unless errors.length > 0
+         
+        if errors.empty?
+          specs.each do |example|
+            example_execution_context = execution_context(example)
+            example_execution_context.copy_instance_variables_from(@before_and_after_all_context_instance) unless before_all_proc.nil?
+            example.run(reporter, before_each_proc, after_each_proc, dry_run, example_execution_context, timeout)
+          end
+        end
         
         @before_and_after_all_context_instance.copy_instance_variables_from(example_execution_context) unless after_all_proc.nil?
         run_after_all(reporter, dry_run)
@@ -44,6 +86,10 @@ module Spec
           return true if example.matches?(matcher, specified_examples)
         end
         return false
+      end
+
+      def shared?
+        @description[:shared]
       end
 
       def retain_examples_matching!(specified_examples)
@@ -70,15 +116,19 @@ module Spec
 
       def prepare_execution_context_class
         plugin_mock_framework
-        weave_in_context_modules
+        weave_in_included_modules
+        define_predicate_matchers #this is in behaviour_eval
         execution_context_class
       end
 
-      def weave_in_context_modules
-        mods = context_modules
+      def weave_in_included_modules
+        mods = included_modules
         eval_module = @eval_module
         execution_context_class.class_eval do
           include eval_module
+          Spec::Runner.configuration.included_modules.each do |mod|
+            include mod
+          end
           mods.each do |mod|
             include mod
           end
@@ -127,11 +177,11 @@ module Spec
       end
       
       def description
-        @description.respond_to?(:description) ? @description.description : @description
+        @description.to_s
       end
       
       def described_type
-        @description.respond_to?(:described_type) ? @description.described_type : nil
+        @description.described_type
       end
 
     end

@@ -1,5 +1,6 @@
 require 'spec/runner/formatter'
 require 'spec/runner/behaviour_runner'
+require 'spec/runner/options'
 require 'spec/runner/option_parser'
 require 'spec/runner/command_line'
 require 'spec/runner/drb_command_line'
@@ -123,6 +124,22 @@ module Spec
   #       @account.balance.should eql(Money.new(0, :dollars))
   #     end
   #   end
+  # 
+  # == Shared behaviour
+  # 
+  # You can define a shared behaviour, that may be used on other behaviours
+  #
+  #  describe "All Editions", :shared => true do
+  #    it "all editions behaviour" ...
+  #  end
+  #
+  #  describe SmallEdition do
+  #    it_should_behave_like "All Editions"
+  #  
+  #    it "should do small edition stuff" do
+  #      ...
+  #    end
+  #  end
   module Runner
     class << self
       def configuration # :nodoc:
@@ -151,6 +168,15 @@ module Spec
       #   Spec::Runner.configure do |config|
       #     config.mock_with MyMockFrameworkAdapter
       #   end
+      #
+      # You can also configure the following items:
+      #
+      #   # include SomeModule in every Behaviour
+      #   config.include SomeModule
+      #
+      #   # generate a do_something predicate_matcher for every Behaviour
+      #   # - See Spec::DSL::Behaviour#predicate_matchers
+      #   config.predicate_matchers[:does_something?] = :do_something
       def configure
         yield configuration
       end

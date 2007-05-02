@@ -1,10 +1,10 @@
 module Spec
   module DSL
-    class Describable
+    class Description
       attr_reader :description, :described_type
       
       def initialize(*args)
-        @options = args.last.is_a?(Hash) ? args.pop : {}
+        args, @options = args_and_options(*args)
         @described_type = args.first unless args.first.is_a?(String)
         @description = args.shift.to_s
         @description << args.shift.to_s unless args.empty?
@@ -17,6 +17,18 @@ module Spec
       def []=(key, value)
         @options[key] = value
       end
+      
+      def to_s; @description; end
+      
+      def ==(value)
+        case value
+        when Description
+          @description == value.description
+        else
+          @description == value
+        end
+      end
+
     end
   end
 end

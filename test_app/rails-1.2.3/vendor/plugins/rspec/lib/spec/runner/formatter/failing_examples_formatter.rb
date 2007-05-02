@@ -8,7 +8,13 @@ module Spec
       
         def example_failed(name, counter, failure)
           @output.puts "#{@behaviour_name} #{name}"
-          STDOUT.flush
+          @output.flush
+        end
+
+        def dump_failure(counter, failure)
+        end
+
+        def dump_summary(duration, example_count, failure_count)
         end
       end
     end
