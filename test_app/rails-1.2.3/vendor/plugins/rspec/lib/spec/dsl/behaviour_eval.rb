@@ -50,13 +50,13 @@ module Spec
         #   end
         #
         #   describe Fish do
-        #     predicate_matchers[:can_swim?] = :swim
+        #     predicate_matchers[:swim] = :can_swim?
         #     it "should swim" do
         #       Fish.new.should swim
         #     end
         #   end
         def predicate_matchers
-          @predicate_matchers ||= {:exist? => :exist}
+          @predicate_matchers ||= {:exist => :exist?}
         end
         
         def define_predicate_matchers(hash=nil) # :nodoc:
@@ -64,7 +64,7 @@ module Spec
             define_predicate_matchers(predicate_matchers)
             define_predicate_matchers(Spec::Runner.configuration.predicate_matchers)
           else
-            hash.each_pair do |method_on_object, matcher_method|
+            hash.each_pair do |matcher_method, method_on_object|
               define_method matcher_method do |*args|
                 eval("be_#{method_on_object.to_s.gsub('?','')}(*args)")
               end
@@ -111,7 +111,6 @@ module Spec
 
         def before_each_proc(&error_handler)
           parts = []
-          add_superclass_method(parts, 'setup')
           parts.push(*Behaviour.before_each_parts)
           parts.push(*before_each_parts)
           CompositeProcBuilder.new(parts).proc(&error_handler)
@@ -120,7 +119,6 @@ module Spec
         def after_each_proc(&error_handler)
           parts = []
           parts.push(*after_each_parts)
-          add_superclass_method(parts, 'teardown')
           parts.push(*Behaviour.after_each_parts)
           CompositeProcBuilder.new(parts).proc(&error_handler)
         end
@@ -137,6 +135,8 @@ module Spec
 
         def derive_execution_context_class_from_behaviour_superclass
           @execution_context_class = Class.new(behaviour_superclass)
+          behaviour_superclass.spec_inherited(self) if behaviour_superclass.respond_to?(:spec_inherited)
+          @execution_context_class
         end
 
         def behaviour_superclass

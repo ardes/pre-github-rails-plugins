@@ -18,7 +18,11 @@ module Spec
         @options.backtrace_tweaker.class.should == QuietBacktraceTweaker
       end
 
-      it "diff= sets context_lines" do
+      it "defaults to no dry_run" do
+        @options.dry_run.should == false
+      end
+
+      it "parse_diff sets context_lines" do
         @options.parse_diff nil, @out_stream, @error_stream
         @options.context_lines.should == 3
       end
@@ -70,6 +74,69 @@ module Spec
           "Madam, if you were my wife, I would drink it."
         ])
       end
-    end    
+    end
+
+    describe "Options", "receiving create_behaviour_runner" do
+      before do
+        @options = Options.new
+      end
+
+      it "returns nil when generate is true" do
+        @options.generate = true
+        @options.create_behaviour_runner.should == nil
+      end
+
+      it "returns a BehaviourRunner by default" do
+        runner = @options.create_behaviour_runner
+        runner.class.should == BehaviourRunner
+      end
+
+      it "returns a custom runner when runner_type is set" do
+        runner_type = Class.new do
+          attr_reader :options
+          def initialize(options)
+            @options = options
+          end
+        end
+        @options.runner_type = runner_type
+
+        runner = @options.create_behaviour_runner
+        runner.class.should == runner_type
+        runner.options.should === @options
+      end
+
+      it "does not set Expectations differ when differ_class is not set" do
+        @options.differ_class = nil
+        Spec::Expectations.should_not_receive(:differ=)
+        @options.create_behaviour_runner
+      end
+
+      it "sets Expectations differ when differ_class is set" do
+        @options.differ_class = Spec::Expectations::Differs::Default
+        Spec::Expectations.should_receive(:differ=).with(:anything).and_return do |arg|
+          arg.class.should == Spec::Expectations::Differs::Default
+        end
+        @options.create_behaviour_runner
+      end
+
+      it "creates a Reporter" do
+        formatter = ::Spec::Runner::Formatter::BaseFormatter.new(:somewhere)
+        @options.formatters << formatter
+        reporter = Reporter.new(@formatters, @backtrace_tweaker)
+        Reporter.should_receive(:new).with(@options.formatters, @options.backtrace_tweaker).and_return(reporter)
+        @options.create_behaviour_runner
+        @options.reporter.should === reporter
+      end
+
+      it "sets colour and dry_run on the formatters" do
+        @options.colour = true
+        @options.dry_run = true
+        formatter = ::Spec::Runner::Formatter::BaseTextFormatter.new(:somewhere)
+        formatter.should_receive(:colour=).with(true)
+        formatter.should_receive(:dry_run=).with(true)
+        @options.formatters << formatter
+        @options.create_behaviour_runner
+      end
+    end
   end
 end

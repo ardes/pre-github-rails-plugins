@@ -206,9 +206,13 @@ module Spec
         before_all_run_count_run_count.should == 1
       end
 
-      it "should run superclass setup method and before block" do
+      it "calls spec_inherited class method" do
         super_class_before_ran = false
         super_class = Class.new do
+          def self.spec_inherited(mod)
+            mod.before {setup}
+          end
+
           define_method :setup do
             super_class_before_ran = true
           end
@@ -261,12 +265,22 @@ module Spec
         end
         @behaviour.inherit super_class
 
+        Behaviour.prepend_before(:all) { fiddle << "Behaviour.prepend_before(:all)" }
         Behaviour.before(:all) { fiddle << "Behaviour.before(:all)" }
+        @behaviour.prepend_before(:all) { fiddle << "prepend_before(:all)" }
         @behaviour.before(:all) { fiddle << "before(:all)" }
+        @behaviour.prepend_before(:each) { fiddle << "prepend_before(:each)" }
         @behaviour.before(:each) { fiddle << "before(:each)" }
         @behaviour.it("test") {true}
         @behaviour.run(@reporter)
-        fiddle.should == ['Behaviour.before(:all)', 'before(:all)', 'superclass setup', 'before(:each)']
+        fiddle.should == [
+          'Behaviour.prepend_before(:all)',
+          'Behaviour.before(:all)',
+          'prepend_before(:all)',
+          'before(:all)',
+          'prepend_before(:each)',
+          'before(:each)'
+        ]
       end
 
       it "after callbacks are ordered from local to global" do
@@ -281,12 +295,22 @@ module Spec
         end
         @behaviour.inherit super_class
 
-        @behaviour.after(:all) { fiddle << "after(:all)" }
-        Behaviour.after(:all) { fiddle << "Behaviour.after(:all)" }
         @behaviour.after(:each) { fiddle << "after(:each)" }
+        @behaviour.append_after(:each) { fiddle << "append_after(:each)" }
+        @behaviour.after(:all) { fiddle << "after(:all)" }
+        @behaviour.append_after(:all) { fiddle << "append_after(:all)" }
+        Behaviour.after(:all) { fiddle << "Behaviour.after(:all)" }
+        Behaviour.append_after(:all) { fiddle << "Behaviour.append_after(:all)" }
         @behaviour.it("test") {true}
         @behaviour.run(@reporter)
-        fiddle.should == ['after(:each)', 'superclass teardown', 'after(:all)', 'Behaviour.after(:all)']
+        fiddle.should == [
+          'after(:each)',
+          'append_after(:each)',
+          'after(:all)',
+          'append_after(:all)',
+          'Behaviour.after(:all)',
+          'Behaviour.append_after(:all)'
+        ]
       end
     
       it "should run superclass teardown method and after block" do
@@ -302,7 +326,7 @@ module Spec
         @behaviour.after {teardown_ran = true}
         @behaviour.it("test") {true}
         @behaviour.run(@reporter)
-        super_class_teardown_ran.should be_true
+        super_class_teardown_ran.should be_false
         teardown_ran.should be_true
         @reporter.rspec_verify
       end
@@ -460,7 +484,7 @@ module Spec
       
       it "should include any predicate_matchers included using configuration" do
         $included_predicate_matcher_found = false
-        Spec::Runner.configuration.predicate_matchers[:does_something?] = :do_something
+        Spec::Runner.configuration.predicate_matchers[:do_something] = :does_something?
         Behaviour.new('example') do
           it "should respond to do_something" do
             $included_predicate_matcher_found = respond_to?(:do_something)

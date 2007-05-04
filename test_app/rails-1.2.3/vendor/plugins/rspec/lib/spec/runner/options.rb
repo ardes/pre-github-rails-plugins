@@ -42,6 +42,29 @@ module Spec
         @examples = []
         @formatters = []
         @colour = false
+        @dry_run = false
+      end
+
+      def create_behaviour_runner
+        @formatters.each do |formatter|
+          formatter.colour = @colour if formatter.respond_to?(:colour=)
+          formatter.dry_run = @dry_run if formatter.respond_to?(:dry_run=)
+        end
+        @reporter = Reporter.new(@formatters, @backtrace_tweaker)
+
+        # this doesn't really belong here.
+        # it should, but the way things are coupled, it doesn't
+        if @differ_class
+          Spec::Expectations.differ = @differ_class.new(@diff_format, @context_lines, @colour)
+        end
+
+        return nil if @generate
+
+        if @runner_type
+          @runner_type.new(self)
+        else
+          BehaviourRunner.new(self)
+        end
       end
 
       def parse_diff(format, out_stream, error_stream)
@@ -74,10 +97,6 @@ module Spec
         else
           @examples = [example]
         end
-      end
-
-      def parse_line(line_number)
-        @line_number = line_number.to_i
       end
 
       def parse_format(format, out_stream, error_stream)
