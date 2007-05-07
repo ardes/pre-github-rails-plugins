@@ -12,10 +12,18 @@ database only when the cached version is not present.
 * {RCov Report}[link:coverage/index.html] is the rcov report
 
 === Dependencies
+
+==== Plugin
+* none
+
+==== Testing
+
 * <tt>RCov</tt>               To install do: <tt>gem install rcov</tt>
 * <tt>RSpec</tt>              To install do: <tt>gem install rspec</tt>
 * <tt>rspec rails plugin</tt> see http://rspec.rubyforge.org/documentation/rails/install.html
 
 === Testing
 RSpec is used for testing, so the tests are in <tt>spec/</tt> rather than
-<tt>test/</tt> Do rake --tasks for more details
+<tt>test/</tt> Do rake --tasks for more details.
+
+Can be run from RAILS_ROOT with spec:plugins

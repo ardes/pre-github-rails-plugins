@@ -1,4 +1,4 @@
-module Ardes
+module Ardes#:nodoc:
   module CachedDbFile
     def self.included(base)
       base.class_eval do
@@ -6,8 +6,8 @@ module Ardes
         self.cached_db_file_root = File.expand_path("#{RAILS_ROOT}/public")
         self.cached_db_file_path = name.underscore.pluralize
         
-        Object.const_set(:DbFile, Class.new(ActiveRecord::Base)) unless Object.const_defined?(:DbFile)
-        base.belongs_to  :db_file, :class_name => '::DbFile', :foreign_key => 'db_file_id'
+        db_file_class = (DbFile rescue Object.const_set(:DbFile, Class.new(ActiveRecord::Base)))
+        base.belongs_to  :db_file, :class_name => db_file_class.name, :foreign_key => 'db_file_id'
 
         validates_presence_of :filename
         validates_presence_of :db_file, :on => :create
