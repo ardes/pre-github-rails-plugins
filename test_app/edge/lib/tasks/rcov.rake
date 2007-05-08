@@ -13,7 +13,7 @@ namespace :plugins do
     t.rcov        = true
     t.rcov_dir    = 'doc/coverage'
     include_files = FileList['vendor/plugins/*/lib'].exclude('vendor/plugins/rspec*')
-    t.rcov_opts   = ['--include-file', include_files.join(','), '--exclude', '^app\/', '--rails']
+    t.rcov_opts   = ['--text-report', '--include-file', include_files.join(','), '--exclude', '^app\/', '--rails']
   end
 
   namespace :rcov do
