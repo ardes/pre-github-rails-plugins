@@ -24,7 +24,7 @@ module CachedDbFileSpec
   class CachedDbFile < ActiveRecord::Base
     self.table_name = 'cached_db_file_spec_cached_db_files'
     include Ardes::CachedDbFile
-    self.cached_db_file_root = File.expand_path(File.join(File.dirname(__FILE__), 'public'))
+    self.cached_db_file_root = File.expand_path(File.join(File.dirname(__FILE__), 'fixtures/public'))
 
     class<<self
       def remove_cache
