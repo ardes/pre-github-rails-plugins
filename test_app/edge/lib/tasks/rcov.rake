@@ -9,7 +9,7 @@ require 'spec/rake/verify_rcov'
 namespace :plugins do  
   desc "Generate RCov report for all plugins"
   Spec::Rake::SpecTask.new(:rcov) do |t|
-    t.spec_files  = FileList['vendor/plugins/**/spec/**/*_spec.rb'].exclude('vendor/plugins/rspec*')
+    t.spec_files  = FileList['vendor/plugins/*/spec/**/*_spec.rb'].exclude('vendor/plugins/rspec*')
     t.rcov        = true
     t.rcov_dir    = 'doc/coverage'
     include_files = FileList['vendor/plugins/*/lib'].exclude('vendor/plugins/rspec*')
