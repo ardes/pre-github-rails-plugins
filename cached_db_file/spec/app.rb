@@ -1,6 +1,8 @@
 ## APP SETUP
 
-ActiveRecord::Migration.suppress_messages do
+puts 'here'
+
+#ActiveRecord::Migration.suppress_messages do
   ActiveRecord::Schema.define(:version => 0) do
     create_table :cached_db_file_spec_db_files, :force => true do |t|
       t.column "data", :binary
@@ -12,15 +14,17 @@ ActiveRecord::Migration.suppress_messages do
       t.column "updated_at", :datetime
     end
   end
-end
+#end
 
 require 'ardes/cached_db_file'
 
 module CachedDbFileSpec  
   class DbFile < ActiveRecord::Base
+    self.table_name = 'cached_db_file_spec_db_files'
   end
   
   class CachedDbFile < ActiveRecord::Base
+    self.table_name = 'cached_db_file_spec_cached_db_files'
     include Ardes::CachedDbFile
     self.cached_db_file_root = File.expand_path(File.join(File.dirname(__FILE__), 'public'))
 
