@@ -1,0 +1,10 @@
+<%= file = File.join(RAILS_ROOT, "config", "connect.yml")
+    IO.read(file) %>
+
+test:
+  <<: *local
+  database: ardes_plugins_rails-1_2_3
+  
+development:
+  <<: *local
+  database: ardes_plugins_rails-1_2_3
