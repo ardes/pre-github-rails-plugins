@@ -1,9 +1,7 @@
 #! /usr/bin/env ruby
 #
-# This script simply does 'svn update' to make sure externals are updated
-# and runs 'rake cruise' in each target path
+# runs 'rake cruise' in each target path
 #
-`svn update`
 
 targets = Dir[File.expand_path(File.join(File.dirname(__FILE__), '*'))].select{|f| File.directory?(f)}
 
