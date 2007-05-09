@@ -1,9 +1,12 @@
 = RSpec Changelog
 
 == Version 0.9.4
+* Fixed [#10669] Kernel#describe override does not cover Kernel#context
 * Applied [#10636] Added spec for OptionParser in Runner (Patch from Scott Taylor)
 * Added [#10516] should_include should be able to accept multiple items
 * Applied [#10631] redirect_to matcher doesn't respect request.host (Patch from Tim Lucas)
+* Each formatter now flushes their own IO. This is to avoid buffering of output.
+* Fixed [#10670] IVarProxy#delete raises exception when instance variable does not exist
 
 == Version 0.9.3
 This is a bugfix release.
