@@ -32,6 +32,6 @@ namespace :gems do
 
   task :unfreeze do
     raise "No gem specified, specify one with GEM=gem_name" unless gem_name = ENV['GEM']
-    Dir["vendor/gems/**/#{gem_name}-*"].each { |d| rm_rf d }
+    Dir["vendor/gems/*/#{gem_name}-*"].each { |d| rm_rf d }
   end
 end

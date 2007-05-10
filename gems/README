@@ -1,0 +1,18 @@
+= gems
+
+Adapted from technoweenies freeze gems plugin.  This version adds two features:
+  (1) gems are unpacked into vendor/gems to make clear what they are
+  (2) it's possible to have multiple versions of gems with architecture dependent features
+
+== Usage
+  
+  rake gems:freeze GEM=gemname [VERSION=version] [ARCH=detect|archname] [TO=dirname]
+
+Running the above task will unpack the named gem into RAILS_ROOT/vendor/gems/ARCH/
+
+If ARCH is unspecified, and the gem has no extensions, the gem will be unpacked into gems/ruby
+If ARCH is unspecified, and the gem has extensions, ARCH will be detected and the gem will be unpacked into gems/ARCH.  
+
+The init.rb file loads gems from gems/ARCH and then gems/ruby.
+
+  rake gems:unfreeze GEM=gemname will remove the named gem from all ARCHS
