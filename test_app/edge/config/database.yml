@@ -3,8 +3,8 @@
 
 test:
   <<: *local
-  database: ardes_plugins_rails-1_2_3
+  database: test_app_edge
   
 development:
   <<: *local
-  database: ardes_plugins_rails-1_2_3
+  database: test_app_edge
