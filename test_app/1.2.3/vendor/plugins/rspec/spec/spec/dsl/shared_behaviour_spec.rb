@@ -6,7 +6,7 @@ module Spec
       
       before do
         @formatter = Spec::Mocks::Mock.new("formatter", :null_object => true)
-        @behaviour = behaviour_class.new("context") {}
+        @behaviour = behaviour_class.new("behaviour") {}
       end
 
       after do
@@ -66,9 +66,15 @@ module Spec
         shared_behaviour.number_of_examples.should == 1
       end
 
-      it "should complain when adding a shared behaviour with the same description" do
+      it "should complain when adding a second shared behaviour with the same description" do
         make_shared_behaviour("shared behaviour", :shared => true) {}
         lambda { make_shared_behaviour("shared behaviour", :shared => true) {} }.should raise_error(ArgumentError)
+      end
+
+      it "should NOT complain when adding a the same shared behaviour again (i.e. file gets reloaded)" do
+        behaviour = behaviour_class.new("shared behaviour", :shared => true) {}
+        behaviour_class.add_shared_behaviour(behaviour)
+        behaviour_class.add_shared_behaviour(behaviour)
       end
 
       it "should add examples to current behaviour when calling it_should_behave_like" do
@@ -165,6 +171,22 @@ module Spec
         @behaviour.run(@formatter)
         mod1_method_called.should be_true
         mod2_method_called.should be_true
+      end
+      
+      it "should make methods defined in the shared behaviour available in consuming behaviour" do
+        shared_behaviour = make_shared_behaviour("shared behaviour xyz", :shared => true) do
+          def a_shared_helper_method
+            "this got defined in a shared behaviour"
+          end
+        end
+        @behaviour.it_should_behave_like("shared behaviour xyz")
+        success = false
+        @behaviour.it("should access a_shared_helper_method") do
+          a_shared_helper_method
+          success = true
+        end
+        @behaviour.run(@formatter)
+        success.should be_true
       end
 
       it "should error if told to inherit from a class" do

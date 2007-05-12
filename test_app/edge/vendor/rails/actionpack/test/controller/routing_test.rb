@@ -207,7 +207,7 @@ class LegacyRouteSetTests < Test::Unit::TestCase
   def setup_for_named_route
     x = Class.new
     x.send(:define_method, :url_for) {|x| x}
-    rs.named_routes.install(x)
+    rs.install_helpers(x)
     x
   end
 
@@ -923,6 +923,11 @@ class RouteTest < Test::Unit::TestCase
     o = {:controller => 'accounts', :action => 'list_all'}
     assert_equal '/accounts/list_all', default_route.generate(o, o, {})
   end
+  
+  def test_default_route_should_escape_pluses_in_id
+    expected = {:controller => 'accounts', :action => 'show', :id => 'hello world'}
+    assert_equal expected, default_route.recognize('/accounts/show/hello+world')
+  end
 
   def test_matches_controller_and_action
     # requirement_for should only be called for the action and controller _once_
@@ -1417,7 +1422,7 @@ class RouteSetTest < Test::Unit::TestCase
     end
 
     klass = Class.new(MockController)
-    set.named_routes.install(klass)
+    set.install_helpers(klass)
     klass.new(set)
   end
 
@@ -1883,6 +1888,16 @@ class RoutingTest < Test::Unit::TestCase
     load_paths = %w(. config\\..\\app\\controllers config\\..\\app\\\\helpers script\\..\\config\\..\\vendor\\rails\\actionpack\\lib vendor\\rails\\railties\\builtin\\rails_info app\\models lib script\\..\\config\\..\\foo\\bar\\..\\..\\app\\models)
     paths = ActionController::Routing.normalize_paths(load_paths)
     assert_equal %w(vendor\\rails\\railties\\builtin\\rails_info vendor\\rails\\actionpack\\lib app\\controllers app\\helpers app\\models lib .), paths
+  end
+  
+  def test_routing_helper_module
+    assert_kind_of Module, ActionController::Routing::Helpers
+    
+    h = ActionController::Routing::Helpers
+    c = Class.new
+    assert ! c.ancestors.include?(h)
+    ActionController::Routing::Routes.install_helpers c
+    assert c.ancestors.include?(h)
   end
   
 end
