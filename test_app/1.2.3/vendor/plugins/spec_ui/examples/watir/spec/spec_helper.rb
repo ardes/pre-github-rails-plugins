@@ -1,0 +1,24 @@
+# You don't need to tweak the $LOAD_PATH if you have RSpec and Spec::Ui installed as gems
+$LOAD_PATH.unshift(File.dirname(__FILE__) + '/../../../../rspec/lib')
+$LOAD_PATH.unshift(File.dirname(__FILE__) + '/../../../lib')
+
+require 'rubygems'
+require 'spec'
+require 'spec/ui'
+require 'spec/ui/watir'
+
+Spec::Runner.configure do |config|
+  config.include(Spec::Matchers::Watir) # This gives us Watir matchers
+  
+  config.before(:all) do
+    @browser = Watir::Browser.new
+  end
+  
+  config.after(:each) do
+    Spec::Ui::ScreenshotFormatter.browser = @browser
+  end
+
+  config.after(:all) do
+    @browser.kill! rescue nil
+  end
+end

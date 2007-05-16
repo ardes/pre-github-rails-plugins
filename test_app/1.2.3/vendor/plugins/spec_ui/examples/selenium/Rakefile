@@ -1,0 +1,17 @@
+# You don't need to tweak the $LOAD_PATH if you have RSpec and Spec::Ui installed as gems
+$LOAD_PATH.unshift(File.dirname(__FILE__) + '/../../../rspec/lib')
+
+require 'rubygems'
+require 'spec/rake/spectask'
+
+desc "Run Selenium Specs"
+Spec::Rake::SpecTask.new('spec:selenium') do |t|
+  t.spec_files = FileList['spec/google/**/*.rb']
+  # This line is not necessary if you have RSpec and Spec::Ui installed as gems
+  t.ruby_opts = ["-I#{File.dirname(__FILE__) + '/../../lib'}"]
+  t.spec_opts = [
+    '--require', 'rubygems,spec/ui', 
+    '--format', 'Spec::Ui::ScreenshotFormatter:spec_report.html',
+    '--format', 'progress'
+  ]
+end
