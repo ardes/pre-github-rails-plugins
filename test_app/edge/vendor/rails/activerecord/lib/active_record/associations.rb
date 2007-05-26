@@ -95,6 +95,12 @@ module ActiveRecord
     # * <tt>Project#categories.empty?, Project#categories.size, Project#categories, Project#categories<<(category1),</tt>
     #   <tt>Project#categories.delete(category1)</tt>
     #
+    # === A word of warning
+    #
+    # Don't create associations that have the same name as instance methods of ActiveRecord::Base. Since the association
+    # adds a method with that name to its model, it will override the inherited method and break things.
+    # For instance, #attributes and #connection would be bad choices for association names.
+    #
     # == Example
     #
     # link:files/examples/associations.png
@@ -416,7 +422,15 @@ module ActiveRecord
     #   for post in Post.find(:all, :include => [ :author, :comments ])
     #
     # That'll add another join along the lines of: LEFT OUTER JOIN comments ON comments.post_id = posts.id. And we'll be down to 1 query.
-    # But that shouldn't fool you to think that you can pull out huge amounts of data with no performance penalty just because you've reduced
+    #
+    # To include a deep hierarchy of associations, using a hash:
+    #
+    #   for post in Post.find(:all, :include => [ :author, { :comments => { :author => :gravatar } } ])
+    #
+    # That'll grab not only all the comments but all their authors and gravatar pictures.  You can mix and match
+    # symbols, arrays and hashes in any combination to describe the associations you want to load.
+    #
+    # All of this power shouldn't fool you into thinking that you can pull out huge amounts of data with no performance penalty just because you've reduced
     # the number of queries. The database still needs to send all the data to Active Record and it still needs to be processed. So it's no
     # catch-all for performance problems, but it's a great way to cut down on the number of queries in a situation as the one described above.
     # 
@@ -594,8 +608,8 @@ module ActiveRecord
       #   include the joined columns.
       # * <tt>:as</tt>: Specifies a polymorphic interface (See #belongs_to).
       # * <tt>:through</tt>: Specifies a Join Model to perform the query through.  Options for <tt>:class_name</tt> and <tt>:foreign_key</tt> 
-      #   are ignored, as the association uses the source reflection.  You can only use a <tt>:through</tt> query through a <tt>belongs_to</tt>
-      #   or <tt>has_many</tt> association.
+      #   are ignored, as the association uses the source reflection. You can only use a <tt>:through</tt> query through a <tt>belongs_to</tt>
+      #   or <tt>has_many</tt> association on the join model.
       # * <tt>:source</tt>: Specifies the source association name used by <tt>has_many :through</tt> queries.  Only use it if the name cannot be 
       #   inferred from the association.  <tt>has_many :subscribers, :through => :subscriptions</tt> will look for either +:subscribers+ or
       #   +:subscriber+ on +Subscription+, unless a +:source+ is given.
@@ -972,7 +986,7 @@ module ActiveRecord
 
           define_method("#{reflection.name}=") do |new_value|
             association = instance_variable_get("@#{reflection.name}")
-            if association.nil?
+            if association.nil? || association.target != new_value
               association = association_proxy_class.new(self, reflection)
             end
 
@@ -982,10 +996,7 @@ module ActiveRecord
               instance_variable_set("@#{reflection.name}", association)
             else
               instance_variable_set("@#{reflection.name}", nil)
-              return nil
             end
-
-            association
           end
 
           define_method("set_#{reflection.name}_target") do |target|
@@ -1115,10 +1126,11 @@ module ActiveRecord
           # delete children, otherwise foreign key is set to NULL.
 
           # Add polymorphic type if the :as option is present
-          dependent_conditions = %(#{reflection.primary_key_name} = \#{record.quoted_id})
-          if reflection.options[:as]
-            dependent_conditions += " AND #{reflection.options[:as]}_type = '#{base_class.name}'"
-          end
+          dependent_conditions = []
+          dependent_conditions << "#{reflection.primary_key_name} = \#{record.quoted_id}"
+          dependent_conditions << "#{reflection.options[:as]}_type = '#{base_class.name}'" if reflection.options[:as]
+          dependent_conditions << sanitize_sql(reflection.options[:conditions]) if reflection.options[:conditions]
+          dependent_conditions = dependent_conditions.collect {|where| "(#{where})" }.join(" AND ")
 
           case reflection.options[:dependent]
             when :destroy, true

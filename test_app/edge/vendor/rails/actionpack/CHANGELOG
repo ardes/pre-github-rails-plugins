@@ -1,5 +1,52 @@
 *SVN*
 
+* Add support for assert_select_rjs with :show and :hide. #7780 [dchelimsky]
+
+* Make assert_select's failure messages clearer about what failed. #7779 [dchelimsky]
+
+* Introduce a default respond_to block for custom types.  #8174 [Josh Peek]
+
+* auto_complete_field takes a :method option so you can GET or POST.  #8120 [zapnap]
+
+* Added option to suppress :size when using :maxlength for FormTagHelper#text_field #3112 [rails@tpope.info]
+
+* catch possible WSOD when trying to render a missing partial. Closes #8454 [Catfish]
+
+* Rewind request body after reading it, if possible.  #8438 [s450r1]
+
+* Resource namespaces are inherited by their has_many subresources.  #8280 [marclove, ggarside]
+
+* Fix filtered parameter logging with nil parameter values.  #8422 [choonkeat]
+
+* Integration tests: alias xhr to xml_http_request and add a request_method argument instead of always using POST.  #7124 [Nik Wakelin, Francois Beausoleil, Wizard]
+
+* Document caches_action.  #5419 [Jarkko Laine]
+
+* Update to Prototype 1.5.1.  [Sam Stephenson]
+
+* Allow routes to be decalred under namespaces [Tobias Luetke]: 
+  
+  map.namespace :admin do |admin|
+    admin.root :controller => "products"       
+    admin.feed 'feed.xml', :controller => 'products', :action => 'feed', :format => 'xml'
+  end
+  
+* Update to script.aculo.us 1.7.1_beta3.  [Thomas Fuchs]
+
+* observe_form always sends the serialized form.  #5271 [manfred, normelton@gmail.com]
+
+* Parse url-encoded and multipart requests ourselves instead of delegating to CGI.  [Jeremy Kemper]
+
+* select :include_blank option can be set to a string instead of true, which just uses an empty string.  #7664 [Wizard]
+
+* Added url_for usage on render :location, which allows for record identification [DHH]. Example:
+
+    render :xml => person, :status => :created, :location => person
+  
+  ...expands the location to person_url(person).
+
+* Introduce the request.body stream. Lazy-read to parse parameters rather than always setting RAW_POST_DATA. Reduces the memory footprint of large binary PUT requests.  [Jeremy Kemper]
+
 * Add some performance enhancements to ActionView.
 
   * Cache base_paths in @@cached_base_paths

@@ -1,6 +1,13 @@
 require File.dirname(__FILE__) + '/../abstract_unit'
 
-silence_warnings { Customer = Struct.new("Customer", :name) }
+class Customer < Struct.new(:name, :id)
+  def to_param
+    id.to_s
+  end
+end
+
+class CustomersController < ActionController::Base
+end
 
 module Fun
   class GamesController < ActionController::Base
@@ -156,6 +163,10 @@ class NewRenderTestController < ActionController::Base
     render :partial => "customer"
   end
   
+  def missing_partial
+    render :partial => 'thisFileIsntHere'
+  end
+  
   def hello_in_a_string
     @customers = [ Customer.new("david"), Customer.new("mary") ]
     render :text =>  "How's there? #{render_to_string("test/list")}"
@@ -260,6 +271,11 @@ class NewRenderTestController < ActionController::Base
 
   def render_with_location
     render :xml => "<hello/>", :location => "http://example.com", :status => 201
+  end
+  
+  def render_with_object_location
+    customer = Customer.new("Some guy", 1)
+    render :xml => "<customer/>", :location => customer_url(customer), :status => :created
   end
 
   def render_with_to_xml
@@ -670,6 +686,12 @@ EOS
     assert_equal "Hello: Marcel", @response.body
   end
   
+  def test_render_missing_partial_template
+    assert_raises(ActionView::ActionViewError) do
+      get :missing_partial
+    end
+  end
+  
   def test_render_text_with_assigns
     get :render_text_with_assigns
     assert_equal "world", assigns["hello"]
@@ -765,5 +787,15 @@ EOS
   def test_rendering_xml_should_call_to_xml_if_possible
     get :render_with_to_xml
     assert_equal "<i-am-xml/>", @response.body
+  end
+  
+  def test_rendering_with_object_location_should_set_header_with_url_for
+    ActionController::Routing::Routes.draw do |map|
+      map.resources :customers
+      map.connect ':controller/:action/:id'
+    end
+
+    get :render_with_object_location
+    assert_equal "http://www.nextangle.com/customers/1", @response.headers["Location"]
   end
 end

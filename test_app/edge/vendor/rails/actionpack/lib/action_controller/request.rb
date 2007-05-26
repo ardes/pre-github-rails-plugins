@@ -1,24 +1,31 @@
+require 'tempfile'
+require 'stringio'
+require 'strscan'
+
 module ActionController
-  # Subclassing AbstractRequest makes these methods available to the request objects used in production and testing,
-  # CgiRequest and TestRequest
+  # CgiRequest and TestRequest provide concrete implementations.
   class AbstractRequest
     cattr_accessor :relative_url_root
     remove_method :relative_url_root
 
-    # Returns the hash of environment variables for this request,
+    # The hash of environment variables for this request,
     # such as { 'RAILS_ENV' => 'production' }.
     attr_reader :env
 
-    attr_accessor :format
+    # The requested content type, such as :html or :xml.
+    attr_writer :format
 
-    # Returns the HTTP request method as a lowercase symbol (:get, for example). Note, HEAD is returned as :get
-    # since the two are supposedly to be functionaly equivilent for all purposes except that HEAD won't return a response
-    # body (which Rails also takes care of elsewhere).
+    # The HTTP request method as a lowercase symbol, such as :get.
+    # Note, HEAD is returned as :get since the two are functionally
+    # equivalent from the application's perspective.
     def method
-      @request_method ||= (!parameters[:_method].blank? && @env['REQUEST_METHOD'] == 'POST') ?
-        parameters[:_method].to_s.downcase.to_sym :
-        @env['REQUEST_METHOD'].downcase.to_sym
-      
+      @request_method ||=
+        if @env['REQUEST_METHOD'] == 'POST' && !parameters[:_method].blank?
+          parameters[:_method].to_s.downcase.to_sym
+        else
+          @env['REQUEST_METHOD'].downcase.to_sym
+        end
+
       @request_method == :head ? :get : @request_method
     end
 
@@ -42,8 +49,8 @@ module ActionController
       method == :delete
     end
 
-    # Is this a HEAD request?  HEAD is mapped as :get for request.method, so here we ask the 
-    # REQUEST_METHOD header directly. Thus, for head, both get? and head? will return true.
+    # Is this a HEAD request? request.method sees HEAD as :get, so check the
+    # HTTP method directly.
     def head?
       @env['REQUEST_METHOD'].downcase.to_sym == :head
     end
@@ -52,28 +59,18 @@ module ActionController
       @env
     end
 
-    # Determine whether the body of a HTTP call is URL-encoded (default)
-    # or matches one of the registered param_parsers. 
+    def content_length
+      @content_length ||= env['CONTENT_LENGTH'].to_i
+    end
+
+    # The MIME type of the HTTP request, such as Mime::XML.
     #
     # For backward compatibility, the post format is extracted from the
     # X-Post-Data-Format HTTP header if present.
     def content_type
       @content_type ||=
-        begin
-          # Receive header sans any charset information.
-          content_type = @env['CONTENT_TYPE'].to_s.sub(/\s*\;.*$/, '').strip.downcase
-
-          if x_post_format = @env['HTTP_X_POST_DATA_FORMAT']
-            case x_post_format.to_s.downcase
-            when 'yaml'
-              content_type = Mime::YAML.to_s
-            when 'xml'
-              content_type = Mime::XML.to_s
-            end
-          end
-
-          Mime::Type.lookup(content_type)
-        end
+        content_type_from_legacy_post_data_format_header ||
+        Mime::Type.lookup(content_type_without_parameters)
     end
 
     # Returns the accepted MIME type for the request
@@ -234,11 +231,14 @@ module ActionController
     end
 
 
-    # Receive the raw post data.
-    # This is useful for services such as REST, XMLRPC and SOAP
-    # which communicate over HTTP POST but don't use the traditional parameter format.
+    # Read the request body. This is useful for web services that need to
+    # work with raw requests directly.
     def raw_post
-      @env['RAW_POST_DATA']
+      unless env.include? 'RAW_POST_DATA'
+        env['RAW_POST_DATA'] = body.read(content_length)
+        body.rewind if body.respond_to?(:rewind)
+      end
+      env['RAW_POST_DATA']
     end
 
     # Returns both GET and POST parameters in a single hash.
@@ -269,6 +269,11 @@ module ActionController
     #--
     # Must be implemented in the concrete request
     #++
+
+    # The request body is an IO input stream.
+    def body
+    end
+
     def query_parameters #:nodoc:
     end
 
@@ -287,5 +292,372 @@ module ActionController
 
     def reset_session #:nodoc:
     end
+
+    protected
+      # The raw content type string. Use when you need parameters such as
+      # charset or boundary which aren't included in the content_type MIME type.
+      def content_type_with_parameters
+        env['CONTENT_TYPE'].to_s
+      end
+
+      # The raw content type string with its parameters stripped off.
+      def content_type_without_parameters
+        @content_type_without_parameters ||= self.class.extract_content_type_without_parameters(content_type_with_parameters)
+      end
+
+    private
+      def content_type_from_legacy_post_data_format_header
+        if x_post_format = @env['HTTP_X_POST_DATA_FORMAT']
+          case x_post_format.to_s.downcase
+            when 'yaml';  Mime::YAML
+            when 'xml';   Mime::XML
+          end
+        end
+      end
+
+      def parse_formatted_request_parameters
+        return {} if content_length.zero?
+
+        content_type, boundary = self.class.extract_multipart_boundary(content_type_with_parameters)
+        return {} if content_type.blank?
+
+        mime_type = Mime::Type.lookup(content_type)
+        strategy = ActionController::Base.param_parsers[mime_type]
+
+        # Only multipart form parsing expects a stream.
+        body = (strategy && strategy != :multipart_form) ? raw_post : self.body
+
+        case strategy
+          when Proc
+            strategy.call(body)
+          when :url_encoded_form
+            self.class.clean_up_ajax_request_body! body
+            self.class.parse_query_parameters(body)
+          when :multipart_form
+            self.class.parse_multipart_form_parameters(body, boundary, content_length, env)
+          when :xml_simple, :xml_node
+            body.blank? ? {} : Hash.from_xml(body).with_indifferent_access
+          when :yaml
+            YAML.load(body)
+          else
+            {}
+        end
+      rescue Exception => e # YAML, XML or Ruby code block errors
+        raise
+        { "body" => body,
+          "content_type" => content_type_with_parameters,
+          "content_length" => content_length,
+          "exception" => "#{e.message} (#{e.class})",
+          "backtrace" => e.backtrace }
+      end
+
+    class << self
+      def parse_query_parameters(query_string)
+        return {} if query_string.blank?
+
+        pairs = query_string.split('&').collect do |chunk|
+          next if chunk.empty?
+          key, value = chunk.split('=', 2)
+          next if key.empty?
+          value = value.nil? ? nil : CGI.unescape(value)
+          [ CGI.unescape(key), value ]
+        end.compact
+
+        UrlEncodedPairParser.new(pairs).result
+      end
+
+      def parse_request_parameters(params)
+        parser = UrlEncodedPairParser.new
+
+        params = params.dup
+        until params.empty?
+          for key, value in params
+            if key.blank?
+              params.delete key
+            elsif !key.include?('[')
+              # much faster to test for the most common case first (GET)
+              # and avoid the call to build_deep_hash
+              parser.result[key] = get_typed_value(value[0])
+              params.delete key
+            elsif value.is_a?(Array)
+              parser.parse(key, get_typed_value(value.shift))
+              params.delete key if value.empty?
+            else
+              raise TypeError, "Expected array, found #{value.inspect}"
+            end
+          end
+        end
+
+        parser.result
+      end
+
+      def parse_multipart_form_parameters(body, boundary, content_length, env)
+        parse_request_parameters(read_multipart(body, boundary, content_length, env))
+      end
+
+      def extract_multipart_boundary(content_type_with_parameters)
+        if content_type_with_parameters =~ MULTIPART_BOUNDARY
+          ['multipart/form-data', $1.dup]
+        else
+          extract_content_type_without_parameters(content_type_with_parameters)
+        end
+      end
+
+      def extract_content_type_without_parameters(content_type_with_parameters)
+        $1.strip.downcase if content_type_with_parameters =~ /^([^,\;]*)/
+      end
+
+      def clean_up_ajax_request_body!(body)
+        body.chop! if body[-1] == 0
+        body.gsub!(/&_=$/, '')
+      end
+
+
+      private
+        def get_typed_value(value)
+          case value
+            when String
+              value
+            when NilClass
+              ''
+            when Array
+              value.map { |v| get_typed_value(v) }
+            else
+              # Uploaded file provides content type and filename.
+              if value.respond_to?(:content_type) &&
+                    !value.content_type.blank? &&
+                    !value.original_filename.blank?
+                unless value.respond_to?(:full_original_filename)
+                  class << value
+                    alias_method :full_original_filename, :original_filename
+
+                    # Take the basename of the upload's original filename.
+                    # This handles the full Windows paths given by Internet Explorer
+                    # (and perhaps other broken user agents) without affecting
+                    # those which give the lone filename.
+                    # The Windows regexp is adapted from Perl's File::Basename.
+                    def original_filename
+                      if md = /^(?:.*[:\\\/])?(.*)/m.match(full_original_filename)
+                        md.captures.first
+                      else
+                        File.basename full_original_filename
+                      end
+                    end
+                  end
+                end
+
+                # Return the same value after overriding original_filename.
+                value
+
+              # Multipart values may have content type, but no filename.
+              elsif value.respond_to?(:read)
+                result = value.read
+                value.rewind
+                result
+
+              # Unknown value, neither string nor multipart.
+              else
+                raise "Unknown form value: #{value.inspect}"
+              end
+          end
+        end
+
+
+        MULTIPART_BOUNDARY = %r|\Amultipart/form-data.*boundary=\"?([^\";,]+)\"?|n
+
+        EOL = "\015\012"
+
+        def read_multipart(body, boundary, content_length, env)
+          params = Hash.new([])
+          boundary = "--" + boundary
+          quoted_boundary = Regexp.quote(boundary, "n")
+          buf = ""
+          bufsize = 10 * 1024
+          boundary_end=""
+
+          # start multipart/form-data
+          body.binmode if defined? body.binmode
+          boundary_size = boundary.size + EOL.size
+          content_length -= boundary_size
+          status = body.read(boundary_size)
+          if nil == status
+            raise EOFError, "no content body"
+          elsif boundary + EOL != status
+            raise EOFError, "bad content body"
+          end
+
+          loop do
+            head = nil
+            content =
+              if 10240 < content_length
+                Tempfile.new("CGI")
+              else
+                StringIO.new
+              end
+            content.binmode if defined? content.binmode
+
+            until head and /#{quoted_boundary}(?:#{EOL}|--)/n.match(buf)
+
+              if (not head) and /#{EOL}#{EOL}/n.match(buf)
+                buf = buf.sub(/\A((?:.|\n)*?#{EOL})#{EOL}/n) do
+                  head = $1.dup
+                  ""
+                end
+                next
+              end
+
+              if head and ( (EOL + boundary + EOL).size < buf.size )
+                content.print buf[0 ... (buf.size - (EOL + boundary + EOL).size)]
+                buf[0 ... (buf.size - (EOL + boundary + EOL).size)] = ""
+              end
+
+              c = if bufsize < content_length
+                    body.read(bufsize)
+                  else
+                    body.read(content_length)
+                  end
+              if c.nil? || c.empty?
+                raise EOFError, "bad content body"
+              end
+              buf.concat(c)
+              content_length -= c.size
+            end
+
+            buf = buf.sub(/\A((?:.|\n)*?)(?:[\r\n]{1,2})?#{quoted_boundary}([\r\n]{1,2}|--)/n) do
+              content.print $1
+              if "--" == $2
+                content_length = -1
+              end
+             boundary_end = $2.dup
+              ""
+            end
+
+            content.rewind
+
+            /Content-Disposition:.* filename=(?:"((?:\\.|[^\"])*)"|([^;]*))/ni.match(head)
+            filename = ($1 or $2 or "")
+            if /Mac/ni.match(env['HTTP_USER_AGENT']) and
+                /Mozilla/ni.match(env['HTTP_USER_AGENT']) and
+                (not /MSIE/ni.match(env['HTTP_USER_AGENT']))
+              filename = CGI.unescape(filename)
+            end
+
+            /Content-Type: (.*)/ni.match(head)
+            content_type = ($1 or "")
+
+            (class << content; self; end).class_eval do
+              alias local_path path
+              define_method(:original_filename) {filename.dup.taint}
+              define_method(:content_type) {content_type.dup.taint}
+            end
+
+            /Content-Disposition:.* name="?([^\";]*)"?/ni.match(head)
+            name = $1.dup
+
+            if params.has_key?(name)
+              params[name].push(content)
+            else
+              params[name] = [content]
+            end
+            break if buf.size == 0
+            break if content_length == -1
+          end
+          raise EOFError, "bad boundary end of body part" unless boundary_end=~/--/
+
+          params
+        end
+    end
+  end
+
+  class UrlEncodedPairParser < StringScanner #:nodoc:
+    attr_reader :top, :parent, :result
+
+    def initialize(pairs = [])
+      super('')
+      @result = {}
+      pairs.each { |key, value| parse(key, value) }
+    end
+
+    KEY_REGEXP = %r{([^\[\]=&]+)}
+    BRACKETED_KEY_REGEXP = %r{\[([^\[\]=&]+)\]}
+
+    # Parse the query string
+    def parse(key, value)
+      self.string = key
+      @top, @parent = result, nil
+
+      # First scan the bare key
+      key = scan(KEY_REGEXP) or return
+      key = post_key_check(key)
+
+      # Then scan as many nestings as present
+      until eos?
+        r = scan(BRACKETED_KEY_REGEXP) or return
+        key = self[1]
+        key = post_key_check(key)
+      end
+
+      bind(key, value)
+    end
+
+    private
+      # After we see a key, we must look ahead to determine our next action. Cases:
+      #
+      #   [] follows the key. Then the value must be an array.
+      #   = follows the key. (A value comes next)
+      #   & or the end of string follows the key. Then the key is a flag.
+      #   otherwise, a hash follows the key.
+      def post_key_check(key)
+        if scan(/\[\]/) # a[b][] indicates that b is an array
+          container(key, Array)
+          nil
+        elsif check(/\[[^\]]/) # a[b] indicates that a is a hash
+          container(key, Hash)
+          nil
+        else # End of key? We do nothing.
+          key
+        end
+      end
+
+      # Add a container to the stack.
+      def container(key, klass)
+        type_conflict! klass, top[key] if top.is_a?(Hash) && top.key?(key) && ! top[key].is_a?(klass)
+        value = bind(key, klass.new)
+        type_conflict! klass, value unless value.is_a?(klass)
+        push(value)
+      end
+
+      # Push a value onto the 'stack', which is actually only the top 2 items.
+      def push(value)
+        @parent, @top = @top, value
+      end
+
+      # Bind a key (which may be nil for items in an array) to the provided value.
+      def bind(key, value)
+        if top.is_a? Array
+          if key
+            if top[-1].is_a?(Hash) && ! top[-1].key?(key)
+              top[-1][key] = value
+            else
+              top << {key => value}.with_indifferent_access
+              push top.last
+            end
+          else
+            top << value
+          end
+        elsif top.is_a? Hash
+          key = CGI.unescape(key)
+          parent << (@top = {}) if top.key?(key) && parent.is_a?(Array)
+          return top[key] ||= value
+        else
+          raise ArgumentError, "Don't know what to do: top is #{top.inspect}"
+        end
+
+        return value
+      end
+
+      def type_conflict!(klass, value)
+        raise TypeError, "Conflicting types for parameter containers. Expected an instance of #{klass} but found an instance of #{value.class}. This can be caused by colliding Array and Hash parameters like qs[]=value&qs[key]=value."
+      end
   end
 end

@@ -1,5 +1,41 @@
 *SVN*
 
+* Oracle: support binary fixtures.  #7987 [Michael Schoen]
+
+* Fixtures: pull fixture insertion into the database adapters.  #7987 [Michael Schoen]
+
+* Announce migration versions as they're performed.  [Jeremy Kemper]
+
+* find gracefully copes with blank :conditions.  #7599 [Dan Manges, johnnyb]
+
+* validates_numericality_of takes :greater_than, :greater_than_or_equal_to, :equal_to, :less_than, :less_than_or_equal_to, :odd, and :even options.  #3952 [Bob Silva, Dan Kubb, Josh Peek]
+
+* MySQL: create_database takes :charset and :collation options. Charset defaults to utf8.  #8448 [matt]
+
+* Find with a list of ids supports limit/offset.  #8437 [hrudududu]
+
+* Optimistic locking: revert the lock version when an update fails.  #7840 [plang]
+
+* Migrations: add_column supports custom column types.  #7742 [jsgarvin, Theory]
+
+* Load database adapters on demand. Eliminates config.connection_adapters and RAILS_CONNECTION_ADAPTERS. Add your lib directory to the $LOAD_PATH and put your custom adapter in lib/active_record/connection_adapters/adaptername_adapter.rb. This way you can provide custom adapters as plugins or gems without modifying Rails. [Jeremy Kemper]
+
+* Ensure that associations with :dependent => :delete_all respect :conditions option.  Closes #8034 [danger, joshpeek, Rick]
+
+* belongs_to assignment creates a new proxy rather than modifying its target in-place.  #8412 [mmangino@elevatedrails.com]
+
+* Fix column type detection while loading fixtures.  Closes #7987 [roderickvd]
+
+* Document deep eager includes.  #6267 [Josh Susser, Dan Manges]
+
+* Document warning that associations names shouldn't be reserved words.  #4378 [murphy@cYcnus.de, Josh Susser]
+
+* Sanitize Base#inspect.  #8392 [Nik Wakelin]
+
+* Replace the transaction {|transaction|..} semantics with a new Exception ActiveRecord::Rollback.   [Koz]
+
+* Oracle: extract column length for CHAR also.  #7866 [ymendel]
+
 * Document :allow_nil option for validates_acceptance_of since it defaults to true. [tzaharia]
 
 * Update documentation for :dependent declaration so that it explicitly uses the non-deprecated API. [danger]

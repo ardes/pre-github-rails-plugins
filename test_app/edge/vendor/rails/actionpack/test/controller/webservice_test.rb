@@ -1,19 +1,15 @@
 require File.dirname(__FILE__) + '/../abstract_unit'
-require 'stringio'
 
 class WebServiceTest < Test::Unit::TestCase
-
   class MockCGI < CGI #:nodoc:
-    attr_accessor :stdinput, :stdoutput, :env_table
+    attr_accessor :stdoutput, :env_table
 
-    def initialize(env, data = '')      
+    def initialize(env, data = '')
       self.env_table = env
-      self.stdinput = StringIO.new(data)
       self.stdoutput = StringIO.new
-      super()
+      super(nil, StringIO.new(data))
     end
   end
-
 
   class TestController < ActionController::Base
     session :off
@@ -40,10 +36,13 @@ class WebServiceTest < Test::Unit::TestCase
   
   def setup
     @controller = TestController.new
-    ActionController::Base.param_parsers.clear
-    ActionController::Base.param_parsers[Mime::XML] = :xml_simple
+    @default_param_parsers = ActionController::Base.param_parsers.dup
   end
-  
+
+  def teardown
+    ActionController::Base.param_parsers = @default_param_parsers
+  end
+
   def test_check_parameters
     process('GET')
     assert_equal '', @controller.response.body

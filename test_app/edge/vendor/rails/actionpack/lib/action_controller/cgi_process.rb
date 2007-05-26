@@ -47,29 +47,32 @@ module ActionController #:nodoc:
     end
 
     def query_string
-      if (qs = @cgi.query_string) && !qs.empty?
+      qs = @cgi.query_string
+      if !qs.blank?
         qs
       elsif uri = @env['REQUEST_URI']
-        parts = uri.split('?')
-        parts.shift
-        parts.join('?')
+        uri.split('?', 2).last
       else
         @env['QUERY_STRING'] || ''
       end
     end
 
+    # The request body is an IO input stream. If the RAW_POST_DATA environment
+    # variable is already set, wrap it in a StringIO.
+    def body
+      if raw_post = env['RAW_POST_DATA']
+        StringIO.new(raw_post)
+      else
+        @cgi.stdinput
+      end
+    end
+
     def query_parameters
-      @query_parameters ||=
-        (qs = self.query_string).empty? ? {} : CGI.parse_query_parameters(qs)
+      @query_parameters ||= self.class.parse_query_parameters(query_string)
     end
 
     def request_parameters
-      @request_parameters ||=
-        if ActionController::Base.param_parsers.has_key?(content_type)
-          CGI.parse_formatted_request_parameters(content_type, @env['RAW_POST_DATA'])
-        else
-          CGI.parse_request_parameters(@cgi.params)
-        end
+      @request_parameters ||= parse_formatted_request_parameters
     end
 
     def cookies

@@ -34,7 +34,9 @@ module ActiveRecord #:nodoc:
   end
   class ReadOnlyRecord < StandardError #:nodoc:
   end
-  
+  class Rollback < StandardError #:nodoc:
+  end
+
   class AttributeAssignmentError < ActiveRecordError #:nodoc:
     attr_reader :exception, :attribute
     def initialize(message, exception, attribute)
@@ -372,7 +374,7 @@ module ActiveRecord #:nodoc:
       # * <tt>:order</tt>: An SQL fragment like "created_at DESC, name".
       # * <tt>:group</tt>: An attribute name by which the result should be grouped. Uses the GROUP BY SQL-clause.
       # * <tt>:limit</tt>: An integer determining the limit on the number of rows that should be returned.
-      # * <tt>:offset</tt>: An integer determining the offset from where the rows should be fetched. So at 5, it would skip the first 4 rows.
+      # * <tt>:offset</tt>: An integer determining the offset from where the rows should be fetched. So at 5, it would skip rows 0 through 4.
       # * <tt>:joins</tt>: An SQL fragment for additional joins like "LEFT JOIN comments ON comments.post_id = id". (Rarely needed).
       #   The records will be returned read-only since they will have attributes that do not correspond to the table's columns.
       #   Pass :readonly => false to override.
@@ -895,7 +897,7 @@ module ActiveRecord #:nodoc:
 
       # Returns a string looking like: #<Post id:integer, title:string, body:text>
       def inspect
-        "#<#{name} #{columns.collect { |c| "#{c.name}:#{c.type}" }.join(", ")}>"
+        "#<#{name} #{columns.collect { |c| "#{c.name}: #{c.type}" }.join(", ")}>"
       end
 
 
@@ -1115,10 +1117,21 @@ module ActiveRecord #:nodoc:
 
           result = find_every(options)
 
-          if result.size == ids.size
+          # If the user passes in a limit to find(), we need to check
+          # to see if the result is limited before just checking the
+          # size of the results.
+          expected_size =
+            if options[:limit] && ids.size > options[:limit]
+              options[:limit]
+            else
+              ids.size
+            end
+          expected_size -= options[:offset] if options[:offset]
+
+          if result.size == expected_size
             result
           else
-            raise RecordNotFound, "Couldn't find all #{name.pluralize} with IDs (#{ids_list})#{conditions}"
+            raise RecordNotFound, "Couldn't find all #{name.pluralize} with IDs (#{ids_list})#{conditions} (found #{result.size} results, but was looking for #{expected_size})"
           end
         end
 
@@ -1236,11 +1249,11 @@ module ActiveRecord #:nodoc:
         def add_conditions!(sql, conditions, scope = :auto)
           scope = scope(:find) if :auto == scope
           segments = []
-          segments << sanitize_sql(scope[:conditions]) if scope && scope[:conditions]
-          segments << sanitize_sql(conditions) unless conditions.nil?
+          segments << sanitize_sql(scope[:conditions]) if scope && !scope[:conditions].blank?
+          segments << sanitize_sql(conditions) unless conditions.blank?
           segments << type_condition unless descends_from_active_record?
           segments.compact!
-          sql << "WHERE (#{segments.join(") AND (")}) " unless segments.empty?
+          sql << "WHERE (#{segments.join(") AND (")}) " unless segments.all?(&:blank?)
         end
 
         def type_condition
@@ -1619,8 +1632,14 @@ module ActiveRecord #:nodoc:
       def id
         attr_name = self.class.primary_key
         column = column_for_attribute(attr_name)
-        define_read_method(:id, attr_name, column) if self.class.generate_read_methods
-        read_attribute(attr_name)
+        
+        if self.class.generate_read_methods
+          define_read_method(:id, attr_name, column)
+          # now that the method exists, call it
+          self.send attr_name.to_sym
+        else
+          read_attribute(attr_name)
+        end
       end
 
       # Enables Active Record objects to be used as URL parameters in Action Pack automatically.
@@ -1810,6 +1829,20 @@ module ActiveRecord #:nodoc:
         clone_attributes :read_attribute_before_type_cast
       end
 
+      # Format attributes nicely for inspect.
+      def attribute_for_inspect(attr_name)
+        raise "Attribute not present #{attr_name}" unless has_attribute?(attr_name) || new_record?
+        value = read_attribute(attr_name)
+
+        if value.is_a?(String) && value.length > 50
+          %("#{value[0..50]}...")
+        elsif value.is_a?(Date) || value.is_a?(Time)
+          %("#{value.to_s(:db)}")
+        else
+          value.inspect
+        end
+      end
+
       # Returns true if the specified +attribute+ has been set by the user or by a database load and is neither
       # nil nor empty? (the latter only applies to objects that respond to empty?, most notably Strings).
       def attribute_present?(attribute)
@@ -1890,6 +1923,13 @@ module ActiveRecord #:nodoc:
         @readonly = true
       end
 
+      # Nice pretty inspect.
+      def inspect
+        attributes_as_nice_string = self.class.column_names.collect { |name|
+          "#{name}: #{attribute_for_inspect(name)}"
+        }.join(", ")
+        "#<#{self.class} #{attributes_as_nice_string}>"
+      end
 
     private
       def create_or_update
@@ -1953,8 +1993,13 @@ module ActiveRecord #:nodoc:
             (md = /\?$/.match(method_name) and
             @attributes.include?(query_method_name = md.pre_match) and
             method_name = query_method_name)
-          define_read_methods if self.class.read_methods.empty? && self.class.generate_read_methods
-          md ? query_attribute(method_name) : read_attribute(method_name)
+          if self.class.read_methods.empty? && self.class.generate_read_methods
+            define_read_methods
+            # now that the method exists, call it
+            self.send method_id.to_sym
+          else
+            md ? query_attribute(method_name) : read_attribute(method_name)
+          end
         elsif self.class.primary_key.to_s == method_name
           id
         elsif md = self.class.match_attribute_method?(method_name)

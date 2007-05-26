@@ -1,5 +1,13 @@
 *SVN*
 
+* Array#to_xml yields the builder just like Hash and ActiveRecord::Base.  #8472 [seth]
+
+* Date, Time, and DateTime support formatting blocks in addition to strftime strings. Introduce :long_ordinal format, e.g. "February 21st, 2005".  #8191 [Coda Hale]
+
+* Document Object#blank?.  #6491 [Chris Mear]
+
+* Date, Time, and DateTime#to_json.  #8399 [wycats]
+
 * Simplify API of assert_difference by passing in an expression that is evaluated before and after the passed in block. See documenation for examples of new API. [Marcel Molina Jr.]
 
 * Added assert_difference and assert_no_difference to test/unit assertions [Tobias Luetke]

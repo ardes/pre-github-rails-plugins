@@ -1598,6 +1598,15 @@ class BasicsTest < Test::Unit::TestCase
     assert xml.include?(%(<arbitrary-method>I am Jack's profound disappointment</arbitrary-method>))
   end
   
+  def test_to_xml_with_block
+    value = "Rockin' the block"
+    xml = Company.new.to_xml(:skip_instruct => true) do |xml|
+      xml.tag! "arbitrary-element", value
+    end
+    assert_equal "<company>", xml.first(9)
+    assert xml.include?(%(<arbitrary-element>#{value}</arbitrary-element>))
+  end
+  
   def test_except_attributes
     assert_equal(
       %w( author_name type id approved replies_count bonus_time written_on content author_email_address parent_id last_read), 
@@ -1623,7 +1632,7 @@ class BasicsTest < Test::Unit::TestCase
   def test_to_param_should_return_string
     assert_kind_of String, Client.find(:first).to_param
   end
-
+  
   # FIXME: this test ought to run, but it needs to run sandboxed so that it
   # doesn't b0rk the current test environment by undefing everything.
   #
@@ -1645,7 +1654,24 @@ class BasicsTest < Test::Unit::TestCase
   #  assert counts.last <= counts.first,
   #    "expected last count (#{counts.last}) to be <= first count (#{counts.first})"
   #end
-  
+
+  def test_inspect
+    topic = topics(:first)
+    assert_equal topic.inspect, %(#<Topic id: 1, title: "The First Topic", author_name: "David", author_email_address: "david@loudthinking.com", written_on: "#{topic.written_on.to_s(:db)}", bonus_time: "#{topic.bonus_time.to_s(:db)}", last_read: "#{topic.last_read.to_s(:db)}", content: "Have a nice day", approved: false, replies_count: 1, parent_id: nil, type: nil>)
+  end
+
+  def test_inspect_new
+    assert_match /Topic id: nil/, Topic.new.inspect
+  end
+
+  def test_attribute_for_inspect
+    t = topics(:first)
+    t.content = %(This is some really long content, longer than 50 characters, so I can test that text is truncated correctly by the new ActiveRecord::Base#inspect method! Yay! BOOM!)
+
+    assert_equal %("#{t.written_on.to_s(:db)}"), t.attribute_for_inspect(:written_on)
+    assert_equal '"This is some really long content, longer than 50 ch..."', t.attribute_for_inspect(:content)
+  end
+
   private
     def assert_readers(model, exceptions)
       expected_readers = Set.new(model.column_names - ['id'])

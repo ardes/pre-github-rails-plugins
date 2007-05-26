@@ -14,7 +14,6 @@ require 'fixtures/author'
 require 'fixtures/tag'
 require 'fixtures/tagging'
 
-
 class AssociationsTest < Test::Unit::TestCase
   fixtures :accounts, :companies, :developers, :projects, :developers_projects,
            :computers
@@ -93,43 +92,12 @@ class AssociationProxyTest < Test::Unit::TestCase
 
   def test_push_does_not_load_target
     david = authors(:david)
-    not_loaded_string = '<categories not loaded yet>'
-    not_loaded_re = Regexp.new(not_loaded_string)
     
     david.categories << categories(:technology)
-    assert_match not_loaded_re, david.inspect
-    assert_equal not_loaded_string, david.categories.inspect
+    assert !david.categories.loaded?
     assert david.categories.include?(categories(:technology))
   end
   
-  def test_inspect_does_not_load_target
-    david = authors(:david)
-    not_loaded_string = '<posts not loaded yet>'
-    not_loaded_re = Regexp.new(not_loaded_string)
-
-    2.times do
-      assert !david.posts.loaded?, "Posts should not be loaded yet"
-      assert_match not_loaded_re, david.inspect
-      assert_equal not_loaded_string, david.posts.inspect
-
-      assert !david.posts.empty?, "There should be more than one post"
-      assert !david.posts.loaded?, "Posts should still not be loaded yet"
-      assert_match not_loaded_re, david.inspect
-      assert_equal not_loaded_string, david.posts.inspect
-
-      assert !david.posts.find(:all).empty?, "There should be more than one post"
-      assert !david.posts.loaded?, "Posts should still not be loaded yet"
-      assert_match not_loaded_re, david.inspect
-      assert_equal not_loaded_string, david.posts.inspect
-
-      assert !david.posts(true).empty?, "There should be more than one post"
-      assert david.posts.loaded?, "Posts should be loaded now"
-      assert_no_match  not_loaded_re, david.inspect
-      assert_not_equal not_loaded_string, david.posts.inspect
-
-      david.reload
-    end
-  end
 end
 
 class HasOneAssociationsTest < Test::Unit::TestCase
@@ -875,6 +843,30 @@ class HasManyAssociationsTest < Test::Unit::TestCase
     assert Client.find_by_id(client_id).nil?
   end                                                    
 
+  def test_dependent_association_respects_optional_conditions_on_delete
+    firm = companies(:odegy)
+    Client.create(:client_of => firm.id, :name => "BigShot Inc.")
+    Client.create(:client_of => firm.id, :name => "SmallTime Inc.")
+    # only one of two clients is included in the association due to the :conditions key
+    assert_equal 2, Client.find_all_by_client_of(firm.id).size
+    assert_equal 1, firm.dependent_conditional_clients_of_firm.size
+    firm.destroy
+    # only the correctly associated client should have been deleted
+    assert_equal 1, Client.find_all_by_client_of(firm.id).size
+  end                                                 
+
+  def test_dependent_association_respects_optional_sanitized_conditions_on_delete
+    firm = companies(:odegy)
+    Client.create(:client_of => firm.id, :name => "BigShot Inc.")
+    Client.create(:client_of => firm.id, :name => "SmallTime Inc.")
+    # only one of two clients is included in the association due to the :conditions key
+    assert_equal 2, Client.find_all_by_client_of(firm.id).size
+    assert_equal 1, firm.dependent_sanitized_conditional_clients_of_firm.size
+    firm.destroy
+    # only the correctly associated client should have been deleted
+    assert_equal 1, Client.find_all_by_client_of(firm.id).size
+  end
+
   def test_clearing_without_initial_access
     firm = companies(:first_firm)
 
@@ -1041,7 +1033,7 @@ end
 
 class BelongsToAssociationsTest < Test::Unit::TestCase
   fixtures :accounts, :companies, :developers, :projects, :topics,
-           :developers_projects, :computers, :authors, :posts
+           :developers_projects, :computers, :authors, :posts, :tags, :taggings
   
   def test_belongs_to
     Client.find(3).firm.name
@@ -1070,7 +1062,20 @@ class BelongsToAssociationsTest < Test::Unit::TestCase
     citibank.firm = apple
     assert_equal apple.id, citibank.firm_id
   end
-  
+
+  def test_no_unexpected_aliasing
+    first_firm = companies(:first_firm)
+    another_firm = companies(:another_firm)
+
+    citibank = Account.create("credit_limit" => 10)
+    citibank.firm = first_firm
+    original_proxy = citibank.firm
+    citibank.firm = another_firm
+
+    assert_equal first_firm.object_id, original_proxy.object_id
+    assert_equal another_firm.object_id, citibank.firm.object_id
+  end
+
   def test_creating_the_belonging_object
     citibank = Account.create("credit_limit" => 10)
     apple    = citibank.create_firm("name" => "Apple")

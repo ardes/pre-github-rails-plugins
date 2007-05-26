@@ -290,7 +290,7 @@ class Fixtures < YAML::Omap
 
   def insert_fixtures
     values.each do |fixture|
-      @connection.execute "INSERT INTO #{@table_name} (#{fixture.key_list}) VALUES (#{fixture.value_list})", 'Fixture Insert'
+      @connection.insert_fixture fixture, @table_name
     end
   end
 
@@ -381,6 +381,8 @@ class Fixture #:nodoc:
   class FormatError < FixtureError#:nodoc:
   end
 
+  attr_reader :class_name
+
   def initialize(fixture, class_name)
     case fixture
       when Hash, YAML::Omap
@@ -415,7 +417,7 @@ class Fixture #:nodoc:
     klass = @class_name.constantize rescue nil
 
     list = @fixture.inject([]) do |fixtures, (key, value)|
-      col = klass.columns_hash[key] if klass.kind_of?(ActiveRecord::Base)
+      col = klass.columns_hash[key] if klass.respond_to?(:ancestors) && klass.ancestors.include?(ActiveRecord::Base)
       fixtures << ActiveRecord::Base.connection.quote(value, col).gsub('[^\]\\n', "\n").gsub('[^\]\\r', "\r")
     end
     list * ', '

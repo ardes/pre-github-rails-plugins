@@ -271,7 +271,9 @@ module ActionController #:nodoc:
     # A YAML parser is also available and can be turned on with:
     #
     #   ActionController::Base.param_parsers[Mime::YAML] = :yaml
-    @@param_parsers = { Mime::XML => :xml_simple }
+    @@param_parsers = { Mime::MULTIPART_FORM => :multipart_form,
+                        Mime::URL_ENCODED_FORM => :url_encoded_form,
+                        Mime::XML => :xml_simple }
     cattr_accessor :param_parsers
 
     # Controls the default charset for all renders.
@@ -439,7 +441,8 @@ module ActionController #:nodoc:
             elsif value.is_a?(Hash)
               filtered_parameters[key] = filter_parameters(value)
             elsif block_given?
-              key, value = key.dup, value.dup
+              key = key.dup
+              value = value.dup if value
               yield key, value
               filtered_parameters[key] = value
             else
@@ -560,7 +563,7 @@ module ActionController #:nodoc:
           when Hash
             @url.rewrite(rewrite_options(options))
           else
-            polymorphic_url(options, self)
+            polymorphic_url(options)
         end
       end
 
@@ -775,7 +778,7 @@ module ActionController #:nodoc:
         end
 
         if location = options[:location]
-          response.headers["Location"] = location
+          response.headers["Location"] = url_for(location)
         end
 
         if text = options[:text]
@@ -1032,9 +1035,12 @@ module ActionController #:nodoc:
           when :back
             request.env["HTTP_REFERER"] ? redirect_to(request.env["HTTP_REFERER"]) : raise(RedirectBackError)
 
-          else
+          when Hash
             redirect_to(url_for(options))
             response.redirected_to = options
+
+          else
+            redirect_to(url_for(options))
         end
       end
 
@@ -1069,18 +1075,11 @@ module ActionController #:nodoc:
       end
 
     private
-      def self.view_class
-        @view_class ||=
-          # create a new class based on the default template class and include helper methods
-          returning Class.new(ActionView::Base) do |view_class|
-            view_class.send(:include, master_helper_module)
-          end
-      end
-
       def initialize_template_class(response)
         raise "You must assign a template class through ActionController.template_class= before processing a request" unless @@template_class
 
-        response.template = self.class.view_class.new(view_paths, {}, self)
+        response.template = ActionView::Base.new(view_paths, {}, self)
+        response.template.extend self.class.master_helper_module
         response.redirected_to = nil
         @performed_render = @performed_redirect = false
       end
