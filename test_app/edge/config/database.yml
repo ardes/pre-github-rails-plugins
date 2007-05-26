@@ -8,3 +8,7 @@ test:
 development:
   <<: *local
   database: test_app_edge
+  
+production:
+  <<: *local
+  database: test_app_edge
