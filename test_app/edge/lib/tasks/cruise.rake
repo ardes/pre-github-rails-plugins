@@ -1,10 +1,10 @@
 task :cruise do 
   targets = FileList["#{RAILS_ROOT}/vendor/plugins/*"].exclude('vendor/plugins/*spec*')
-
+  failed = []
   targets.each do |target|
     if FileList["#{target}/spec/**/*_spec.rb"].size > 0
       target_name = File.basename(target)
-      puts "\n\n=========\n== Plugin #{target_name}\n"
+      puts "\n= Plugin #{target_name}\n"
       sh("cd #{target}; rake cruise") do |ok,_|
         failed << target_name unless ok
       end
