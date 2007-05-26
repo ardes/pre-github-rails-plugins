@@ -25,8 +25,7 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 
     it "should match an rjs template" do
       xhr :post, 'some_action'
-      if ActionView::Base.const_defined?('DEFAULT_TEMPLATE_HANDLER_PREFERENCE') &&
-         ActionView::Base::DEFAULT_TEMPLATE_HANDLER_PREFERENCE.include?('erb') then
+      if ActionView::Base.const_defined?('DEFAULT_TEMPLATE_HANDLER_PREFERENCE')
         response.should render_template('render_spec/some_action')
       else
         response.should render_template('render_spec/some_action.rjs')
@@ -96,4 +95,18 @@ require File.dirname(__FILE__) + '/../../spec_helper'
       }.should fail_with(/expected \"this is the text for this action\", got .*/)
     end
   end
+
+  describe "response.should_not have_text (in #{mode} mode)",
+    :behaviour_type => :controller do
+    controller_name :render_spec
+    if mode == 'integration'
+      integrate_views
+    end
+
+    it "should pass with exactly matching text" do
+      post 'text_action'
+      response.should_not have_text("the accordian guy")
+    end
+  end
+
 end

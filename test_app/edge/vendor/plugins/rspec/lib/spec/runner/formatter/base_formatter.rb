@@ -16,9 +16,9 @@ module Spec
         def start(example_count)
         end
 
-        # This method is invoked at the beginning of the execution of each context.
-        # +name+ is the name of the context and +first+ is true if it is the
-        # first context - otherwise it's false.
+        # This method is invoked at the beginning of the execution of each behaviour.
+        # +name+ is the name of the behaviour and +first+ is true if it is the
+        # first behaviour - otherwise it's false.
         #
         # The next method to be invoked after this is #example_failed or #example_finished
         def add_behaviour(name)
@@ -40,6 +40,11 @@ module Spec
         # (starting at 1) and +failure+ is the associated Failure object.
         def example_failed(name, counter, failure)
         end
+        
+        # This method is invoked when an example is not yet implemented (i.e. has not been provided a block). 
+        # +name+ is the name of the example.
+        def example_not_implemented(name)
+        end
 
         # This method is invoked after all of the examples have executed. The next method
         # to be invoked after this one is #dump_failure (once for each failed example),
@@ -54,7 +59,7 @@ module Spec
         end
       
         # This method is invoked at the very end.
-        def dump_summary(duration, example_count, failure_count)
+        def dump_summary(duration, example_count, failure_count, not_implemented_count)
         end
 
       end

@@ -1,4 +1,5 @@
-require 'stringio'
+require File.dirname(__FILE__) + '/../../spec_helper.rb'
+
 describe "CommandLine" do
   it "should run directory" do
     file = File.dirname(__FILE__) + '/../../../examples'
@@ -7,7 +8,7 @@ describe "CommandLine" do
     Spec::Runner::CommandLine.run([file], err, out, false, true)
     
     out.rewind
-    out.read.should =~ /75 examples, 0 failures/n
+    out.read.should =~ /77 examples, 0 failures/n
   end
 
   it "should run file" do
