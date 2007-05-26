@@ -1,4 +1,5 @@
 task :cruise do 
+  ENV['RAILS_ENV'] = 'test'
   targets = FileList["#{RAILS_ROOT}/vendor/plugins/*"].exclude('vendor/plugins/*spec*')
   failed = []
   targets.each do |target|
