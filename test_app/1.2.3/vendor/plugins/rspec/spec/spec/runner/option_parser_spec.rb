@@ -133,7 +133,7 @@ describe "OptionParser" do
     options = parse(["--format", "html:test.html"])
     File.should be_exist('test.html')
     options.formatters[0].class.should equal(Spec::Runner::Formatter::HtmlFormatter)
-    FileUtils.rm 'test.html' rescue nil # Help windows
+    FileUtils.rm 'test.html' #rescue nil # Help windows
   end
 
   it "should use noisy backtrace tweaker with b option" do
@@ -262,16 +262,16 @@ describe "OptionParser" do
     @err.string.should match(/You cannot use both --line and --example/n)
   end
 
-  if(PLATFORM != "i386-mswin32")
-    it "should heckle when --heckle is specified (and platform is not windows)" do
-      options = parse(["--heckle", "Spec"])
-      options.heckle_runner.should be_instance_of(Spec::Runner::HeckleRunner)
-    end
-  else
+  if [/mswin/, /java/].detect{|p| p =~ RUBY_PLATFORM}
     it "should barf when --heckle is specified (and platform is windows)" do
       lambda do
         options = parse(["--heckle", "Spec"])
       end.should raise_error(StandardError, "Heckle not supported on Windows")
+    end
+  else
+    it "should heckle when --heckle is specified (and platform is not windows)" do
+      options = parse(["--heckle", "Spec"])
+      options.heckle_runner.should be_instance_of(Spec::Runner::HeckleRunner)
     end
   end
 
@@ -291,10 +291,10 @@ describe "OptionParser" do
   end
    
   it "should save config to file when --generate-options is specified" do
-    FileUtils.rm 'test.spec.opts' rescue nil
+    FileUtils.rm 'test.spec.opts' if File.exist?('test.spec.opts')
     options = parse(["--colour", "--generate-options", "test.spec.opts", "--diff"])
     File.open('test.spec.opts').read.should == "--colour\n--diff\n"
-    FileUtils.rm 'test.spec.opts' rescue nil
+    FileUtils.rm 'test.spec.opts' #rescue nil # Help windows
   end
 
   it "should call DrbCommandLine when --drb is specified" do

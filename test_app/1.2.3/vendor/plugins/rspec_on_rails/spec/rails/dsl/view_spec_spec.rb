@@ -44,20 +44,28 @@ describe "A view requiring multiple explicit helpers", :behaviour_type => :view 
 end
 
 describe "A view that includes a partial", :behaviour_type => :view do
-  before(:each) do
+  def render!
     render "view_spec/partial_including_template"
   end
 
   it "should render the enclosing template" do
-    response.should have_tag('div', :content => "method_in_included_partial in ViewSpecHelper")
+    render!
+    response.should have_tag('div', "method_in_included_partial in ViewSpecHelper")
   end
 
   it "should render the partial" do
-    response.should have_tag('div', :content => "method_in_partial_including_template in ViewSpecHelper")
+    render!
+    response.should have_tag('div', "method_in_partial_including_template in ViewSpecHelper")
   end
 
   it "should include the application helper" do
-    response.should have_tag('div', :content => "This is text from a method in the ApplicationHelper")
+    render!
+    response.should have_tag('div', "This is text from a method in the ApplicationHelper")
+  end
+  
+  it "should support mocking the render call" do
+    template.should_receive(:render).with(:partial => 'included_partial')
+    render!
   end
 end
 
@@ -135,11 +143,9 @@ describe "A view", :behaviour_type => :view do
   end
 end
 
-unless Rails::VERSION::STRING == "1.1.6" #1.1.6 did not have form_tag
-  describe "A view with a form_tag", :behaviour_type => :view do
-    it "should render the right action" do
-      render "view_spec/entry_form"
-      response.should have_tag("form[action=?]","/view_spec/entry_form")
-    end
+describe "A view with a form_tag", :behaviour_type => :view do
+  it "should render the right action" do
+    render "view_spec/entry_form"
+    response.should have_tag("form[action=?]","/view_spec/entry_form")
   end
 end

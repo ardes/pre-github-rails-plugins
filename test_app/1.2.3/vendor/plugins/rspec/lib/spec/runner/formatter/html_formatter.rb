@@ -28,6 +28,8 @@ module Spec
         end
 
         def add_behaviour(name)
+          @behaviour_red = false
+          @behaviour_red = false
           @current_behaviour_number += 1
           unless current_behaviour_number == 1
             @output.puts "  </dl>"
@@ -56,8 +58,10 @@ module Spec
           extra = extra_failure_content(failure)
           
           @current_example_number += 1
-          @output.puts "    <script type=\"text/javascript\">makeRed('rspec-header');</script>"
-          @output.puts "    <script type=\"text/javascript\">makeRed('behaviour_#{current_behaviour_number}');</script>"
+          @output.puts "    <script type=\"text/javascript\">makeRed('rspec-header');</script>" unless @header_red
+          @header_red = true
+          @output.puts "    <script type=\"text/javascript\">makeRed('behaviour_#{current_behaviour_number}');</script>" unless @behaviour_red
+          @behaviour_red = true
           move_progress
           @output.puts "    <dd class=\"spec failed\">"
           @output.puts "      <span class=\"failed_spec_name\">#{escape(name)}</span>"
@@ -70,6 +74,14 @@ module Spec
           @output.flush
         end
 
+        def example_not_implemented(name)
+          @current_example_number += 1
+          @output.puts "    <script type=\"text/javascript\">makeYellow('rspec-header');</script>" unless @header_red
+          @output.puts "    <script type=\"text/javascript\">makeYellow('behaviour_#{current_behaviour_number}');</script>" unless @behaviour_red
+          move_progress
+          @output.puts "    <dd class=\"spec not_implemented\"><span class=\"not_implemented_spec_name\">#{escape(name)}</span></dd>"
+          @output.flush
+        end
         # Override this method if you wish to output extra HTML for a failed spec. For example, you
         # could output links to images or other files produced during the specs.
         #
@@ -90,11 +102,12 @@ module Spec
         def dump_failure(counter, failure)
         end
 
-        def dump_summary(duration, example_count, failure_count)
+        def dump_summary(duration, example_count, failure_count, not_implemented_count)
           if @dry_run
             totals = "This was a dry-run"
           else
             totals = "#{example_count} example#{'s' unless example_count == 1}, #{failure_count} failure#{'s' unless failure_count == 1}"
+            totals << ", #{not_implemented_count} not implemented" if not_implemented_count > 0  
           end
           @output.puts "<script type=\"text/javascript\">document.getElementById('duration').innerHTML = \"Finished in <strong>#{duration} seconds</strong>\";</script>"
           @output.puts "<script type=\"text/javascript\">document.getElementById('totals').innerHTML = \"#{totals}\";</script>"
@@ -120,8 +133,10 @@ module Spec
   <meta http-equiv="Pragma" content="no-cache" />
   <style type="text/css">
   body {
-    margin: 0; padding: 0;
+    margin: 0;
+    padding: 0;
     background: #fff;
+    font-size: 80%;
   }
   </style>
 </head>
@@ -145,8 +160,8 @@ EOF
   <h1>RSpec Results</h1>
 
   <div id="summary">
-    <p id="duration">&nbsp;</p>
     <p id="totals">&nbsp;</p>
+    <p id="duration">&nbsp;</p>
   </div>
 </div>
 
@@ -161,6 +176,20 @@ function moveProgressBar(percentDone) {
 }
 function makeRed(element_id) {
   document.getElementById(element_id).style.background = '#C40D0D';
+  document.getElementById(element_id).style.color = '#FFFFFF';
+}
+
+function makeYellow(element_id) {
+  if (element_id == "rspec-header" && document.getElementById(element_id).style.background != '#C40D0D')
+  {
+    document.getElementById(element_id).style.background = '#FAF834';
+    document.getElementById(element_id).style.color = '#000000';
+  }
+  else
+  {
+    document.getElementById(element_id).style.background = '#FAF834';
+    document.getElementById(element_id).style.color = '#000000';
+  }
 }
 EOF
         end
@@ -171,15 +200,16 @@ EOF
   background: #65C400; color: #fff;
 }
 
-div.rspec-report h1 {
+.rspec-report h1 {
   margin: 0px 10px 0px 10px;
   padding: 10px;
-  font: bold 18px "Lucida Grande", Helvetica, sans-serif;
+  font-family: "Lucida Grande", Helvetica, sans-serif;
+  font-size: 1.8em;
 }
 
 #summary {
   margin: 0; padding: 5px 10px;
-  font: bold 10px "Lucida Grande", Helvetica, sans-serif;
+  font-family: "Lucida Grande", Helvetica, sans-serif;
   text-align: right;
   position: absolute;
   top: 0px;
@@ -187,11 +217,11 @@ div.rspec-report h1 {
 }
 
 #summary p {
-  margin: 0 0 2px;
+  margin: 0 0 0 2px;
 }
 
 #summary #totals {
-  font-size: 14px;
+  font-size: 1.2em;
 }
 
 .behaviour {
@@ -228,7 +258,13 @@ dd.spec.failed {
   color: #C20000; background: #FFFBD3;
 }
 
-div.backtrace {
+dd.spec.not_implemented {
+  border-left: 5px solid #FAF834;
+  border-bottom: 1px solid #FAF834;
+  background: #FCFB98; color: #131313;
+}
+
+.backtrace {
   color: #000;
   font-size: 12px;
 }
@@ -238,7 +274,7 @@ a {
 }
 
 /* Ruby code, style similar to vibrant ink */
-pre.ruby {
+.ruby {
   font-size: 12px;
   font-family: monospace;
   color: white;
@@ -246,27 +282,27 @@ pre.ruby {
   padding: 0.1em 0 0.2em 0;
 }
 
-pre.ruby .keyword { color: #FF6600; }
-pre.ruby .constant { color: #339999; }
-pre.ruby .attribute { color: white; }
-pre.ruby .global { color: white; }
-pre.ruby .module { color: white; }
-pre.ruby .class { color: white; }
-pre.ruby .string { color: #66FF00; }
-pre.ruby .ident { color: white; }
-pre.ruby .method { color: #FFCC00; }
-pre.ruby .number { color: white; }
-pre.ruby .char { color: white; }
-pre.ruby .comment { color: #9933CC; }
-pre.ruby .symbol { color: white; }
-pre.ruby .regex { color: #44B4CC; }
-pre.ruby .punct { color: white; }
-pre.ruby .escape { color: white; }
-pre.ruby .interp { color: white; }
-pre.ruby .expr { color: white; }
+.ruby .keyword { color: #FF6600; }
+.ruby .constant { color: #339999; }
+.ruby .attribute { color: white; }
+.ruby .global { color: white; }
+.ruby .module { color: white; }
+.ruby .class { color: white; }
+.ruby .string { color: #66FF00; }
+.ruby .ident { color: white; }
+.ruby .method { color: #FFCC00; }
+.ruby .number { color: white; }
+.ruby .char { color: white; }
+.ruby .comment { color: #9933CC; }
+.ruby .symbol { color: white; }
+.ruby .regex { color: #44B4CC; }
+.ruby .punct { color: white; }
+.ruby .escape { color: white; }
+.ruby .interp { color: white; }
+.ruby .expr { color: white; }
 
-pre.ruby .offending { background-color: gray; }
-pre.ruby .linenum {
+.ruby .offending { background-color: gray; }
+.ruby .linenum {
 	width: 75px;
 	padding: 0.1em 1em 0.2em 0;
 	color: #000000;
