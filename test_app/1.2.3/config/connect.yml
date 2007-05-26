@@ -1,0 +1,5 @@
+local: &local
+  adapter: mysql
+  username: root
+  password: 
+  socket: /opt/local/var/run/mysql5/mysqld.sock
