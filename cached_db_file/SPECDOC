@@ -12,29 +12,29 @@ CachedDbFile :db_file association (re: delegation)
 - should be delegate for #data=
 - should be delegate for #data
 
-a new CachedDbFile (with no attributes)
+CachedDbFile (new, with no attributes)
 - should not be valid
 - should raise error when sent #id_path
 - should raise error when sent #cached_filename
 
-a new CachedDbFile (with #filename)
+CachedDbFile (new, with :filename set)
 - should be valid
 - should create db_file on save
 
-saved CachedDbFile
+CachedDbFile (saved)
 - should return "#{id/10000}/#{id/100}/#{id}" when sent #id_path (e.g. "0/2/234" if id==234)
 - should have #full_filename == "#{cached_db_file_root}/#{plural_model_name}/#{id_path}/#{timestamped_filename}"
 - should have #public_filename == "/#{plural_model_name}/#{id_path}/first_#{timestamp}.txt"
 
-saved CachedDbFile (when there is no cached data)
+CachedDbFile (saved, but when there is NOT a cache file)
 - should access db_file when sent #full_filename
 - should create cached file when sent #full_filename
 - should create cached file when sent #public_filename
 - should create the cached file with the data in db_file.data
 
-saved CachedDbFile (when the data is cached)
-- should not access db_file when full_filename called
-- should not access db_file when public_filename called
+CachedDbFile (saved, when there IS a cache file)
+- should not access db_file when sent #full_filename
+- should not access db_file when sent #public_filename
 - should remove cached file on destroy
 - should remove cached file, and empty enclosing dirs, on update
 - should destroy db_file on destroy
@@ -45,6 +45,6 @@ saved CachedDbFile (when the data is cached)
 CachedDbFile (when cache file is bad)
 - should log exceptions when destroying the cached file
 
-Finished in 0.312041 seconds
+Finished in 0.260766 seconds
 
 28 examples, 0 failures
