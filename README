@@ -1,0 +1,25 @@
+= rails_plugins by Ian White of Argument from Design
+
+== What's in here:
+
+  README          this file
+  
+  Rakefile        contains a 'cruise' task for CI with cruisecontrol.rb
+
+  deprecated/     old plugins
+    flatlining/   those plugins I don't expect to pay much more attention to
+    with_pulse/   ones that I'll be looking to refactor
+
+  test_app/       for CI with cruisecontrol.rb
+    1.2.3/        against rails 1.2.3
+    edge/         againts rails edge
+    
+  template/       A template for plugins - with Rakefile and spec dir set up
+
+  the rest are plugins
+  
+== The plugins
+
+  All are spec'd using rspec 1.0
+  When in a rails plugin directory, run rake --tasks to see how to run specs
+  and generate docs
