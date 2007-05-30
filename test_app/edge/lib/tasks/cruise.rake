@@ -13,3 +13,12 @@ task :cruise do
   end
   raise "\n=\n= The following plugins FAILED: #{failed.join(', ')}\n=" if failed.size > 0
 end
+
+namespace :cruise do
+  task :doc do 
+    targets = FileList["#{RAILS_ROOT}/vendor/plugins/*"].exclude('vendor/plugins/*spec*')
+    targets.each do |target|
+      sh("cd #{target}; rake doc:all")
+    end
+  end
+end
