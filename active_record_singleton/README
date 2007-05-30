@@ -15,16 +15,6 @@ See the ActiveRecord::Singleton RDoc for usage and examples.
 * <tt>rspec rails plugin</tt> see http://rspec.rubyforge.org/documentation/rails/install.html
 
 === Testing
+
 RSpec is used for testing, so the tests are in <tt>spec/</tt> rather than
-<tt>test/</tt> To run the tests you need a test database set up,
-edit <tt>spec/database.yml</tt> to provide the details.
-
-=== Rake tasks
-The following tasks are defined:
-
-* <tt>rspec</tt>      (the default task) run the specs
-* <tt>rcov</tt>       generate a coverage report (in doc/coverage)
-* <tt>rspec_rdoc</tt> generate an rdoc formatted spec doc (in SPECDOC)
-* <tt>rspec_rep</tt>  generate a html report of passing/failing test cases (in doc/rspec_report.html)
-* <tt>rdoc</tt>       generate the docs, (including SPECDOC)
-* <tt>rdoc_all</tt>   generate all documentation including coverage and rspec report
+<tt>test/</tt> Do rake --tasks for more details.

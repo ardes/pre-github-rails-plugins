@@ -1,4 +1,16 @@
-require File.join(File.dirname(__FILE__), 'thing')
+require 'active_record/singleton'
+
+ActiveRecord::Migration.suppress_messages do
+  ActiveRecord::Schema.define(:version => 0) do
+    create_table :things, :force => true do |t|
+      t.column "name", :string
+    end
+  end
+end
+
+class Thing < ActiveRecord::Base
+  include ActiveRecord::Singleton
+end
 
 # add a delay after the singleton attributes are read.  This will expose any
 # concurrency issues as concurrrent processes will all (most) perform the read before an
