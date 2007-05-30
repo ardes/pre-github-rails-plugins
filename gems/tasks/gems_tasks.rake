@@ -8,17 +8,17 @@ namespace :gems do
     gem = (version = ENV['VERSION']) ?
       Gem.cache.search(gem_name, "= #{version}").first :
       Gem.cache.search(gem_name).sort_by { |g| g.version }.last
-
-    if ENV['ARCH']
-      arch = ENV['ARCH'] == 'detect' ? Config::CONFIG['host'] : ENV['ARCH']
-    else
-      arch = gem.extensions.size > 0 ? Config::CONFIG['host'] : 'ruby'
-    end
     
     version ||= gem.version.version rescue nil
     
     unless gem && path = Gem::UnpackCommand.new.get_path(gem_name, version)
       raise "No gem #{gem_name} #{version} is installed.  Do 'gem list #{gem_name}' to see what you have available."
+    end
+
+    if ENV['ARCH']
+      arch = ENV['ARCH'] == 'detect' ? Config::CONFIG['host'] : ENV['ARCH']
+    else
+      arch = gem.extensions.size > 0 ? Config::CONFIG['host'] : 'ruby'
     end
 
     target_dir = ENV['TO'] || File.basename(path).sub(/\.gem$/, '')
