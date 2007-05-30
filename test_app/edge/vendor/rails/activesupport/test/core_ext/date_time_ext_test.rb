@@ -21,6 +21,12 @@ class DateTimeExtCalculationsTest < Test::Unit::TestCase
   def test_to_date
     assert_equal Date.new(2005, 2, 21), DateTime.new(2005, 2, 21).to_date
   end
+  
+  def test_to_time
+    assert_equal Time.utc(2005, 2, 21, 10, 11, 12), DateTime.new(2005, 2, 21, 10, 11, 12, 0, 0).to_time
+    assert_equal Time.local(2005, 2, 21, 10, 11, 12), DateTime.new(2005, 2, 21, 10, 11, 12, Rational(-5, 24), 0).to_time
+    assert_equal Time.utc_time(2039, 2, 21, 10, 11, 12), DateTime.new(2039, 2, 21, 10, 11, 12, 0, 0).to_time
+  end
 
   def test_seconds_since_midnight
     assert_equal 1,DateTime.civil(2005,1,1,0,0,1).seconds_since_midnight
@@ -112,6 +118,8 @@ class DateTimeExtCalculationsTest < Test::Unit::TestCase
     assert_equal DateTime.civil(2005,2,22,11,10,10), DateTime.civil(2005,2,22,10,10,10).since(3600)
     assert_equal DateTime.civil(2005,2,24,10,10,10), DateTime.civil(2005,2,22,10,10,10).since(86400*2)
     assert_equal DateTime.civil(2005,2,24,11,10,35), DateTime.civil(2005,2,22,10,10,10).since(86400*2 + 3600 + 25)
+    assert_equal DateTime.civil(2005,2,22,10,10,11), DateTime.civil(2005,2,22,10,10,10).since(1.333)
+    assert_equal DateTime.civil(2005,2,22,10,10,12), DateTime.civil(2005,2,22,10,10,10).since(1.667)
   end
 
   def test_yesterday

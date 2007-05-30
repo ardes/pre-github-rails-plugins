@@ -312,8 +312,8 @@ module Spec
       end
 
       it "after callbacks are ordered from local to global" do
-        @reporter.should_receive(:add_behaviour).with :any_args
-        @reporter.should_receive(:example_finished).with :any_args
+        @reporter.should_receive(:add_behaviour).with any_args()
+        @reporter.should_receive(:example_finished).with any_args()
 
         fiddle = []
         super_class = Class.new do
@@ -400,8 +400,8 @@ module Spec
       end
     
       it "should have accessible instance methods from included module" do
-        @reporter.should_receive(:add_behaviour).with :any_args
-        @reporter.should_receive(:example_finished).with :any_args
+        @reporter.should_receive(:add_behaviour).with any_args()
+        @reporter.should_receive(:example_finished).with any_args()
     
         mod1_method_called = false
         mod1 = Module.new do
@@ -596,6 +596,10 @@ module Spec
     describe Behaviour, " subclass" do
       it "should have access to the described_type" do
         BehaviourSubclass.new(Example){}.described_type.should == Example
+      end
+      
+      it "should figure out its behaviour_type based on its name ()" do
+        BehaviourSubclass.new(Object){}.behaviour_type.should == :subclass
       end
       
       # TODO - add an example about shared behaviours

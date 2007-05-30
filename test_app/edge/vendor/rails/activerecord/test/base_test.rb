@@ -53,6 +53,12 @@ class Task < ActiveRecord::Base
   attr_protected :starting
 end
 
+class TopicWithProtectedContentAndAccessibleAuthorName < ActiveRecord::Base 
+  self.table_name = 'topics' 
+  attr_accessible :author_name
+  attr_protected  :content
+end
+
 class BasicsTest < Test::Unit::TestCase
   fixtures :topics, :companies, :developers, :projects, :computers, :accounts
 
@@ -771,6 +777,12 @@ class BasicsTest < Test::Unit::TestCase
     assert_raise(ActiveRecord::RecordInvalid) { reply.update_attributes!(:title => nil, :content => "Have a nice evening") }
   end
   
+  def test_mass_assignment_should_raise_exception_if_accessible_and_protected_attribute_writers_are_both_used
+    topic = TopicWithProtectedContentAndAccessibleAuthorName.new
+    assert_raises(RuntimeError) { topic.attributes = { "author_name" => "me" } }
+    assert_raises(RuntimeError) { topic.attributes = { "content" => "stuff" } }
+  end
+  
   def test_mass_assignment_protection
     firm = Firm.new
     firm.attributes = { "name" => "Next Angle", "rating" => 5 }
@@ -1154,16 +1166,29 @@ class BasicsTest < Test::Unit::TestCase
     assert_equal(myobj, topic.content)
   end
 
-  def test_serialized_attribute_with_class_constraint
+  def test_nil_serialized_attribute_with_class_constraint
     myobj = MyObject.new('value1', 'value2')
-    topic = Topic.create("content" => myobj)
+    topic = Topic.new
+    assert_nil topic.content
+  end
+
+  def test_should_raise_exception_on_serialized_attribute_with_type_mismatch
+    myobj = MyObject.new('value1', 'value2')
+    topic = Topic.new(:content => myobj)
+    assert topic.save
     Topic.serialize(:content, Hash)
-
     assert_raise(ActiveRecord::SerializationTypeMismatch) { Topic.find(topic.id).content }
+  ensure
+    Topic.serialize(:content)
+  end
 
+  def test_serialized_attribute_with_class_constraint
     settings = { "color" => "blue" }
-    Topic.find(topic.id).update_attribute("content", settings)
+    Topic.serialize(:content, Hash)
+    topic = Topic.new(:content => settings)
+    assert topic.save
     assert_equal(settings, Topic.find(topic.id).content)
+  ensure
     Topic.serialize(:content)
   end
 
