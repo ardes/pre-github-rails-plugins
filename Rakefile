@@ -8,7 +8,7 @@ task :cruise do
   
   puts "#{'#'*79}\n### ci report: http://svn.ardes.com/rails_plugins r#{svn_revision}\n#{'#'*79}\n"
   
-  targets.reverse.each do |target|
+  targets.each do |target|
     rev = piston_revision("#{target}/vendor/rails")
     puts "\n\n#{'*'*79}\n** Against: rails #{File.basename(target).upcase} #{rev ? "r#{rev}" : ""}\n#{'*'*79}\n"
     sh("cd #{target}; rake -s cruise") do |ok, _|
@@ -27,7 +27,7 @@ directory 'doc'
 
 desc 'builds the documentation for all plugins in test_app/ede and the ci report'
 file 'doc' do
-  sh "rake -s cruise > doc/ci_report.txt"
+  sh "rake -s cruise > doc/_ci_report.txt"
   targets = FileList["test_app/edge/vendor/plugins/*"].exclude('test_app/edge/vendor/plugins/*spec*')
   targets.each do |target|
     sh "cd #{target}; rake doc:all" do |ok, _|
