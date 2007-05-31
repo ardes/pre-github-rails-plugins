@@ -17,27 +17,28 @@ module ActiveRecord#:nodoc:
   # ActiveRecord::Singleton is Thread safe, and handles concurrent access properly (if two separate processes
   # instantiate a Singleton where a table is empty, only one row will be created)
   # 
-  # Example of use:  <em>meta data on another active record</em>
+  # === Example of use:
+  #   <em>meta data on another active record</em>
   #
-  # class FocusableListItem < ActiveRecord::Base
-  #   class Properties < ActiveRecord::Base
-  #     inlcude ActiveRecord::Singleton
-  #   end
-  #
-  #   acts_as_list
-  #
-  #   after_save do |record| # new record recieves focus
-  #     Properties.instance.update_attributes :has_focus_id => record.id
-  #   end
-  #
-  #   def self.focused
-  #     find Properties.instance.has_focus_id
-  #   end
+  #   class FocusableListItem < ActiveRecord::Base
+  #     class Properties < ActiveRecord::Base
+  #       inlcude ActiveRecord::Singleton
+  #     end
   #   
-  #   def recieve_focus
-  #     Properties.instance.update_attributes :has_focus_id => id
+  #     acts_as_list
+  #   
+  #     after_save do |record| # new record recieves focus
+  #       Properties.instance.update_attributes :has_focus_id => record.id
+  #     end
+  #   
+  #     def self.focused
+  #       find Properties.instance.has_focus_id
+  #     end
+  #     
+  #     def recieve_focus
+  #       Properties.instance.update_attributes :has_focus_id => id
+  #     end
   #   end
-  # end
   module Singleton
     def self.included(base)
       require 'singleton'
