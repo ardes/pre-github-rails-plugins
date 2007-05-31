@@ -3,17 +3,14 @@
 == What's in here:
 
   README          this file
-  
-  Rakefile        contains a 'cruise' task for CI with cruisecontrol.rb
-
+  Rakefile        contains a 'cruise' task for CI with cruisecontrol.rb, and a
+                  'doc' class which builds all plugin documentation (with CI report)
   deprecated/     old plugins
     flatlining/   those plugins I don't expect to pay much more attention to
     with_pulse/   ones that I'll be looking to refactor
-
   test_app/       for CI with cruisecontrol.rb
     1.2.3/        against rails 1.2.3
     edge/         againts rails edge
-    
   template/       A template for plugins - with Rakefile and spec dir set up
 
   the rest are plugins
