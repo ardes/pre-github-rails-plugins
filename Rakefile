@@ -41,7 +41,7 @@ namespace :doc do
   task :update => :doc do
     rev = svn_revision
     `svn update`
-    `rm_rf doc; rake doc` if rev < svn_revision
+    `rm -rf doc; rake doc` if rev < svn_revision
   end
 end
 
