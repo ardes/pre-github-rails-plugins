@@ -18,7 +18,7 @@ module ActiveRecord#:nodoc:
   # instantiate a Singleton where a table is empty, only one row will be created)
   # 
   # === Example of use:
-  #   <em>meta data on another active record</em>
+  # <em>meta data on another active record</em>
   #
   #   class FocusableListItem < ActiveRecord::Base
   #     class Properties < ActiveRecord::Base
