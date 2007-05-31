@@ -8,7 +8,7 @@ task :cruise do
   
   puts "#{'#'*79}\n### ci report: http://svn.ardes.com/rails_plugins r#{svn_revision}\n#{'#'*79}\n"
   
-  targets.each do |target|
+  targets.reverse.each do |target|
     rev = piston_revision("#{target}/vendor/rails")
     puts "\n\n#{'*'*79}\n** Against: rails #{File.basename(target).upcase} #{rev ? "r#{rev}" : ""}\n#{'*'*79}\n"
     sh("cd #{target}; rake -s cruise") do |ok, _|
@@ -17,9 +17,9 @@ task :cruise do
   end
   
   if failed.size > 0
-    raise "#{'#'*79}\n### targets FAILED: #{failed.join(', ')}\n#{'#'*79}\n" 
+    raise "\n#{'#'*79}\n### targets FAILED: #{failed.join(', ')}\n#{'#'*79}\n" 
   else
-    puts "#{'#'*79}\n### build successful\n#{'#'*79}\n"
+    puts "\n#{'#'*79}\n### build successful\n#{'#'*79}\n"
   end
 end
 
