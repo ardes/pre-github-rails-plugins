@@ -8,6 +8,11 @@ class DateExtCalculationsTest < Test::Unit::TestCase
     assert_equal "2005-02-21",          Date.new(2005, 2, 21).to_s(:db)
     assert_equal "21 Feb 2005",         Date.new(2005, 2, 21).to_s(:rfc822)
   end
+  
+  def test_readable_inspect
+    assert_equal "Mon, 21 Feb 2005", Date.new(2005, 2, 21).readable_inspect
+    assert_equal Date.new(2005, 2, 21).readable_inspect, Date.new(2005, 2, 21).inspect
+  end
 
   def test_to_time
     assert_equal Time.local(2005, 2, 21), Date.new(2005, 2, 21).to_time
@@ -126,4 +131,28 @@ class DateExtCalculationsTest < Test::Unit::TestCase
   def test_last_month_on_31st
     assert_equal Date.new(2004, 2, 29), Date.new(2004, 3, 31).last_month
   end  
+
+  def test_yesterday_constructor
+    assert_equal Date.today - 1, Date.yesterday
+  end
+  
+  def test_tomorrow_constructor
+    assert_equal Date.today + 1, Date.tomorrow
+  end
+  
+  def test_since
+    assert_equal Time.local(2005,2,21,0,0,45), Date.new(2005,2,21).since(45)
+  end
+  
+  def test_ago
+    assert_equal Time.local(2005,2,20,23,59,15), Date.new(2005,2,21).ago(45)
+  end
+  
+  def test_beginning_of_day
+    assert_equal Time.local(2005,2,21,0,0,0), Date.new(2005,2,21).beginning_of_day
+  end
+  
+  def test_end_of_day
+    assert_equal Time.local(2005,2,21,23,59,59), Date.new(2005,2,21).end_of_day
+  end
 end

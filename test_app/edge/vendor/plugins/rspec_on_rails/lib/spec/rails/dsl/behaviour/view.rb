@@ -37,9 +37,8 @@ module Spec
             defaults = { :layout => false }
             options = defaults.merge options
 
-            @request.parameters.merge(@params)
-
             @controller.instance_variable_set :@params, @request.parameters
+            
             @controller.send :initialize_current_url
 
             @controller.class.instance_eval %{
@@ -96,7 +95,7 @@ module Spec
           super
           # these go here so that flash and session work as they should.
           @controller.send :initialize_template_class, @response
-          @controller.send :assign_shortcuts, @request, @response rescue nil
+          @controller.send :assign_shortcuts, @request, @response
           @session = @controller.session
           @controller.class.send :public, :flash # make flash accessible to the spec
         end

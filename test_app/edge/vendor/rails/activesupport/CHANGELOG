@@ -1,27 +1,12 @@
 *SVN*
 
-* Added proper handling of arrays #8537 [hasmanyjosh]
+* Add Date#since, ago, beginning_of_day, and end_of_day. Date + seconds works now.  #8575 [Geoff Buesing]
 
-  Before:
-    Hash.from_xml '<images></images>'
-    # => {:images => nil}
+* String#to_time overflows to DateTime. Add String#to_datetime.  #8572 [Geoff Buesing]
 
-    Hash.from_xml '<images><image>foo.jpg</image></images>'
-    # => {:images => {:image => "foo.jpg"}}
+* Date.yesterday and .tomorrow.  #8571 [Geoff Buesing]
 
-    Hash.from_xml '<images><image>foo.jpg</image><image>bar.jpg</image></images>'
-    # => {:images => {:image => ["foo.jpg", "bar.jpg"]}}
-
-  After:
-    Hash.from_xml '<images type="array"></images>'
-    # => {:images => []}
-
-    Hash.from_xml '<images type="array"><image>foo.jpg</image></images>'
-    # => {:images => ["foo.jpg"]}
-
-    Hash.from_xml '<images type="array"><image>foo.jpg</image><image>bar.jpg</image></images>'
-    # => {:images => ["foo.jpg", "bar.jpg"]}
-
+* Readable Date and DateTime#inspect.  #8570 [Geoff Buesing]
 
 * Move common DateTime calculations to Date.  #8536 [Geoff Buesing]
 

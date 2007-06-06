@@ -25,6 +25,11 @@ class UrlHelperTest < Test::Unit::TestCase
     assert_equal "http://www.example.com?a=b&c=d", url_for(:a => 'b', :c => 'd', :escape => false)
   end
 
+  def test_url_for_escapes_url_once
+    @controller.url = "http://www.example.com?a=b&amp;c=d"
+    assert_equal "http://www.example.com?a=b&amp;c=d", url_for("http://www.example.com?a=b&amp;c=d")
+  end
+
   # todo: missing test cases
   def test_button_to_with_straight_url
     assert_dom_equal "<form method=\"post\" action=\"http://www.example.com\" class=\"button-to\"><div><input type=\"submit\" value=\"Hello\" /></div></form>", button_to("Hello", "http://www.example.com")
@@ -370,6 +375,22 @@ class Workshop
   end
 end
 
+class Session
+  attr_accessor :id, :workshop_id, :new_record
+
+  def initialize(id, new_record)
+    @id, @new_record = id, new_record
+  end
+
+  def new_record?
+    @new_record
+  end
+
+  def to_s
+    id.to_s
+  end
+end
+
 class PolymorphicControllerTest < Test::Unit::TestCase
   class WorkshopsController < ActionController::Base
     self.view_paths = ["#{File.dirname(__FILE__)}/../fixtures/"]
@@ -389,15 +410,36 @@ class PolymorphicControllerTest < Test::Unit::TestCase
     def rescue_action(e) raise e end
   end
 
+  class SessionsController < ActionController::Base
+    self.view_paths = ["#{File.dirname(__FILE__)}/../fixtures/"]
+
+    def self.controller_path; 'sessions' end
+
+    def index
+      @workshop = Workshop.new(params[:workshop_id], false)
+      @session = Session.new(1, true)
+      render :inline => "<%= url_for([@workshop, @session]) %>\n<%= link_to('Session', [@workshop, @session]) %>"
+    end
+
+    def show
+      @workshop = Workshop.new(params[:workshop_id], false)
+      @session = Session.new(params[:id], false)
+      render :inline => "<%= url_for([@workshop, @session]) %>\n<%= link_to('Session', [@workshop, @session]) %>"
+    end
+
+    def rescue_action(e) raise e end
+  end
+
   include ActionView::Helpers::UrlHelper
 
   def setup
     @request    = ActionController::TestRequest.new
     @response   = ActionController::TestResponse.new
-    @controller = WorkshopsController.new
   end
 
   def test_new_resource
+    @controller = WorkshopsController.new
+
     with_restful_routing do
       get :index
       assert_equal "/workshops\n<a href=\"/workshops\">Workshop</a>", @response.body
@@ -405,9 +447,29 @@ class PolymorphicControllerTest < Test::Unit::TestCase
   end
 
   def test_existing_resource
+    @controller = WorkshopsController.new
+
     with_restful_routing do
       get :show, :id => 1
       assert_equal "/workshops/1\n<a href=\"/workshops/1\">Workshop</a>", @response.body
+    end
+  end
+
+  def test_new_nested_resource
+    @controller = SessionsController.new
+
+    with_restful_routing do
+      get :index, :workshop_id => 1
+      assert_equal "/workshops/1/sessions\n<a href=\"/workshops/1/sessions\">Session</a>", @response.body
+    end
+  end
+
+  def test_existing_nested_resource
+    @controller = SessionsController.new
+
+    with_restful_routing do
+      get :show, :workshop_id => 1, :id => 1
+      assert_equal "/workshops/1/sessions/1\n<a href=\"/workshops/1/sessions/1\">Session</a>", @response.body
     end
   end
 
@@ -415,7 +477,9 @@ class PolymorphicControllerTest < Test::Unit::TestCase
     def with_restful_routing
       with_routing do |set|
         set.draw do |map|
-          map.resources :workshops
+          map.resources :workshops do |w|
+            w.resources :sessions
+          end
         end
         yield
       end

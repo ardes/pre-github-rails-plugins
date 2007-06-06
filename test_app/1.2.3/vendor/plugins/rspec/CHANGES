@@ -1,5 +1,13 @@
-== Version 1.0.5 (in SVN)
+== Version 1.0.6 (in SVN)
 
+* Fixed [#10534] Windows: undefined method 'controller_name'
+
+== Version 1.0.5
+Bug fixes. Autotest plugin tweaks.
+
+* Fixed [#11378] fix to 10814 broke drb (re-opened #10814)
+* Fixed [#11223] Unable to access flash from rails helper specs
+* Fixed [#11337] autotest runs specs redundantly
 * Fixed [#11258] windows: autotest won't run
 * Applied [#11253] Tweaks to autotest file mappings (Patch from Wincent Colaiuta)
 * Applied [#11252] Should be able to re-load file containing shared behaviours without raising an exception (Patch from Wincent Colaiuta)

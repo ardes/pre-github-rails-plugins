@@ -15,6 +15,10 @@ class Author::Nested < Author; end
 
 
 module BaseTest
+  def self.included(base)
+    base.send :attr_accessor, :template_format
+  end
+
   include ActionView::Helpers::JavaScriptHelper
   include ActionView::Helpers::PrototypeHelper
   include ActionView::Helpers::ScriptaculousHelper
@@ -172,6 +176,17 @@ class PrototypeHelperTest < Test::Unit::TestCase
   def test_observe_field
     assert_dom_equal %(<script type=\"text/javascript\">\n//<![CDATA[\nnew Form.Element.Observer('glass', 300, function(element, value) {new Ajax.Request('http://www.example.com/reorder_if_empty', {asynchronous:true, evalScripts:true, parameters:value})})\n//]]>\n</script>),
       observe_field("glass", :frequency => 5.minutes, :url => { :action => "reorder_if_empty" })
+  end
+  
+  def test_observe_field_using_with_option
+    expected = %(<script type=\"text/javascript\">\n//<![CDATA[\nnew Form.Element.Observer('glass', 300, function(element, value) {new Ajax.Request('http://www.example.com/check_value', {asynchronous:true, evalScripts:true, parameters:'id=' + value})})\n//]]>\n</script>)
+    assert_dom_equal expected, observe_field("glass", :frequency => 5.minutes, :url => { :action => "check_value" }, :with => 'id')
+    assert_dom_equal expected, observe_field("glass", :frequency => 5.minutes, :url => { :action => "check_value" }, :with => "'id=' + value")
+  end
+  
+  def test_observe_field_using_json_in_with_option
+    expected = %(<script type=\"text/javascript\">\n//<![CDATA[\nnew Form.Element.Observer('glass', 300, function(element, value) {new Ajax.Request('http://www.example.com/check_value', {asynchronous:true, evalScripts:true, parameters:{'id':value}})})\n//]]>\n</script>)
+    assert_dom_equal expected, observe_field("glass", :frequency => 5.minutes, :url => { :action => "check_value" }, :with => "{'id':value}")    
   end
   
   def test_observe_field_using_function_for_callback
