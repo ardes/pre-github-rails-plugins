@@ -1,3 +1,5 @@
+{Ardes plugins}[http://plugins.ardes.com] > {Documentation}[http://plugins.ardes.com/doc] > active_record_singleton
+
 = active_record_singleton
 Mixin to make an ActiveRecord class behave in a singleton fashion, having
 only one row in its associated table.

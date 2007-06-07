@@ -1,3 +1,5 @@
+{Ardes plugins}[http://plugins.ardes.com] > {Documentation}[http://plugins.ardes.com/doc] > cached_db_file
+
 = cached_db_file
 
 A mixin for caching db_files.
