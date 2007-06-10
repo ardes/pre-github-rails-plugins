@@ -81,6 +81,13 @@ class PrototypeHelperTest < Test::Unit::TestCase
       periodically_call_remote(:update => "schremser_bier", :url => { :action => "mehr_bier" })
   end
   
+  def test_periodically_call_remote_with_frequency
+    assert_dom_equal(
+      "<script type=\"text/javascript\">\n//<![CDATA[\nnew PeriodicalExecuter(function() {new Ajax.Request('http://www.example.com/', {asynchronous:true, evalScripts:true})}, 2)\n//]]>\n</script>",
+      periodically_call_remote(:frequency => 2)
+    )
+  end
+  
   def test_form_remote_tag
     assert_dom_equal %(<form action=\"http://www.example.com/fast\" method=\"post\" onsubmit=\"new Ajax.Updater('glass_of_beer', 'http://www.example.com/fast', {asynchronous:true, evalScripts:true, parameters:Form.serialize(this)}); return false;\">),
       form_remote_tag(:update => "glass_of_beer", :url => { :action => :fast  })
@@ -203,7 +210,12 @@ class PrototypeHelperTest < Test::Unit::TestCase
     assert_dom_equal %(<script type=\"text/javascript\">\n//<![CDATA[\nnew Form.Observer('cart', 2, function(element, value) {alert('Form changed')})\n//]]>\n</script>),
       observe_form("cart", :frequency => 2, :function => "alert('Form changed')")
   end
-  
+
+  def test_observe_field_without_frequency
+    assert_dom_equal %(<script type=\"text/javascript\">\n//<![CDATA[\nnew Form.Element.EventObserver('glass', function(element, value) {new Ajax.Request('http://www.example.com/', {asynchronous:true, evalScripts:true, parameters:value})})\n//]]>\n</script>),
+      observe_field("glass")
+  end
+
   def test_update_page
     block = Proc.new { |page| page.replace_html('foo', 'bar') }
     assert_equal create_generator(&block).to_s, update_page(&block)

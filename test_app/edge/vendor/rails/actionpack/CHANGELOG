@@ -1,6 +1,12 @@
 *SVN*
 
-* Resources: url_for([parent, child]) generates /parents/1/children/2 for the nested resource. Likewise with the other simply helpful methods like form_for and link_to.  #6432 [mhw, Jonathan Vaught]
+* Action caching is limited to GET requests returning 200 OK status.  #3335 [tom@craz8.com, halfbyte, Dan Kubb, Josh Peek]
+
+* Improve Text Helper test coverage.  #7274 [Rob Sanheim, Josh Peek]
+
+* Improve Action View test coverage.  #7241, #7243, #7244 [Rich Collins]
+
+* Resources: url_for([parent, child]) generates /parents/1/children/2 for the nested resource. Likewise with the other simply helpful methods like form_for and link_to.  #6432 [mhw, Jonathan Vaught, lotswholetime]
 
 * Assume html format when rendering partials in RJS. #8076 [Rick]
 
@@ -560,7 +566,7 @@ superclass' view_paths.  [Rick]
 
 * Update Routing to complain when :controller is not specified by a route. Closes #6669. [Nicholas Seckar]
 
-* Ensure render_to_string cleans up after itself when an exception is raised.  #6658 [rsanheim]
+* Ensure render_to_string cleans up after itself when an exception is raised.  #6658 [Rob Sanheim]
 
 * Extract template_changed_since? from compile_template? so plugins may override its behavior for non-file-based templates.  #6651 [Jeff Barczewski]
 

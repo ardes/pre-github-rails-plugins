@@ -46,6 +46,11 @@ class JavaScriptHelperTest < Test::Unit::TestCase
     assert_dom_equal %(<a href="#" class="updater" onclick="Element.update(&quot;header&quot;, &quot;\\074h1\\076Greetings\\074/h1\\076&quot;);; return false;">Greet me!</a>), html
   end
 
+  def test_link_to_function_with_href
+    assert_dom_equal %(<a href="http://example.com/" onclick="alert('Hello world!'); return false;">Greeting</a>), 
+      link_to_function("Greeting", "alert('Hello world!')", :href => 'http://example.com/')
+  end
+
   def test_button_to_function
     assert_dom_equal %(<input type="button" onclick="alert('Hello world!');" value="Greeting" />), 
       button_to_function("Greeting", "alert('Hello world!')")
@@ -63,5 +68,15 @@ class JavaScriptHelperTest < Test::Unit::TestCase
       page.replace_html 'header', "<h1>Greetings</h1>"
     end
     assert_dom_equal %(<input type="button" class="greeter" onclick="Element.update(&quot;header&quot;, &quot;\\074h1\\076Greetings\\074/h1\\076&quot;);;" value="Greet me!" />), html
+  end
+
+  def test_javascript_tag
+    assert_dom_equal "<script type=\"text/javascript\">\n//<![CDATA[\nalert('hello')\n//]]>\n</script>",
+      javascript_tag("alert('hello')")
+  end
+
+  def test_javascript_tag_with_options
+    assert_dom_equal "<script id=\"the_js_tag\" type=\"text/javascript\">\n//<![CDATA[\nalert('hello')\n//]]>\n</script>",
+      javascript_tag("alert('hello')", :id => "the_js_tag")
   end
 end
