@@ -1,7 +1,6 @@
 require 'base64'
 require 'yaml'
 require 'set'
-require 'active_record/deprecated_finders'
 
 module ActiveRecord #:nodoc:
   class ActiveRecordError < StandardError #:nodoc:
@@ -912,11 +911,6 @@ module ActiveRecord #:nodoc:
         connection.quote(value,column)
       end
 
-      def quote(value, column = nil) #:nodoc:
-        connection.quote(value, column)
-      end
-      deprecate :quote => :quote_value
-
       # Used to sanitize objects before they're used in an SELECT SQL-statement. Delegates to <tt>connection.quote</tt>.
       def sanitize(object) #:nodoc:
         connection.quote(object)
@@ -1207,7 +1201,7 @@ module ActiveRecord #:nodoc:
         # or find_or_create_by_user_and_password(user, password).
         def method_missing(method_id, *arguments)
           if match = /^find_(all_by|by)_([_a-zA-Z]\w*)$/.match(method_id.to_s)
-            finder, deprecated_finder = determine_finder(match), determine_deprecated_finder(match)
+            finder = determine_finder(match)
 
             attribute_names = extract_attribute_names_from_match(match)
             super unless all_attributes_exists?(attribute_names)
@@ -1234,9 +1228,7 @@ module ActiveRecord #:nodoc:
                 end
 
               else
-                ActiveSupport::Deprecation.silence do
-                  send(deprecated_finder, sanitize_sql(attributes), *arguments[attribute_names.length..-1])
-                end
+                raise ArgumentError, "Unrecognized arguments for #{method_id}: #{extra_options.inspect}"
             end
           elsif match = /^find_or_(initialize|create)_by_([_a-zA-Z]\w*)$/.match(method_id.to_s)
             instantiator = determine_instantiator(match)
@@ -1260,10 +1252,6 @@ module ActiveRecord #:nodoc:
 
         def determine_finder(match)
           match.captures.first == 'all_by' ? :find_every : :find_initial
-        end
-
-        def determine_deprecated_finder(match)
-          match.captures.first == 'all_by' ? :find_all : :find_first
         end
 
         def determine_instantiator(match)
@@ -1852,7 +1840,6 @@ module ActiveRecord #:nodoc:
 
       # Format attributes nicely for inspect.
       def attribute_for_inspect(attr_name)
-        raise "Attribute not present #{attr_name}" unless has_attribute?(attr_name) || new_record?
         value = read_attribute(attr_name)
 
         if value.is_a?(String) && value.length > 50
@@ -1947,8 +1934,10 @@ module ActiveRecord #:nodoc:
       # Nice pretty inspect.
       def inspect
         attributes_as_nice_string = self.class.column_names.collect { |name|
-          "#{name}: #{attribute_for_inspect(name)}"
-        }.join(", ")
+          if has_attribute?(name) || new_record?
+            "#{name}: #{attribute_for_inspect(name)}"
+          end
+        }.compact.join(", ")
         "#<#{self.class} #{attributes_as_nice_string}>"
       end
 
@@ -2213,13 +2202,6 @@ module ActiveRecord #:nodoc:
         self.class.connection.quote(value, column)
       end
 
-      # Deprecated, use quote_value
-      def quote(value, column = nil)
-        self.class.connection.quote(value, column)
-      end
-      deprecate :quote => :quote_value
-      
-      
       # Interpolate custom sql string in instance context.
       # Optional record argument is meant for custom insert_sql.
       def interpolate_sql(sql, record = nil)
