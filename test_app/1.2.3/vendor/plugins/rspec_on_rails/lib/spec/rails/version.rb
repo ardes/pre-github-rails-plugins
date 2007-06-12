@@ -2,8 +2,8 @@ module Spec
   module Rails
     module VERSION #:nodoc:
       unless defined?(REV)
-        # RANDOM_TOKEN: 0.631896195420361
-        REV = "$LastChangedRevision: 2093 $".match(/LastChangedRevision: (\d+)/)[1]
+        # RANDOM_TOKEN: 0.178763246749367
+        REV = "$LastChangedRevision: 2094 $".match(/LastChangedRevision: (\d+)/)[1]
       end
     end
   end
