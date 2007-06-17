@@ -6,8 +6,8 @@ module Spec
       TINY   = 5
       RELEASE_CANDIDATE = nil
 
-      # RANDOM_TOKEN: 0.816891778562226
-      REV = "$LastChangedRevision: 2097 $".match(/LastChangedRevision: (\d+)/)[1]
+      # RANDOM_TOKEN: 0.987571027027295
+      REV = "$LastChangedRevision: 2099 $".match(/LastChangedRevision: (\d+)/)[1]
 
       STRING = [MAJOR, MINOR, TINY].join('.')
       TAG = "REL_#{[MAJOR, MINOR, TINY, RELEASE_CANDIDATE].compact.join('_')}".upcase.gsub(/\.|-/, '_')
