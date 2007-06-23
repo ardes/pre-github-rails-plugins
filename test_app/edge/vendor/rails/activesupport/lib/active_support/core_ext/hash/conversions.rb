@@ -20,6 +20,27 @@ class Array
   end
 end
 
+# Locked down XmlSimple#xml_in_string
+class XmlSimple
+  # Same as xml_in but doesn't try to smartly shoot itself in the foot.
+  def xml_in_string(string, options = nil)
+    handle_options('in', options)
+
+    @doc = parse(string)
+    result = collapse(@doc.root)
+
+    if @options['keeproot']
+      merge({}, @doc.root.name, result)
+    else
+      result
+    end
+  end
+
+  def self.xml_in_string(string, options = nil)
+    new.xml_in_string(string, options)
+  end
+end
+
 module ActiveSupport #:nodoc:
   module CoreExtensions #:nodoc:
     module Hash #:nodoc:
@@ -135,17 +156,12 @@ module ActiveSupport #:nodoc:
         module ClassMethods
           def from_xml(xml)
             # TODO: Refactor this into something much cleaner that doesn't rely on XmlSimple
-            typecast_xml_value(undasherize_keys(XmlSimple.xml_in(xml,
+            typecast_xml_value(undasherize_keys(XmlSimple.xml_in_string(xml,
               'forcearray'   => false,
               'forcecontent' => true,
               'keeproot'     => true,
               'contentkey'   => '__content__')
             ))
-          end
-          
-          def create_from_xml(xml)
-            ActiveSupport::Deprecation.warn("Hash.create_from_xml has been renamed to Hash.from_xml", caller)
-            from_xml(xml)
           end
 
           private
@@ -162,6 +178,20 @@ module ActiveSupport #:nodoc:
                       end
                     else
                       content
+                    end
+                  elsif value['type'] == 'array'
+                    child_key, entries = value.detect { |k,v| k != 'type' }   # child_key is throwaway
+                    if entries.nil?
+                      []
+                    else
+                      case entries.class.to_s   # something weird with classes not matching here.  maybe singleton methods breaking is_a?
+                      when "Array"
+                        entries.collect { |v| typecast_xml_value(v) }
+                      when "Hash"
+                        [typecast_xml_value(entries)]
+                      else
+                        raise "can't typecast #{entries.inspect}"
+                      end
                     end
                   elsif value['type'] == 'string' && value['nil'] != 'true'
                     ""

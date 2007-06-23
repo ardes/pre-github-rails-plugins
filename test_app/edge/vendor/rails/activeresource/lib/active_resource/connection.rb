@@ -71,21 +71,17 @@ module ActiveResource
     # Execute a PUT request (see HTTP protocol documentation if unfamiliar).
     # Used to update resources.
     def put(path, body = '', headers = {})
-      request(:put, path, body, build_request_headers(headers))
+      request(:put, path, body.to_s, build_request_headers(headers))
     end
 
     # Execute a POST request.
     # Used to create new resources.
     def post(path, body = '', headers = {})
-      request(:post, path, body, build_request_headers(headers))
+      request(:post, path, body.to_s, build_request_headers(headers))
     end
 
     def xml_from_response(response)
-      if response = from_xml_data(Hash.from_xml(response.body))
-        response.first
-      else
-        nil
-      end
+      from_xml_data(Hash.from_xml(response.body))
     end
 
 
@@ -150,21 +146,12 @@ module ActiveResource
       # Manipulate from_xml Hash, because xml_simple is not exactly what we
       # want for ActiveResource.
       def from_xml_data(data)
-        case data
-          when Hash
-            if data.keys.size == 1
-              case data.values.first
-                when Hash  then [ from_xml_data(data.values.first) ]
-                when Array then from_xml_data(data.values.first)
-                else       data.values.first
-              end
-            else
-              data.each_key { |key| data[key] = from_xml_data(data[key]) }
-              data
-            end
-          when Array then data.collect { |val| from_xml_data(val) }
-          else data
+        if data.is_a?(Hash) && data.keys.size == 1
+          data.values.first
+        else
+          data
         end
       end
+      
   end
 end
