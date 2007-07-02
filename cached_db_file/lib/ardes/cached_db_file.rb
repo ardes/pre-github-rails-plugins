@@ -30,7 +30,7 @@ module Ardes#:nodoc:
   
     # returns the full path and filename of the (possibly non-existent) cached file
     def cached_filename
-      raise RuntimeError, "Can't get cached_filename of a new record, save the record first" if id.nil?
+      raise RuntimeError, "Can't get cached_filename of a new record, save the record first" if new_record?
       @cached_filename ||= File.expand_path(File.join(cached_db_file_root, cached_db_file_path, id_path, timestamped_filename))
     end
   
@@ -59,20 +59,6 @@ module Ardes#:nodoc:
       write_attribute :filename, filename.nil? ? nil : sanitize_filename(filename)
     end
 
-  protected
-    def save_db_file
-      @db_file.save if @db_file
-    end
-    
-    def destroy_db_file
-      db_file.destroy
-    end
-  
-    def timestamped_filename
-      return filename unless time = (respond_to?(:updated_at) && updated_at) || (respond_to?(:updated_on) && updated_on)
-      filename.sub(/(\.\w+)?$/) {|ext| "_#{time.strftime("%Y%m%d%H%M%S")}#{ext}"}
-    end
-    
     def sanitize_filename(filename)
       # taken from attachment_fu by Rick Olson
       returning filename.strip do |name|
@@ -83,6 +69,20 @@ module Ardes#:nodoc:
         # Finally, replace all non alphanumeric, underscore or periods with underscore
         name.gsub! /[^\w\.\-]/, '_'
       end
+    end
+    
+    def timestamped_filename
+      return filename unless time = (respond_to?(:updated_at) && updated_at) || (respond_to?(:updated_on) && updated_on)
+      filename.sub(/(\.\w+)?$/) {|ext| "_#{time.strftime("%Y%m%d%H%M%S")}#{ext}"}
+    end
+    
+  protected
+    def save_db_file
+      @db_file.save if @db_file
+    end
+    
+    def destroy_db_file
+      db_file.destroy
     end
   
     # writes the db_file.data to the cached_filename, first destroying the directory
