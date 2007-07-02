@@ -640,9 +640,21 @@ module ActiveRecord #:nodoc:
       end
 
 
-      # Specifies that the attribute by the name of +attr_name+ should be serialized before saving to the database and unserialized
-      # after loading from the database. The serialization is done through YAML. If +class_name+ is specified, the serialized
-      # object must be of that class on retrieval, or nil. Otherwise, +SerializationTypeMismatch+ will be raised.
+      # If you have an attribute that needs to be saved to the database as an object, and retrieved as the same object, 
+      # then specify the name of that attribute using this method and it will be handled automatically.  
+      # The serialization is done through YAML. If +class_name+ is specified, the serialized object must be of that 
+      # class on retrieval or +SerializationTypeMismatch+ will be raised.
+      #
+      # ==== Options
+      #
+      # +attr_name+   The field name that should be serialized
+      # +class_name+  Optional, class name that the object should be equal to
+      #
+      # ==== Example
+      #   # Serialize a preferences attribute
+      #   class User
+      #     serialize :preferences
+      #   end
       def serialize(attr_name, class_name = Object)
         serialized_attributes[attr_name.to_s] = class_name
       end
@@ -1275,7 +1287,7 @@ module ActiveRecord #:nodoc:
         def attribute_condition(argument)
           case argument
             when nil   then "IS ?"
-            when Array then "IN (?)"
+            when Array, ActiveRecord::Associations::AssociationCollection then "IN (?)"
             when Range then "BETWEEN ? AND ?"
             else            "= ?"
           end
@@ -1335,8 +1347,8 @@ module ActiveRecord #:nodoc:
         #     end
         #   end
         #
-        # In nested scopings, all previous parameters are overwritten by inner rule
-        # except :conditions in :find, that are merged as hash.
+        # In nested scopings, all previous parameters are overwritten by the innermost rule, with the exception of
+        # :conditions and :include options in :find, which are merged.
         #
         #   class Article < ActiveRecord::Base
         #     def self.find_with_scope

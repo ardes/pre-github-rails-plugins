@@ -674,6 +674,7 @@ module ActiveRecord
 
         if options[:through]
           collection_reader_method(reflection, HasManyThroughAssociation)
+          collection_accessor_methods(reflection, HasManyThroughAssociation, false)
         else
           add_multiple_associated_save_callbacks(reflection.name)
           add_association_callbacks(reflection.name, reflection.options)
@@ -1060,7 +1061,7 @@ module ActiveRecord
           end
         end
 
-        def collection_accessor_methods(reflection, association_proxy_class)
+        def collection_accessor_methods(reflection, association_proxy_class, writer = true)
           collection_reader_method(reflection, association_proxy_class)
 
           define_method("#{reflection.name}=") do |new_value|
@@ -1077,7 +1078,7 @@ module ActiveRecord
           define_method("#{reflection.name.to_s.singularize}_ids=") do |new_value|
             ids = (new_value || []).reject { |nid| nid.blank? }
             send("#{reflection.name}=", reflection.class_name.constantize.find(ids))
-          end
+          end if writer
         end
 
         def add_multiple_associated_save_callbacks(association_name)
@@ -1681,21 +1682,13 @@ module ActiveRecord
                         as_extra
                       ]
 
-                    when reflection.macro == :has_many && reflection.options[:as]
+                    when reflection.options[:as] && [:has_many, :has_one].include?(reflection.macro)
                       " LEFT OUTER JOIN %s ON %s.%s = %s.%s AND %s.%s = %s" % [
                         table_name_and_alias,
                         aliased_table_name, "#{reflection.options[:as]}_id",
                         parent.aliased_table_name, parent.primary_key,
                         aliased_table_name, "#{reflection.options[:as]}_type",
                         klass.quote_value(parent.active_record.base_class.name)
-                      ]
-                    when reflection.macro == :has_one && reflection.options[:as]
-                      " LEFT OUTER JOIN %s ON %s.%s = %s.%s AND %s.%s = %s " % [
-                        table_name_and_alias,
-                        aliased_table_name, "#{reflection.options[:as]}_id",
-                        parent.aliased_table_name, parent.primary_key,
-                        aliased_table_name, "#{reflection.options[:as]}_type",
-                        klass.quote_value(reflection.active_record.base_class.name)
                       ]
                     else
                       foreign_key = options[:foreign_key] || reflection.active_record.name.foreign_key

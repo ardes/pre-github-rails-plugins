@@ -155,7 +155,7 @@ module Rails
 
     # Requires all frameworks specified by the Configuration#frameworks
     # list. By default, all frameworks (ActiveRecord, ActiveSupport,
-    # ActionPack, ActionMailer, and ActionWebService) are loaded.
+    # ActionPack, ActionMailer, and ActiveResource) are loaded.
     def require_frameworks
       configuration.frameworks.each { |framework| require(framework.to_s) }
     end
@@ -167,7 +167,7 @@ module Rails
     # Loads all plugins in <tt>config.plugin_paths</tt>.  <tt>plugin_paths</tt>
     # defaults to <tt>vendor/plugins</tt> but may also be set to a list of
     # paths, such as
-    #   config.plugin_paths = ['lib/plugins', 'vendor/plugins']
+    #   config.plugin_paths = ["#{RAILS_ROOT}/lib/plugins", "#{RAILS_ROOT}/vendor/plugins"]
     #
     # Each plugin discovered in <tt>plugin_paths</tt> is initialized:
     # * add its +lib+ directory, if present, to the beginning of the load path
@@ -388,7 +388,7 @@ module Rails
     # The list of rails framework components that should be loaded. (Defaults
     # to <tt>:active_record</tt>, <tt>:action_controller</tt>,
     # <tt>:action_view</tt>, <tt>:action_mailer</tt>, and
-    # <tt>:action_web_service</tt>).
+    # <tt>:active_resource</tt>).
     attr_accessor :frameworks
 
     # An array of additional paths to prepend to the load path. By default,

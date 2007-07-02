@@ -178,9 +178,11 @@ module ActiveRecord #:nodoc:
     end
 
     def serializable_method_attributes
-      Array(options[:methods]).collect { |name| MethodAttribute.new(name.to_s, @record) }
+      Array(options[:methods]).inject([]) do |method_attributes, name|
+        method_attributes << MethodAttribute.new(name.to_s, @record) if @record.respond_to?(name.to_s)
+        method_attributes
+      end
     end
-
 
     def add_attributes
       (serializable_attributes + serializable_method_attributes).each do |attribute|
@@ -207,7 +209,7 @@ module ActiveRecord #:nodoc:
               tag = association.to_s
               tag = tag.dasherize if dasherize?
 
-              builder.tag!(tag) do
+              builder.tag!(tag, :type => :array) do
                 records.each { |r| r.to_xml(opts.merge(:root=>r.class.to_s.underscore)) }
               end
             end

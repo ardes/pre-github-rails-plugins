@@ -1,5 +1,27 @@
 *SVN*
 
+* Allow you to delete cookies with options. Closes #3685 [josh, Chris Wanstrath]
+
+* Allow you to render views with periods in the name.  Closes #8076 [norbert]
+
+  render :partial => 'show.html.erb'
+
+* Improve capture helper documentation.  #8796 [kampers]
+
+* Prefix nested resource named routes with their action name, e.g. new_group_user_path(@group) instead of group_new_user_path(@group). The old nested action named route is deprecated in Rails 1.2.4.  #8558 [David Chelimsky]
+
+* Allow sweepers to be created solely for expiring after controller actions, not model changes [DHH]
+
+* Added assigns method to ActionController::Caching::Sweeper to easily access instance variables on the controller [DHH]
+
+* Give the legacy X-POST_DATA_FORMAT header greater precedence during params parsing for backward compatibility.  [Jeremy Kemper]
+
+* Fixed that link_to with an href of # when using :method will not allow for click-through without JavaScript #7037 [stevenbristol/josh]
+
+* Fixed that radio_button_tag should generate unique ids #3353 [BobSilva/rebecca/josh]
+
+* Fixed that HTTP authentication should work if the header is called REDIRECT_X_HTTP_AUTHORIZATION as well #6754 [mislaw]
+
 * Don't mistakenly interpret the request uri as the query string.  #8731 [lifofifo, Jeremy Kemper]
 
 * Make ActionView#view_paths an attr_accessor for real this time.  Also, don't perform an unnecessary #compact on the @view_paths array in #initialize.  Closes #8582 [dasil003, julik, rick]

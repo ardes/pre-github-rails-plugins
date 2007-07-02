@@ -1,5 +1,19 @@
 *SVN*
 
+* Added rake routes for listing all the defined routes in the system #8795 [josh]
+
+* db:create creates the database for the current environment if it's on localhost. db:create:all creates local databases for all environments.  #8783 [matt]
+
+* Generators: look for generators in all gems, not just those suffixed with _generator, in the gem's generators or rails_generators directory. Allow use of the rails_generators directory instead of the standard generators directory in plugins also.  #8730 [Dr Nic, topfunky]
+
+* MySQL, PostgreSQL: database.yml defaults to utf-8.  #8701 [matt]
+
+* Added db:version to get the current schema number [via Err The Blog]
+
+* Added --skip-migration option to scaffold and resource generators #8656 [Michael Glaesemann]
+
+* Fix that FCGIs would leave log files open when asked to shut down by USR2 #3028 [sebastian.kanthak/josh]
+
 * Fixed that dispatcher preparation callbacks only run once in production mode.  Mock Routes.reload so that dispatcher preparation callback tests run. [Rick]
 
 * Fix syntax error in dispatcher than wrecked failsafe responses.  #8625 [mtitorenko]
