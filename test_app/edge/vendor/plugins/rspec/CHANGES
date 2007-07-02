@@ -1,7 +1,29 @@
 == Version 1.0.6 (in SVN)
+Improvements and bug fixes.
 
+Warning: Spec::Rails users: In fixing 11508, we've removed the raise_controller_errors method. As long as you
+follow the upgrade instructions and run 'script/generate rspec' you'll be fine, but if you skip this
+step you need to manually go into spec_helper.rb and remove the call to that method (if present - it
+might not be if you haven't upgraded in a while).
+
+* Fixed [#11891] script/generate rspec_controller fails to create appropriate views (from templates) on edge rails
+* Applied [#11921] Adds the correct controller_name from derived_controller_name() to the ViewExampleController (Patch from Eloy Duran)
+* Fixed [#11903] config.include with behaviour_type 'hash' does not work
+* Examples without blocks and pending is now reported with a P instead of a *
+* Pending blocks that now pass are rendered blue
+* New behaviour for after: If an after block raises an error, the other ones will still run instead of bailing at the first. 
+* Made it possible to run spec from RSpec.tmbundle with --drb against a Rails spec_server.
+* Applied [#11868] Add ability for pending to optionally hold a failing block and to fail when it passes (Patch from Bob Cotton)
+* Fixed [#11843] watir_behaviour missing from spec_ui gem
+* Added 'switch between source and spec file' command in Spec::Mate (based on code from Ruy Asan)
+* Applied [#11509] Documentation - RSpec requires hpricot
+* Applied [#11807] Daemonize spec_server and rake tasks to manage them. (patch from Kyosuke MOROHASHI)
+* Added pending(message) method
+* Fixed [#11777] should render_template doesn't check paths correctly
+* Fixed [#11749] Use of 'rescue => e' does not catch all exceptions
+* Fixed [#11793] should raise_error('with a message') does not work correctly
 * Fixed [#11774] Mocks should respond to :kind_of? in the same way they respond to :is_a?
-* Fixed [#11508] Exceptions are not raised for Controller Specs
+* Fixed [#11508] Exceptions are not raised for Controller Specs (removed experimental raise_controller_errors)
 * Applied [#11615] Partial mock methods give ambiguous failures when given a method name as a String (Patch from Jay Phillips)
 * Fixed [#11545] Rspec doesn't handle should_receive on ActiveRecord associations (Patch from Ian White)
 * Fixed [#11514] configuration.use_transactional_fixtures is ALWAYS true, regardless of assignment

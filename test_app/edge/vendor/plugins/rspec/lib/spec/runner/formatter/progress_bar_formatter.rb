@@ -15,8 +15,9 @@ module Spec
           @output.flush
         end
       
-        def example_not_implemented(name)
-          @output.print yellow('*')
+        def example_pending(behaviour_name, example_name, message)
+          super
+          @output.print yellow('P')
           @output.flush
         end
         

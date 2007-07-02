@@ -15,8 +15,8 @@ module Spec
           @output.puts "# * #{name} [#{counter} - FAILED]"
         end
         
-        def example_not_implemented(name)
-          @output.puts "# * #{name} [NOT IMPLEMENTED]"
+        def example_pending(behaviour_name, example_name, message)
+          @output.puts "# * #{behaviour_name} #{example_name} [PENDING: #{message}]"
         end
       end
     end

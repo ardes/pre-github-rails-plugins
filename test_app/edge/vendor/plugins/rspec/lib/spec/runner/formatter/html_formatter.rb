@@ -56,14 +56,14 @@ module Spec
 
         def example_failed(name, counter, failure)
           extra = extra_failure_content(failure)
-          
+          failure_style = failure.pending_fixed? ? 'pending_fixed' : 'failed'
           @current_example_number += 1
           @output.puts "    <script type=\"text/javascript\">makeRed('rspec-header');</script>" unless @header_red
           @header_red = true
           @output.puts "    <script type=\"text/javascript\">makeRed('behaviour_#{current_behaviour_number}');</script>" unless @behaviour_red
           @behaviour_red = true
           move_progress
-          @output.puts "    <dd class=\"spec failed\">"
+          @output.puts "    <dd class=\"spec #{failure_style}\">"
           @output.puts "      <span class=\"failed_spec_name\">#{escape(name)}</span>"
           @output.puts "      <div class=\"failure\" id=\"failure_#{counter}\">"
           @output.puts "        <div class=\"message\"><pre>#{escape(failure.exception.message)}</pre></div>" unless failure.exception.nil?
@@ -74,12 +74,12 @@ module Spec
           @output.flush
         end
 
-        def example_not_implemented(name)
+        def example_pending(behaviour_name, example_name, message)
           @current_example_number += 1
           @output.puts "    <script type=\"text/javascript\">makeYellow('rspec-header');</script>" unless @header_red
           @output.puts "    <script type=\"text/javascript\">makeYellow('behaviour_#{current_behaviour_number}');</script>" unless @behaviour_red
           move_progress
-          @output.puts "    <dd class=\"spec not_implemented\"><span class=\"not_implemented_spec_name\">#{escape(name)}</span></dd>"
+          @output.puts "    <dd class=\"spec not_implemented\"><span class=\"not_implemented_spec_name\">#{escape(example_name)}</span></dd>"
           @output.flush
         end
         # Override this method if you wish to output extra HTML for a failed spec. For example, you
@@ -102,12 +102,12 @@ module Spec
         def dump_failure(counter, failure)
         end
 
-        def dump_summary(duration, example_count, failure_count, not_implemented_count)
+        def dump_summary(duration, example_count, failure_count, pending_count)
           if @dry_run
             totals = "This was a dry-run"
           else
             totals = "#{example_count} example#{'s' unless example_count == 1}, #{failure_count} failure#{'s' unless failure_count == 1}"
-            totals << ", #{not_implemented_count} not implemented" if not_implemented_count > 0  
+            totals << ", #{pending_count} pending" if pending_count > 0  
           end
           @output.puts "<script type=\"text/javascript\">document.getElementById('duration').innerHTML = \"Finished in <strong>#{duration} seconds</strong>\";</script>"
           @output.puts "<script type=\"text/javascript\">document.getElementById('totals').innerHTML = \"#{totals}\";</script>"
@@ -262,6 +262,12 @@ dd.spec.not_implemented {
   border-left: 5px solid #FAF834;
   border-bottom: 1px solid #FAF834;
   background: #FCFB98; color: #131313;
+}
+
+dd.spec.pending_fixed {
+  border-left: 5px solid #0000C2;
+  border-bottom: 1px solid #0000C2;
+  color: #0000C2; background: #D3FBFF;
 }
 
 .backtrace {
