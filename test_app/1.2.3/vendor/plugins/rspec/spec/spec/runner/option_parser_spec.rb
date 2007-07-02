@@ -54,9 +54,9 @@ describe "OptionParser" do
     @out.read.should match(/Usage: spec \(FILE\|DIRECTORY\|GLOB\)\+ \[options\]/m)
   end
 
-  it "should print instructions about how to fix bad formatter" do
-    options = parse(["--format", "Custom::BadFormatter"])
-    @err.string.should match(/Couldn't find formatter class Custom::BadFormatter/n)
+  it "should print instructions about how to require missing formatter" do
+    lambda { options = parse(["--format", "Custom::MissingFormatter"]) }.should raise_error(NameError)
+    @err.string.should match(/Couldn't find formatter class Custom::MissingFormatter/n)
   end
 
   it "should print usage to err if no dir specified" do
@@ -199,9 +199,9 @@ describe "OptionParser" do
     options.differ_class.should == Custom::Formatter
   end
 
-  it "should print instructions about how to fix bad differ" do
-    options = parse(["--diff", "Custom::BadFormatter"])
-    @err.string.should match(/Couldn't find differ class Custom::BadFormatter/n)
+  it "should print instructions about how to fix missing differ" do
+    lambda { parse(["--diff", "Custom::MissingFormatter"]) }.should raise_error(NameError)
+    @err.string.should match(/Couldn't find differ class Custom::MissingFormatter/n)
   end
 
   it "should support --line to identify spec" do
@@ -333,7 +333,7 @@ describe "OptionParser" do
   end
 
   it "should fail when custom runner not found" do
-    parse(["--runner", "whatever"])
+    lambda { parse(["--runner", "whatever"]) }.should raise_error(NameError)
     @err.string.should match(/Couldn't find behaviour runner class/)
   end
 

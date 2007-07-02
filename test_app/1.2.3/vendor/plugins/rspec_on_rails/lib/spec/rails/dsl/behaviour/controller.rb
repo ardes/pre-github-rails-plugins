@@ -38,28 +38,16 @@ module Spec
             ensure_that_routes_are_loaded
             ActionController::Routing::Routes.generate(options)
           end
-
-          # TODO - TEST ME
-          # Also - this is somewhat experimental at the moment and may be changed
-          # or removed without explanation or apology!
-          def raise_controller_errors
-            unless @controller_class_name.blank?
-              @controller_class_name.constantize.class_eval do
-                define_method :rescue_action do |e|
-                  raise e
-                end
-              end
-            end
-          end
         end
       end
 
       module ControllerInstanceMethods #:nodoc:
+        include Spec::Rails::DSL::RenderObserver
 
         # === render(options = nil, deprecated_status = nil, &block)
         #
         # This gets added to the controller's singleton meta class,
-        # allowing Controller Specs to run in two modes, freely switching
+        # allowing Controller Examples to run in two modes, freely switching
         # from context to context.
         def render(options=nil, deprecated_status=nil, &block)
           unless block_given?
@@ -73,7 +61,14 @@ module Spec
             end
           end
           
-          super
+          if (Hash === options)
+            expect_render_mock_proxy.render(options)
+          end
+          if expect_render_mock_proxy.send(:__mock_proxy).send(:find_matching_expectation, :render, options)
+            @performed_render = true
+          else
+            super(options, deprecated_status, &block)
+          end
         end
         
         def response(&block)
@@ -94,7 +89,7 @@ module Spec
       end
     
       # The methods provided by Spec::Rails::DSL::ControllerEvalContext
-      # are available to you in Controller Specs.
+      # are available to you in Controller Examples.
       #
       # The Public Class Methods are to be used within the +context+ block:
       #
@@ -108,7 +103,7 @@ module Spec
       #       # public instance methods go here
       #
       # See Spec::Rails::DSL::ControllerBehaviour for more general information
-      # on Controller Specs
+      # on Controller Examples
       class ControllerEvalContext < Spec::Rails::DSL::FunctionalEvalContext
         include Spec::Rails::DSL::ControllerBehaviourHelpers
         attr_reader :response, :request, :controller
@@ -151,9 +146,9 @@ module Spec
           end
       end
 
-      # Controller Specs live in $RAILS_ROOT/spec/controllers/.
+      # Controller Examples live in $RAILS_ROOT/spec/controllers/.
       #
-      # Controller Specs use Spec::Rails::DSL::ControllerBehaviour, which supports running specs for
+      # Controller Examples use Spec::Rails::DSL::ControllerBehaviour, which supports running specs for
       # Controllers in two modes, which represent the tension between the more granular
       # testing common in TDD and the more high level testing built into
       # rails. BDD sits somewhere in between: we want to a balance between
@@ -188,16 +183,17 @@ module Spec
       #
       # == Expecting Errors
       #
-      # By default, Rails will swallow errors that are raised in controller
-      # actions and return an error code in the header. If you want to
-      # specify that an action should raise an error, you can either
-      # override rescue_action in your controller ...
+      # Rspec on Rails will raise errors that occur in controller actions.
+      # In contrast, Rails will swallow errors that are raised in controller
+      # actions and return an error code in the header. If you wish to override
+      # Rspec and have Rail's default behaviour,tell the controller to use
+      # rails error handling ...
       #
       #   before(:each) do
-      #     controller.class.send(:define_method, :rescue_action) { |e| raise e }
+      #     controller.use_rails_error_handling!
       #   end
       #
-      # ... or you can expect error codes in headers ...
+      # When using Rail's error handling, you can expect error codes in headers ...
       #
       #   it "should return an error in the header" do
       #     response.should be_error
@@ -212,7 +208,7 @@ module Spec
       #   end
       #
       # See Spec::Rails::DSL::ControllerEvalContext for information
-      # about methods you can use in your Controller Specs
+      # about methods you can use in your Controller Examples
       class ControllerBehaviour < Spec::DSL::Behaviour
         def execution_context(example=nil) # :nodoc:
           instance = execution_context_class.new(example)

@@ -65,16 +65,19 @@ module Spec
         raise "shared behaviours should never run" if shared?
         reporter.add_behaviour(description)
         prepare_execution_context_class
-        errors = run_before_all(reporter, dry_run)
+        before_all_errors = run_before_all(reporter, dry_run)
 
         specs = reverse ? examples.reverse : examples
         example_execution_context = nil
          
-        if errors.empty?
+        if before_all_errors.empty?
           specs.each do |example|
             example_execution_context = execution_context(example)
             example_execution_context.copy_instance_variables_from(@before_and_after_all_context_instance) unless before_all_proc(behaviour_type).nil?
-            example.run(reporter, before_each_proc(behaviour_type), after_each_proc(behaviour_type), dry_run, example_execution_context, timeout)
+            
+            befores = before_each_proc(behaviour_type) {|e| raise e}
+            afters = after_each_proc(behaviour_type)
+            example.run(reporter, befores, afters, dry_run, example_execution_context, timeout)
           end
         end
         
@@ -115,12 +118,7 @@ module Spec
 
       # Includes modules in the Behaviour (the <tt>describe</tt> block).
       def include(*args)
-        args << {} unless Hash === args.last
-        modules, options = args_and_options(*args)
-        required_behaviour_type = options[:behaviour_type]
-        if required_behaviour_type.nil? || required_behaviour_type.to_sym == behaviour_type.to_sym
-          @eval_module.include(*modules)
-        end
+        @eval_module.include(*args)
       end
 
       def behaviour_type #:nodoc:
@@ -128,7 +126,7 @@ module Spec
       end
 
     protected
-
+    
       # Messages that this class does not understand
       # are passed directly to the @eval_module.
       def method_missing(sym, *args, &block)
@@ -145,11 +143,11 @@ module Spec
       def weave_in_included_modules
         mods = included_modules
         eval_module = @eval_module
+        
+        global_modules = Spec::Runner.configuration.modules_for(behaviour_type)
         execution_context_class.class_eval do
           include eval_module
-          Spec::Runner.configuration.included_modules.each do |mod|
-            include mod
-          end
+          include(*global_modules) unless global_modules.nil?
           mods.each do |mod|
             include mod
           end
@@ -166,7 +164,7 @@ module Spec
           begin
             @before_and_after_all_context_instance = execution_context(nil)
             @before_and_after_all_context_instance.instance_eval(&before_all_proc(behaviour_type))
-          rescue => e
+          rescue Exception => e
             errors << e
             location = "before(:all)"
             reporter.example_finished(location, e, location) if reporter
@@ -180,7 +178,7 @@ module Spec
           begin 
             @before_and_after_all_context_instance ||= execution_context(nil) 
             @before_and_after_all_context_instance.instance_eval(&after_all_proc(behaviour_type)) 
-          rescue => e
+          rescue Exception => e
             location = "after(:all)"
             reporter.example_finished(location, e, location) if reporter
           end
