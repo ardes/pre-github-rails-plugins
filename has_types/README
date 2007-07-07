@@ -1,0 +1,37 @@
+http://plugins.ardes.com > has_types
+
+= has_types
+
+This plugin allows you to specify the types fro your STI models. This ensures
+that all of the types are loaded whenever the base class is loaded, and an
+error is raised when a non specified class inherits from a base class.
+
+=== Example
+
+  class Product < ActiveRecord::Base
+    has_types :watch, :pony  # or 'Watch', 'Pony' if you prefer
+  end
+
+=== Why?
+
+This has a few benefits:
+
+* All subclasses (types) are loaded when the base class is loaded.  Among other
+  benefits, this means that Product.find(:all) will use an SQL clause like 
+  <code>products.`type` = 'Product' OR products.`type` = 'Pony' OR product.`type` = 'Watch'</code>
+
+* You don't have to muck about requiring all the model dependencies to avoid weird
+  STIness
+  
+* Your classes are documented that little bit better, and if you forget to add 
+  a subclass to :has_types, you'll be told about it.
+
+=== Specs and Coverage
+* {SPECDOC}[link:files/SPECDOC.html] lists the specifications
+* {RSpec Report}[link:rspec_report.html] is a report of spec pass/fails
+* {RCov Report}[link:coverage/index.html] is the rcov report
+
+=== Testing
+RSpec is used for testing, so the tests are in <tt>spec/</tt> rather than
+<tt>test/</tt> Do rake --tasks for more details.
+
