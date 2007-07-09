@@ -17,6 +17,11 @@ describe 'Animal (class with has_types :pony)' do
     Animal.should_not respond_to(:descends_from_active_record_without_has_types?)
     Animal.should respond_to?(:descends_from_active_record?)
   end
+  
+  it '#descends_from_active_record? should work' do
+    Animal.descends_from_active_record?.should == true
+    Pony.descends_from_active_record?.should == false
+  end
 end
   
 describe 'has_types' do

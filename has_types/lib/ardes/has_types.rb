@@ -55,7 +55,7 @@ module Ardes#:nodoc:
               Ardes::HasTypes.require_dependencies
               returning descends_from_active_record_without_has_types? do
                 class<<self
-                  alias_method :descends_from_active_record?, :descends_from_active_record_with_has_types?
+                  alias_method :descends_from_active_record?, :descends_from_active_record_without_has_types?
                   undef_method :descends_from_active_record_with_has_types?
                   undef_method :descends_from_active_record_without_has_types?
                 end
