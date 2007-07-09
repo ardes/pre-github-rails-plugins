@@ -7,40 +7,11 @@ module Ardes#:nodoc:
   # the base class is defined.  (If ruby had a <code>class_defined</code> hook, a companion to <code>inherited</code>, this would be trivial)
   #
   # The solution given here is to store the outstanding dependencies on the HasTypes module, which are then
-  # required when:
+  # required when the class descends_from_active_record? method is called (as this is called prior to doing any
+  # funny STI stuff).  This method is restored to its original state after the dependencies are loaded.
   #
-  # * any ActiveRecord::Base is defined, or
-  # * the classes descends_from_active_record? method is called (as this is called prior to doing any
-  #   funny STI stuff).  This method is restored to its original state after the dependencies are loaded.
-  #
-  # I'm pretty sure the above two conditions serve to load STI subclasses just in time to maek all the finder magic work.
+  # I'm pretty sure this condition serves to load STI subclasses just in time to maek all the finder magic work.
   module HasTypes
-    class<<self
-      def extended(base)
-        base.class_eval do
-          class<<self
-            def inherited_with_has_types(child)
-              Ardes::HasTypes.require_dependencies
-              inherited_without_has_types(child)
-            end
-            alias_method_chain :inherited, :has_types
-          end
-        end
-      end
-    
-      def add_dependency(*dependencies)
-        @outstanding_dependencies ||= []
-        @outstanding_dependencies += dependencies
-      end
-    
-      def require_dependencies
-        if @outstanding_dependencies
-          deps, @outstanding_dependencies = @outstanding_dependencies, nil
-          deps.each {|d| require_dependency(d.underscore)}
-        end
-      end
-    end
-    
     def has_types(*types)
       raise RuntimeError, "can only specify has_types on an STI base class" unless self == self.base_class
       
@@ -52,7 +23,7 @@ module Ardes#:nodoc:
             # intercept calls to descend_from_active_record? and load outstanding dependencies. then wipe
             # all trace of this method intercept
             def descends_from_active_record_with_has_types?
-              Ardes::HasTypes.require_dependencies
+              type_class_names.each {|d| require_dependency(d.underscore) }
               returning descends_from_active_record_without_has_types? do
                 class<<self
                   alias_method :descends_from_active_record?, :descends_from_active_record_without_has_types?
@@ -71,7 +42,6 @@ module Ardes#:nodoc:
       end
       
       self.type_class_names = types.collect{|t| t.to_s.classify }
-      Ardes::HasTypes.add_dependency(*self.type_class_names)
     end
   end
 end
