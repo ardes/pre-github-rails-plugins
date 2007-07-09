@@ -1,0 +1,2 @@
+class PortableDwelling < Dwelling
+end

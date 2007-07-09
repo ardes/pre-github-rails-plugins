@@ -1,0 +1,2 @@
+class Caravan < PortableDwelling
+end

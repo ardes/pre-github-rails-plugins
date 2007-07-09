@@ -1,0 +1,2 @@
+class FixedDwelling < Dwelling
+end

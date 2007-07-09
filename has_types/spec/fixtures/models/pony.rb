@@ -1,0 +1,2 @@
+class Pony < Animal
+end

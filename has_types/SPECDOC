@@ -1,0 +1,18 @@
+
+Animal (class with has_types :pony)
+- should load subclasses on #new
+- should be cleaned up after dependencies loaded
+
+has_types
+- should load outstanding dependencies when next active record loaded
+- should load subclasses when any descendent loaded, and have correct SQL on #find
+
+class Bling < Product; end (where Bling is not in Product.has_types)
+- should raise NameError
+
+class Truck < Vehicle; has_types :ute; end
+- should raise error (can only specify has_types on STI base class)
+
+Finished in 0.113387 seconds
+
+6 examples, 0 failures

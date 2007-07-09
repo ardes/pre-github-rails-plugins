@@ -1,43 +1,70 @@
 module Ardes#:nodoc:
   # to be extended into ActiveRecord::Base
+  #
+  # See README for details
+  #
+  # The solution is a bit complicated, because we can't load the subclass dependencies until after
+  # the base class is defined.  (If ruby had a <code>class_defined</code> hook, a companion to <code>inherited</code>, this would be trivial)
+  #
+  # The solution given here is to store the outstanding dependencies on the HasTypes module, which are then
+  # required when:
+  #
+  # * any ActiveRecord::Base is defined, or
+  # * the classes descends_from_active_record? method is called (as this is called prior to doing any
+  #   funny STI stuff).  This method is restored to its original state after the dependencies are loaded.
+  #
+  # I'm pretty sure the above two conditions serve to load STI subclasses just in time to maek all the finder magic work.
   module HasTypes
-    def self.extended(base)
-      base.class_eval do
-        class<<self
-          def inherited_with_has_types(child)
-            Ardes::HasTypes.require_dependencies
-            inherited_without_has_types(child)
+    class<<self
+      def extended(base)
+        base.class_eval do
+          class<<self
+            def inherited_with_has_types(child)
+              Ardes::HasTypes.require_dependencies
+              inherited_without_has_types(child)
+            end
+            alias_method_chain :inherited, :has_types
           end
-          alias_method_chain :inherited, :has_types
+        end
+      end
+    
+      def add_dependency(*dependencies)
+        @outstanding_dependencies ||= []
+        @outstanding_dependencies += dependencies
+      end
+    
+      def require_dependencies
+        if @outstanding_dependencies
+          deps, @outstanding_dependencies = @outstanding_dependencies, nil
+          deps.each {|d| require_dependency(d.underscore)}
         end
       end
     end
     
-    def self.add_dependency(*dependencies)
-      @dependencies_for_next_inherit ||= []
-      @dependencies_for_next_inherit += dependencies
-    end
-    
-    def self.require_dependencies
-      if @require_dependencies
-        deps, @require_dependencies = @require_dependencies, nil
-        deps.each {|d| require_dependency(d.underscore)}
-      end
-      if @dependencies_for_next_inherit
-        @require_dependencies, @dependencies_for_next_inherit = @dependencies_for_next_inherit, nil
-      end
-    end
-    
     def has_types(*types)
-      raise "can only specify has_types on an STI base class" unless self == self.base_class
+      raise RuntimeError, "can only specify has_types on an STI base class" unless self == self.base_class
       
       unless singleton_methods.include?(:subclass_names)
         self.class_eval do
           cattr_accessor :type_class_names
         
           class<<self
+            # intercept calls to descend_from_active_record? and load outstanding dependencies. then wipe
+            # all trace of this method intercept
+            def descends_from_active_record_with_has_types?
+              Ardes::HasTypes.require_dependencies
+              returning descends_from_active_record_without_has_types? do
+                class<<self
+                  alias_method :descends_from_active_record?, :descends_from_active_record_with_has_types?
+                  undef_method :descends_from_active_record_with_has_types?
+                  undef_method :descends_from_active_record_without_has_types?
+                end
+              end
+            end
+            alias_method_chain :descends_from_active_record?, :has_types
+              
             def inherited(child)
-              type_class_names.include?(child.name) ? super : raise("#{child.name} is not declared in #{child.base_class.name}. Add has_types :#{klass.underscore} to #{child.base_class.name} class definition")
+              type_class_names.include?(child.name) ? super : raise(NameError, "#{child.name} is not declared in #{child.base_class.name}. Add has_types :#{child.name.underscore} to #{child.base_class.name} class definition")
             end
           end
         end
