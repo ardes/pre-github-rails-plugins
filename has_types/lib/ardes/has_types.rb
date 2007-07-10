@@ -6,11 +6,11 @@ module Ardes#:nodoc:
   # The solution is a bit complicated, because we can't load the subclass dependencies until after
   # the base class is defined.  (If ruby had a <code>class_defined</code> hook, a companion to <code>inherited</code>, this would be trivial)
   #
-  # The solution given here is to store the outstanding dependencies on the HasTypes module, which are then
-  # required when the class descends_from_active_record? method is called (as this is called prior to doing any
-  # funny STI stuff).  This method is restored to its original state after the dependencies are loaded.
+  # The solution given here is to load the outstanding dependencies when the classes descends_from_active_record? method is called.
+  # This is called before any queries that need type conditions.  The dependency laoding happens only once, as the the method is
+  # returned to its original state afterwards.
   #
-  # I'm pretty sure this condition serves to load STI subclasses just in time to maek all the finder magic work.
+  # I'm pretty sure this condition serves to load STI subclasses just in time to make all the finder magic work.
   module HasTypes
     def has_types(*types)
       raise RuntimeError, "can only specify has_types on an STI base class" unless self == self.base_class
@@ -20,7 +20,7 @@ module Ardes#:nodoc:
           cattr_accessor :type_class_names
         
           class<<self
-            # intercept calls to descend_from_active_record? and load outstanding dependencies. then wipe
+            # Intercept calls to descend_from_active_record? and load outstanding dependencies, then wipe
             # all trace of this method intercept
             def descends_from_active_record_with_has_types?
               type_class_names.each {|d| require_dependency(d.underscore) }

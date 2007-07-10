@@ -2,23 +2,26 @@ http://plugins.ardes.com > has_types
 
 = has_types
 
-This plugin allows you to specify the types fro your STI models. This ensures
-that all of the types are loaded whenever the base class is loaded, and an
-error is raised when a non specified class inherits from a base class.
+This plugin allows you to specify the types for your STI models. This ensures
+that all of the types are loaded whenever find conditions using the subclasses
+are constructed, and an error is raised when a non specified class inherits from a base class.
 
 === Example
 
   class Product < ActiveRecord::Base
     has_types :watch, :pony  # or 'Watch', 'Pony' if you prefer
   end
+  
+  class Bling < Product # => raises error because :bling is not in the above list
 
 === Why?
 
 This has a few benefits:
 
-* All subclasses (types) are loaded when the base class is loaded.  Among other
-  benefits, this means that Product.find(:all) will use an SQL clause like 
+* All subclasses (types) are loaded before the type_condition is constructed for
+  queries.  This means that Product.find(:all) will use an SQL clause like 
   <code>products.`type` = 'Product' OR products.`type` = 'Pony' OR product.`type` = 'Watch'</code>
+  even if you haven't explicitly required 'models/watch' or 'models/pony'
 
 * You don't have to muck about requiring all the model dependencies to avoid weird
   STIness
