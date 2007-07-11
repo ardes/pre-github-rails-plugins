@@ -277,6 +277,19 @@ class HashExtTest < Test::Unit::TestCase
       assert_equal expected, copy
     end
   end
+
+  def test_except
+    original = { :a => 'x', :b => 'y', :c => 10 }
+    expected = { :a => 'x', :b => 'y' }
+
+    # Should return a new hash with only the given keys.
+    assert_equal expected, original.except(:c)
+    assert_not_equal expected, original
+
+    # Should replace the hash with only the given keys.
+    assert_equal expected, original.except!(:c)
+    assert_equal expected, original
+  end
 end
 
 class IWriteMyOwnXML
@@ -574,6 +587,23 @@ class HashToXmlTest < Test::Unit::TestCase
     }.stringify_keys
 
     assert_equal expected_bacon_hash, Hash.from_xml(bacon_xml)["bacon"]
+  end
+  
+  def test_type_trickles_through_when_unknown
+    product_xml = <<-EOT
+    <product>
+      <weight type="double">0.5</weight>
+      <image type="ProductImage"><filename>image.gif</filename></image>
+      
+    </product>
+    EOT
+
+    expected_product_hash = {
+      :weight => 0.5,
+      :image => {'type' => 'ProductImage', 'filename' => 'image.gif' },
+    }.stringify_keys
+
+    assert_equal expected_product_hash, Hash.from_xml(product_xml)["product"]    
   end
 
   def test_should_use_default_value_for_unknown_key

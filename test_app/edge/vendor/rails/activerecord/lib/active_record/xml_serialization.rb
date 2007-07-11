@@ -205,12 +205,19 @@ module ActiveRecord #:nodoc:
           case @record.class.reflect_on_association(association).macro
           when :has_many, :has_and_belongs_to_many
             records = @record.send(association).to_a
-            unless records.empty?
-              tag = association.to_s
-              tag = tag.dasherize if dasherize?
-
+            tag = association.to_s
+            tag = tag.dasherize if dasherize?
+            if records.empty?
+              builder.tag!(tag, :type => :array)
+            else
               builder.tag!(tag, :type => :array) do
-                records.each { |r| r.to_xml(opts.merge(:root=>r.class.to_s.underscore)) }
+                association_name = association.to_s.singularize
+                records.each do |record| 
+                  record.to_xml opts.merge(
+                    :root => association_name, 
+                    :type => (record.class.to_s.underscore == association_name ? nil : record.class.name)
+                  )
+                end
               end
             end
           when :has_one, :belongs_to
@@ -245,6 +252,10 @@ module ActiveRecord #:nodoc:
       args = [root]
       if options[:namespace]
         args << {:xmlns=>options[:namespace]}
+      end
+      
+      if options[:type]
+        args << {:type=>options[:type]}
       end
         
       builder.tag!(*args) do
