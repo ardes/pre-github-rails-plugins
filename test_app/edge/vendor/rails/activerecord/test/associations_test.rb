@@ -409,13 +409,6 @@ class HasOneAssociationsTest < Test::Unit::TestCase
     end
   end
 
-  def test_deprecated_inferred_foreign_key
-    assert_not_deprecated { Company.belongs_to :firm }
-    assert_not_deprecated { Company.belongs_to :client, :foreign_key => "firm_id" }
-    assert_not_deprecated { Company.belongs_to :firm, :class_name => "Firm", :foreign_key => "client_of" }
-    assert_deprecated("inferred foreign_key name") { Company.belongs_to :client, :class_name => "Firm" }
-  end
-
 end
 
 
@@ -440,9 +433,7 @@ class HasManyAssociationsTest < Test::Unit::TestCase
   end
 
   def test_counting_with_single_conditions
-    assert_deprecated 'count' do
-      assert_equal 2, Firm.find(:first).plain_clients.count('1=1')
-    end
+    assert_equal 2, Firm.find(:first).plain_clients.count(:conditions => '1=1')
   end
 
   def test_counting_with_single_hash

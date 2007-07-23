@@ -40,7 +40,7 @@ namespace :spec do
     t.spec_files = FileList['vendor/plugins/**/spec/**/*_spec.rb'].exclude('vendor/plugins/rspec/*')
   end
 
-  [:models, :controllers, :views, :helpers].each do |sub|
+  [:models, :controllers, :views, :helpers, :lib].each do |sub|
     desc "Run the specs under spec/#{sub}"
     Spec::Rake::SpecTask.new(sub => spec_prereq) do |t|
       t.spec_opts = ['--options', "\"#{RAILS_ROOT}/spec/spec.opts\""]
@@ -51,7 +51,15 @@ namespace :spec do
   desc "Run the specs under vendor/plugins (except RSpec's own)"
   Spec::Rake::SpecTask.new(:plugins => spec_prereq) do |t|
     t.spec_opts = ['--options', "\"#{RAILS_ROOT}/spec/spec.opts\""]
-    t.spec_files = FileList['vendor/plugins/**/spec/**/*_spec.rb'].exclude('vendor/plugins/rspec/*')
+    t.spec_files = FileList['vendor/plugins/**/spec/**/*_spec.rb'].exclude('vendor/plugins/rspec/*').exclude("vendor/plugins/rspec_on_rails/*")
+  end
+  
+  namespace :plugins do
+    desc "Runs the examples for rspec_on_rails"
+    Spec::Rake::SpecTask.new(:rspec_on_rails => spec_prereq) do |t|
+      t.spec_opts = ['--options', "\"#{RAILS_ROOT}/spec/spec.opts\""]
+      t.spec_files = FileList['vendor/plugins/rspec_on_rails/spec/**/*_spec.rb']
+    end
   end
 
   desc "Translate/upgrade specs using the built-in translator"

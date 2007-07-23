@@ -6,6 +6,27 @@ follow the upgrade instructions and run 'script/generate rspec' you'll be fine, 
 step you need to manually go into spec_helper.rb and remove the call to that method (if present - it
 might not be if you haven't upgraded in a while).
 
+Warning: Implementors of custom formatters. Formatters will now be sent an Example object instead of just a 
+String for #example_started, #example_passed and #example_failed. In certain scenarios 
+(Spec::Ui with Spec::Distributed), the formatter must ask the Example for its sequence number instead of
+keeping track of a sequence number internal to the formatter. Most of you shouldn't need to upgrade
+your formatters though - the Example#to_s method returns the example name/description, so you should be
+able to use the passed Example instance as if it were a String.
+
+* Fixed [#12448] The spec:plugins rake task from rspec_on_rails should ignore specs from the rspec_on_rails plugin
+* Applied [#12300] rr integration (patch from Kyle Hargraves)
+* Implemented [#12284] mock_with :rr (integration with RR mock framework: http://rubyforge.org/projects/pivotalrb/)
+* Applied [#12237] (tiny) added full path to mate in switch_command (Patch from Carl Porth)
+* Formatters will now be sent an Example object instead of just a String for certain methods
+* All Spec::Rake::SpecTask attributes can now be procs, which allows for lazy evaluation.
+* Changed the Spec::Ui interfaces slightly. See examples.
+* Applied [#12174] mishandling of paths with spaces in spec_mate switch_command (Patch from Carl Porth)
+* Implemented [#8315] File "Go to..." functionality
+* Applied [#11917] Cleaner Spec::Ui error for failed Selenium connection (Patch from Ian Dees)
+* Applied [#11888] rspec_on_rails spews out warnings when assert_select is used with an XML response (Patch from Ian Leitch)
+* Applied [#12010] Nicer failure message formatting (Patch from Wincent Colaiuta)
+* Applied [#12156] smooth open mate patch (Patch from Ienaga Eiji)
+* Applied [#10577] Rails with Oracle breaks 0.9.2. (Patch from Sinclair Bain)
 * Fixed [#12079] auto-generated example name incomplete: should have 1 error on ....]
 * Applied [#12066] Docfix for mocks/mocks.page (Patch from Kyle Hargraves)
 * Fixed [#11891] script/generate rspec_controller fails to create appropriate views (from templates) on edge rails

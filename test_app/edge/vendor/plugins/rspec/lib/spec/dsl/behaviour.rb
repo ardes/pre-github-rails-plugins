@@ -67,11 +67,11 @@ module Spec
         prepare_execution_context_class
         before_all_errors = run_before_all(reporter, dry_run)
 
-        specs = reverse ? examples.reverse : examples
+        exs = reverse ? examples.reverse : examples
         example_execution_context = nil
          
         if before_all_errors.empty?
-          specs.each do |example|
+          exs.each do |example|
             example_execution_context = execution_context(example)
             example_execution_context.copy_instance_variables_from(@before_and_after_all_context_instance) unless before_all_proc(behaviour_type).nil?
             
@@ -124,6 +124,16 @@ module Spec
       def behaviour_type #:nodoc:
         @description[:behaviour_type]
       end
+      
+      # Sets the #number on each Example and returns the next number
+      def set_sequence_numbers(number, reverse) #:nodoc:
+        exs = reverse ? examples.reverse : examples
+        exs.each do |example|
+          example.number = number
+          number += 1
+        end
+        number
+      end
 
     protected
     
@@ -141,16 +151,15 @@ module Spec
       end
 
       def weave_in_included_modules
-        mods = included_modules
-        eval_module = @eval_module
-        
-        global_modules = Spec::Runner.configuration.modules_for(behaviour_type)
+        mods = [@eval_module]
+        mods << included_modules.dup
+        mods << Spec::Runner.configuration.modules_for(behaviour_type)
         execution_context_class.class_eval do
-          include eval_module
-          include(*global_modules) unless global_modules.nil?
-          mods.each do |mod|
-            include mod
-          end
+          # WARNING - the following can be executed in the context of any
+          # class, and should never pass more than one module to include
+          # even though we redefine include in this class. This is NOT
+          # tested anywhere, hence this comment.
+          mods.flatten.each {|mod| include mod}
         end
       end
 
@@ -167,7 +176,9 @@ module Spec
           rescue Exception => e
             errors << e
             location = "before(:all)"
-            reporter.example_finished(location, e, location) if reporter
+            # The easiest is to report this as an example failure. We don't have an Example
+            # at this point, so we'll just create a placeholder. 
+            reporter.example_finished(Example.new(location), e, location) if reporter
           end
         end
         errors
@@ -180,7 +191,7 @@ module Spec
             @before_and_after_all_context_instance.instance_eval(&after_all_proc(behaviour_type)) 
           rescue Exception => e
             location = "after(:all)"
-            reporter.example_finished(location, e, location) if reporter
+            reporter.example_finished(Example.new(location), e, location) if reporter
           end
         end
       end

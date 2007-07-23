@@ -1,6 +1,6 @@
 require File.dirname(__FILE__) + '/../spec_helper'
 
-describe "Google's search page" do
+describe "Google's search page I" do
   before(:each) do
     # The @browser is initialised in spec_helper.rb
     @browser.goto('http://www.google.com')
@@ -9,7 +9,14 @@ describe "Google's search page" do
   it "should find rspec's home page when I search for rspec" do
     @browser.text_field(:name, "q").set("rspec")
     @browser.button(:name, "btnG").click
-    @browser.should have_link(:url, "http://rspec.rubyforge.org/")
+    @browser.should have_link(:url, "http://rspec.rubyforge.org/index.html")
+  end
+end
+
+describe "Google's search page II" do
+  before(:each) do
+    # The @browser is initialised in spec_helper.rb
+    @browser.goto('http://www.google.com')
   end
 
   it "should find rspec's home page when I search for 'better than fudge' (this is supposed to fail)" do

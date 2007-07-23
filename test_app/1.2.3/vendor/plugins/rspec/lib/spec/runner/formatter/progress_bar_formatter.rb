@@ -5,12 +5,12 @@ module Spec
         def add_behaviour(name)
         end
       
-        def example_failed(name, counter, failure)
-          @output.print failure.expectation_not_met? ? red('F') : magenta('F')
+        def example_failed(example, counter, failure)
+          @output.print colourise('F', failure)
           @output.flush
         end
 
-        def example_passed(name)
+        def example_passed(example)
           @output.print green('.')
           @output.flush
         end
