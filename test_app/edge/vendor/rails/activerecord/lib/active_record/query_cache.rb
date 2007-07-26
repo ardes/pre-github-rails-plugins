@@ -58,8 +58,14 @@ module ActiveRecord
         else
           @query_cache[sql] = yield
         end
-        
-        result ? result.dup : nil
+
+        if result
+          # perform a deep #dup in case result is an array
+          result = result.collect { |row| row.dup } if result.is_a?(Array)
+          result.dup
+        else
+          nil
+        end
       end
     
       def method_missing(method, *arguments, &proc)

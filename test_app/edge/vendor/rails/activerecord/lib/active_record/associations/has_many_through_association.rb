@@ -9,7 +9,7 @@ module ActiveRecord
       end
 
       def find(*args)
-        options = Base.send(:extract_options_from_args!, args)
+        options = args.extract_options!
 
         conditions = "#{@finder_sql}"
         if sanitized_conditions = sanitize_sql(options[:conditions])
@@ -94,6 +94,13 @@ module ActiveRecord
           self << (object = @reflection.klass.send(:with_scope, :create => attrs) { @reflection.klass.create! })
           object
         end
+      end
+
+      # Returns the size of the collection by executing a SELECT COUNT(*) query if the collection hasn't been loaded and
+      # calling collection.size if it has. If it's more likely than not that the collection does have a size larger than zero
+      # and you need to fetch that collection afterwards, it'll take one less SELECT query if you use length.
+      def size
+        loaded? ? @target.size : count
       end
 
       # Calculate sum using SQL, not Enumerable
