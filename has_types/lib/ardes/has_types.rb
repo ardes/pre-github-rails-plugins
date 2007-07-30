@@ -55,6 +55,7 @@ module Ardes#:nodoc:
     # extended into model when :type_factory => true
     module TypeFactory
       def new(attributes = nil)
+        descends_from_active_record? # to load dependencies
         if attributes && attributes[:type] && attributes[:type].to_s != self.name
           type = attributes.delete(:type).to_s.classify
           subclass_names = send(:subclasses).collect(&:name)
