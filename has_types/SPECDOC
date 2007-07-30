@@ -13,6 +13,18 @@ class Mansion < FixedDwelling; end (where :mansion is not in Dwelling.has_types)
 class Pony < Animal; has_types :my_little; end
 - should raise error (can only specify has_types on STI base class)
 
-Finished in 0.097356 seconds
+class Dwelling (with :type_factory => true)
+- should return a FixedDwelling with new(:type => :fixed_dwelling)
+- should return a FixedDwelling with new(:type => "FixedDwelling")
+- should raise argument error with new(:type => "Object")
+- should return Dwelling with new(:type => "Dwelling")
 
-6 examples, 0 failures
+class FixedDwelling < Dwelling
+- should return a House with new(:type => :house)
+- should return a House with new(:type => "House")
+- should raise argument error with new(:type => "Dwelling")
+- should return FixedDwelling with new(:type => "FixedDwelling")
+
+Finished in 0.12419 seconds
+
+14 examples, 0 failures

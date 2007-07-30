@@ -47,3 +47,39 @@ describe "class Pony < Animal; has_types :my_little; end" do
     lambda{ class Pony < Animal; has_types :my_little; end }.should raise_error(RuntimeError, 'can only specify has_types on an STI base class')
   end
 end
+
+describe "class Dwelling (with :type_factory => true)" do
+  it 'should return a FixedDwelling with new(:type => :fixed_dwelling)' do
+    Dwelling.new(:type => :fixed_dwelling).class.should == FixedDwelling
+  end
+  
+  it 'should return a FixedDwelling with new(:type => "FixedDwelling")' do
+    Dwelling.new(:type => "FixedDwelling").class.should == FixedDwelling
+  end
+  
+  it 'should raise argument error with new(:type => "Object")' do
+    lambda { Dwelling.new(:type => 'Object') }.should raise_error(ArgumentError)
+  end
+  
+  it 'should return Dwelling with new(:type => "Dwelling")' do
+    Dwelling.new(:type => "Dwelling").class.should == Dwelling
+  end
+end
+
+describe "class FixedDwelling < Dwelling" do
+  it 'should return a House with new(:type => :house)' do
+    FixedDwelling.new(:type => :house).class.should == House
+  end
+  
+  it 'should return a House with new(:type => "House")' do
+    FixedDwelling.new(:type => "House").class.should == House
+  end
+  
+  it 'should raise argument error with new(:type => "Dwelling")' do
+    lambda { FixedDwelling.new(:type => 'Dwelling') }.should raise_error(ArgumentError)
+  end
+  
+  it 'should return FixedDwelling with new(:type => "FixedDwelling")' do
+    FixedDwelling.new(:type => "FixedDwelling").class.should == FixedDwelling
+  end
+end

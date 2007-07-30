@@ -11,13 +11,23 @@ module Ardes#:nodoc:
   # returned to its original state afterwards.
   #
   # I'm pretty sure this condition serves to load STI subclasses just in time to make all the finder magic work.
+  #
+  # === Options
+  #
+  # :type_factory (default false)
+  #
+  # When this is set to true, new() is extended so that it will return an object specified by :type attribute.
   module HasTypes
     def has_types(*types)
       raise RuntimeError, "can only specify has_types on an STI base class" unless self == self.base_class
       
+      options = types.last.is_a?(Hash) ? types.pop : {}
+      
       self.class_eval do
         cattr_accessor :type_class_names
       
+        extend TypeFactory if options[:type_factory]
+        
         class<<self
           # Intercept calls to descend_from_active_record? and load outstanding dependencies, then wipe
           # all trace of this method intercept
@@ -40,6 +50,20 @@ module Ardes#:nodoc:
       end
       
       self.type_class_names = types.collect{|t| t.to_s.classify }
+    end
+    
+    # extended into model when :type_factory => true
+    module TypeFactory
+      def new(attributes = nil)
+        if attributes && attributes[:type] && attributes[:type].to_s != self.name
+          type = attributes.delete(:type).to_s.classify
+          subclass_names = send(:subclasses).collect(&:name)
+          raise ArgumentError, "type: #{type} must be one of #{subclass_names.to_sentence(:connector => 'or')}" unless subclass_names.include?(type)
+          type.constantize.new(attributes)
+        else
+         super(attributes)
+        end
+      end
     end
   end
 end
