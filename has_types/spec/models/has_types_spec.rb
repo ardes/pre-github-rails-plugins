@@ -82,4 +82,8 @@ describe "class FixedDwelling < Dwelling" do
   it 'should return FixedDwelling with new(:type => "FixedDwelling")' do
     FixedDwelling.new(:type => "FixedDwelling").class.should == FixedDwelling
   end
+  
+  it 'should be fine with FixedDwelling.new' do
+    lambda { FixedDwelling.new }.should_not raise_error
+  end
 end
