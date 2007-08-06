@@ -1,5 +1,13 @@
 *SVN*
 
+* Make the utf-handler return the correct value for non-matching regular expressions. Closes #9049 [manfred]
+
+* Add ljust, rjust and center to utf8-handler. Closes #9165 [manfred]
+
+* Fix Time#advance bug when trying to advance a year from leap day.  Closes #8655 [gbuesing]
+
+* Add support for []= on ActiveSupport::Multibyte::Chars. Closes #9142. [ewan, manfred]
+
 * Added Array#extract_options! to encapsulate the pattern of getting an options hash out of a variable number of parameters #8759 [norbert].
 
 * Let alias_attribute work with attributes with initial capital letters (legacy columns etc).  Closes #8596 [mpalmer]
