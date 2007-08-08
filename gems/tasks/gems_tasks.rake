@@ -11,7 +11,7 @@ namespace :gems do
     
     version ||= gem.version.version rescue nil
     
-    unless gem && path = Gem::UnpackCommand.new.get_path(gem_name, version)
+    unless gem && path = Gem::CommandManager.instance['unpack'].get_path(gem_name, version)
       raise "No gem #{gem_name} #{version} is installed.  Do 'gem list #{gem_name}' to see what you have available."
     end
 
