@@ -2,8 +2,8 @@ module Spec
   module Rails
     module VERSION #:nodoc:
       unless defined?(REV)
-        # RANDOM_TOKEN: 0.145125549991196
-        REV = "$LastChangedRevision: 2249 $".match(/LastChangedRevision: (\d+)/)[1]
+        # RANDOM_TOKEN: 0.328738627558458
+        REV = "$LastChangedRevision: 2360 $".match(/LastChangedRevision: (\d+)/)[1]
       end
     end
   end
@@ -24,3 +24,4 @@ See http://rspec.rubyforge.org/documentation/rails/install.html for details.
 ############################################################################
 EOF
 end
+

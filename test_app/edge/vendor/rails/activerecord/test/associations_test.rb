@@ -1470,10 +1470,12 @@ class HasAndBelongsToManyAssociationsTest < Test::Unit::TestCase
     assert project.respond_to?("name=")
     assert project.respond_to?("name?")
     assert project.respond_to?("joined_on")
-    assert project.respond_to?("joined_on=")
+    # given that the 'join attribute' won't be persisted, I don't
+    # think we should define the mutators
+    #assert project.respond_to?("joined_on=")
     assert project.respond_to?("joined_on?")
     assert project.respond_to?("access_level")
-    assert project.respond_to?("access_level=")
+    #assert project.respond_to?("access_level=")
     assert project.respond_to?("access_level?")
   end
 
@@ -1759,6 +1761,13 @@ class HasAndBelongsToManyAssociationsTest < Test::Unit::TestCase
     welcome = categories(:technology).posts.first
     welcome.title = "Something else"
     assert welcome.save!
+  end
+
+  def test_habtm_respects_select
+    categories(:technology).select_testing_posts(true).each do |o|
+      assert_respond_to o, :correctness_marker
+    end
+    assert_respond_to categories(:technology).select_testing_posts.find(:first), :correctness_marker
   end
 
   def test_updating_attributes_on_rich_associations

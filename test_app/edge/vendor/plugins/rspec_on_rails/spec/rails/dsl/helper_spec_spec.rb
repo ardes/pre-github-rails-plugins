@@ -7,6 +7,11 @@ describe "HelperBehaviour", :behaviour_type => :helper do
   it "should have direct access to methods defined in helpers" do
     method_in_explicit_helper.should =~ /text from a method/
   end
+  
+  it "should have access to named routes" do
+    rspec_on_rails_specs_url.should == "http://test.host/rspec_on_rails_specs"
+    rspec_on_rails_specs_path.should == "/rspec_on_rails_specs"
+  end
 end
 
 
@@ -67,6 +72,8 @@ describe ExplicitHelper, :behaviour_type => :helper do
   it "should not require naming the helper if describe is passed a type" do
     method_in_explicit_helper.should match(/text from a method/)
   end
+  
+  
 end
 
 module Spec

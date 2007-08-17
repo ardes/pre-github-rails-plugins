@@ -3,11 +3,11 @@ module Spec
     unless defined? MAJOR
       MAJOR  = 1
       MINOR  = 0
-      TINY   = 6
+      TINY   = 8
       RELEASE_CANDIDATE = nil
 
-      # RANDOM_TOKEN: 0.145125549991196
-      REV = "$LastChangedRevision: 2249 $".match(/LastChangedRevision: (\d+)/)[1]
+      # RANDOM_TOKEN: 0.328738627558458
+      REV = "$LastChangedRevision: 2360 $".match(/LastChangedRevision: (\d+)/)[1]
 
       STRING = [MAJOR, MINOR, TINY].join('.')
       TAG = "REL_#{[MAJOR, MINOR, TINY, RELEASE_CANDIDATE].compact.join('_')}".upcase.gsub(/\.|-/, '_')
@@ -20,3 +20,4 @@ module Spec
     end
   end
 end
+

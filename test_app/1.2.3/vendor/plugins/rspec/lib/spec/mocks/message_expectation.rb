@@ -42,6 +42,17 @@ module Spec
         @return_block = block_given? ? return_block : lambda { value }
       end
       
+      # :call-seq:
+      #   and_raise()
+      #   and_raise(Exception) #any exception class
+      #   and_raise(exception) #any exception object
+      #
+      # == Warning
+      #
+      # When you pass an exception class, the MessageExpectation will
+      # raise an instance of it, creating it with +new+. If the exception
+      # class initializer requires any parameters, you must pass in an
+      # instance and not the class.
       def and_raise(exception=Exception)
         @exception_to_raise = exception
       end
@@ -221,11 +232,5 @@ module Spec
       end
     end
     
-    class MethodStub < BaseExpectation
-      def initialize(message, expectation_ordering, expected_from, sym, method_block)
-        super(message, expectation_ordering, expected_from, sym, method_block, 0)
-        @expected_received_count = :any
-      end
-    end
   end
 end

@@ -1,4 +1,29 @@
-== Version 1.0.6 (in SVN)
+== Version 1.0.9
+
+Release notes here
+
+* describe("A", Hash, "with one element") will generate description "A Hash with one element" (Tip from Ola Bini)
+* Applied [#13016] [DOC] Point out that view specs render, well, a view (Patch from Jay Levitt)
+* Applied [#13078] Develop rspec with autotest (Patch from Scott Taylor)
+* Fixed [#13065] Named routes throw a NoMethodError in Helper specs (Patches from James Deville and Mike Mangino)
+* Added (back) the verbose attribute in Spec::Rake::SpecTask
+* Changed documentation to point at the new http svn URL, which is more accessible.
+
+== Version 1.0.8
+
+Another bugfix release - this time to resolve the version mismatch
+
+== Version 1.0.7
+
+Quick bugfix release to ensure that you don't have to have the rspec gem installed
+in order to use autotest with rspec_on_rails.
+
+* Fixed [#13015] autotest gives failure in 'spec_command' after upgrade 1.0.5 to 1.0.6
+
+== Version 1.0.6
+
+The "holy cow, batman, it's been a long time since we released and there are a ton of bug
+fixes, patches and even new features" release.
 
 Warning: Spec::Rails users: In fixing 11508, we've removed the raise_controller_errors method. As long as you
 follow the upgrade instructions and run 'script/generate rspec' you'll be fine, but if you skip this
@@ -12,7 +37,12 @@ keeping track of a sequence number internal to the formatter. Most of you should
 your formatters though - the Example#to_s method returns the example name/description, so you should be
 able to use the passed Example instance as if it were a String.
 
-* Applied [#12701] Allow checking of content captured with content_for in view specs (Patch from Jens Kr√§mer)
+* Applied [#12986] Autotest Specs + Refactoring (Patch from Scott Tayler)
+* Added a #close method to formatters, which allows them to gracefully close streams.
+* Applied [#12935] Remove requirement that mocha must be installed as a gem when used as mocking framework. (Patch from Ryan Kinderman).
+* Fixed [#12893] RSpec's Autotest should work with rspec's trunk
+* Fixed [#12865] Partial mock error when object has an @options instance var
+* Applied [#12701] Allow checking of content captured with content_for in view specs (Patch from Jens Kr‰mer)
 * Applied [#12817] Cannot include same shared behaviour when required with absolute paths (Patch from Ian Leitch)
 * Applied [#12719] rspec_on_rails should not include pagination helper (Patch from Matthijs Langenberg)
 * Fixed [#12714] helper spec not finding rails core helpers

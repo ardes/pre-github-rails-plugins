@@ -35,7 +35,7 @@ module Spec
         def colour=(colour)
           @colour = colour
           begin ; require 'Win32/Console/ANSI' if @colour && PLATFORM =~ /win32/ ; rescue LoadError ; raise "You must gem install win32console to use colour on Windows" ; end
-	      end
+        end
 
         def dump_failure(counter, failure)
           @output.puts
@@ -76,7 +76,7 @@ module Spec
           @output.flush
           dump_pending
         end
-        
+
         def dump_pending
           unless @pending_examples.empty?
             @output.puts
@@ -87,7 +87,13 @@ module Spec
           end
           @output.flush
         end
-
+        
+        def close
+          if IO === @output
+            @output.close 
+          end
+        end
+        
         def format_backtrace(backtrace)
           return "" if backtrace.nil?
           backtrace.map { |line| backtrace_line(line) }.join("\n")
