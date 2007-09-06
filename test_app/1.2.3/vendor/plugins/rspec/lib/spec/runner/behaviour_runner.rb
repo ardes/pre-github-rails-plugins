@@ -1,22 +1,26 @@
 module Spec
   module Runner
     class BehaviourRunner
+      FILE_SORTERS = {
+        'mtime' => lambda {|file_a, file_b| File.mtime(file_b) <=> File.mtime(file_a)}
+      }
       
-      def initialize(options, arg=nil)
+      def initialize(options)
         @behaviours = []
         @options = options
       end
     
       def add_behaviour(behaviour)
-        if !specified_examples.nil? && !specified_examples.empty?
-          behaviour.retain_examples_matching!(specified_examples)
+        if behaviour.shared?
+          raise ArgumentError, "Cannot add Shared Example to the BehaviourRunner"
         end
-        @behaviours << behaviour if behaviour.number_of_examples != 0 && !behaviour.shared?
+        @behaviours << behaviour
+        behaviour.rspec_options = @options
       end
       
       # Runs all behaviours and returns the number of failures.
       def run(paths, exit_when_done)
-        prepare!(paths)
+        prepare(paths)
         begin
           run_behaviours
         rescue Interrupt
@@ -25,7 +29,7 @@ module Spec
         end
         failure_count = report_dump
         
-        heckle if(failure_count == 0 && !@options.heckle_runner.nil?)
+        heckle if(failure_count == 0 && @options.heckle_runner)
         
         if(exit_when_done)
           exit_code = (failure_count == 0) ? 0 : 1
@@ -34,15 +38,9 @@ module Spec
         failure_count
       end
       
-      def report_end
-        @options.reporter.end
-      end
-      
-      def report_dump
-        @options.reporter.dump
-      end
-      
-      def prepare!(paths)
+    protected
+
+      def prepare(paths)
         unless paths.nil? # It's nil when running single specs with ruby
           paths = find_paths(paths)
           sorted_paths = sort_paths(paths)
@@ -53,33 +51,37 @@ module Spec
         set_sequence_numbers
       end
 
-      def run_behaviours
-        @behaviours.each do |behaviour|
-          behaviour.run(@options.reporter, @options.dry_run, @options.reverse, @options.timeout)
-        end
-      end
-    
-      def number_of_examples
-        @behaviours.inject(0) {|sum, behaviour| sum + behaviour.number_of_examples}
-      end
-      
-      FILE_SORTERS = {
-        'mtime' => lambda {|file_a, file_b| File.mtime(file_b) <=> File.mtime(file_a)}
-      }
-      
       def sorter(paths)
         FILE_SORTERS[@options.loadby]
       end
-      
+
       def sort_paths(paths)
         sorter = sorter(paths)
         paths = paths.sort(&sorter) unless sorter.nil?
         paths
       end
 
-    private
+      def number_of_examples
+        @behaviours.inject(0) {|sum, behaviour| sum + behaviour.number_of_examples}
+      end
+
+      def run_behaviours
+        @behaviours.each do |behaviour|
+          suite = behaviour.suite
+          suite.rspec_options = @options
+          suite.run(nil)
+        end
+      end
+
+      def report_end
+        @options.reporter.end
+      end
+
+      def report_dump
+        @options.reporter.dump
+      end
       
-      # Sets the #number on each Example
+      # Sets the #number on each ExampleDefinition
       def set_sequence_numbers
         number = 0
         @behaviours.each do |behaviour|
@@ -90,9 +92,9 @@ module Spec
       def find_paths(paths)
         result = []
         paths.each do |path|
-          if File.directory?(path)
-            result += Dir["#{path}/**/*.rb"]
-          elsif File.file?(path)
+          if test ?d, path
+            result += Dir[File.expand_path("#{path}/**/*.rb")]
+          elsif test ?f, path
             result << path
           else
             raise "File or directory not found: #{path}"
@@ -105,10 +107,6 @@ module Spec
         paths.each do |path|
           load path
         end
-      end
-      
-      def specified_examples
-        @options.examples
       end
       
       def heckle

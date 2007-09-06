@@ -95,6 +95,12 @@ class ValidationsTest < Test::Unit::TestCase
     end
   end
 
+  def test_exception_on_create_bang_many
+    assert_raises(ActiveRecord::RecordInvalid) do
+      Reply.create!([ { "title" => "OK" }, { "title" => "Wrong Create" }])
+    end
+  end
+
   def test_scoped_create_without_attributes
     Reply.with_scope(:create => {}) do
       assert_raises(ActiveRecord::RecordInvalid) { Reply.create! }
@@ -451,6 +457,24 @@ class ValidationsTest < Test::Unit::TestCase
     assert developer.valid?
   end
 
+  def test_validates_length_of_with_allow_nil
+    Topic.validates_length_of( :title, :is => 5, :allow_nil=>true )
+
+    assert !Topic.create("title" => "ab").valid?
+    assert !Topic.create("title" => "").valid?
+    assert Topic.create("title" => nil).valid?
+    assert Topic.create("title" => "abcde").valid?
+  end
+
+  def test_validates_length_of_with_allow_blank
+    Topic.validates_length_of( :title, :is => 5, :allow_blank=>true )
+
+    assert !Topic.create("title" => "ab").valid?
+    assert Topic.create("title" => "").valid?
+    assert Topic.create("title" => nil).valid?
+    assert Topic.create("title" => "abcde").valid?
+  end
+
   def test_numericality_with_allow_nil_and_getter_method
     Developer.validates_numericality_of( :salary, :allow_nil => true)
     developer = Developer.new("name" => "michael", "salary" => nil)
@@ -644,18 +668,6 @@ class ValidationsTest < Test::Unit::TestCase
     assert !t.valid?
 
     assert_equal 'tu est trops petit hombre 10', t.errors['title']
-  end
-  
-  def test_add_on_boundary_breaking_is_deprecated
-    t = Topic.new('title' => 'noreplies', 'content' => 'whatever')
-    class << t
-      def validate
-        errors.add_on_boundary_breaking('title', 1..6)
-      end
-    end
-    assert_deprecated 'add_on_boundary_breaking' do
-      assert !t.valid?
-    end
   end
 
   def test_validates_size_of_association
@@ -1121,6 +1133,28 @@ class ValidationsTest < Test::Unit::TestCase
     assert !t.valid?
     assert_equal "can't be blank", t.errors.on("title").first
  end
+
+  # previous implementation of validates_presence_of eval'd the 
+  # string with the wrong binding, this regression test is to 
+  # ensure that it works correctly
+  def test_validation_with_if_as_string
+    Topic.validates_presence_of(:title)
+    Topic.validates_presence_of(:author_name, :if => "title.to_s.match('important')")
+
+    t = Topic.new
+    assert !t.valid?, "A topic without a title should not be valid"
+    assert !t.errors.invalid?("author_name"), "A topic without an 'important' title should not require an author"
+
+    t.title = "Just a title"
+    assert t.valid?, "A topic with a basic title should be valid"
+
+    t.title = "A very important title"
+    assert !t.valid?, "A topic with an important title, but without an author, should not be valid"
+    assert t.errors.invalid?("author_name"), "A topic with an 'important' title should require an author"
+
+    t.author_name = "Hubert J. Farnsworth"
+    assert t.valid?, "A topic with an important title and author should be valid"
+  end
 end
 
 

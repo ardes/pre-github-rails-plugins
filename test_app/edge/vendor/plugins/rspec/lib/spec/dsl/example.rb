@@ -1,134 +1,222 @@
-require 'timeout'
-
 module Spec
   module DSL
-    class Example
-      # The global sequence number of this example
-      attr_accessor :number
-      
-      def initialize(description, options={}, &example_block)
-        @from = caller(0)[3]
-        @options = options
-        @example_block = example_block
-        @description = description
-        @description_generated_proc = lambda { |desc| @generated_description = desc }
-      end
-      
-      def run(reporter, before_each_block, after_each_block, dry_run, execution_context, timeout=nil)
-        @dry_run = dry_run
-        reporter.example_started(self)
-        return reporter.example_finished(self) if dry_run
+    class Example < ::Test::Unit::TestCase
+      remove_method :default_test if respond_to?(:default_test)
+      class << self
+        extend ExampleCallbacks
+        include BehaviourApi
+        public :include
+        attr_accessor :rspec_options
 
-        errors = []
-        location = nil
-        Timeout.timeout(timeout) do
-          before_each_ok = before_example(execution_context, errors, &before_each_block)
-          example_ok = run_example(execution_context, errors) if before_each_ok
-          after_each_ok = after_example(execution_context, errors, &after_each_block)
-          location = failure_location(before_each_ok, example_ok, after_each_ok)
+        def suite
+          return ExampleSuite.new("Rspec Description Suite", self) unless description
+          suite = ExampleSuite.new(description.description, self)
+          suite
         end
 
-        ExampleShouldRaiseHandler.new(@from, @options).handle(errors)
-        reporter.example_finished(self, errors.first, location, @example_block.nil?) if reporter
-      end
-      
-      def matches?(matcher, specified_examples)
-        matcher.example_desc = description
-        matcher.matches?(specified_examples)
-      end
-      
-      def description
-        @description == :__generate_description ? generated_description : @description
-      end
-      
-      def to_s
-        description
-      end
+        def run
+          retain_specified_examples
+          return if example_definitions.empty?
 
-    private
-      
-      def generated_description
-        return @generated_description if @generated_description
-        if @dry_run
-          "NO NAME (Because of --dry-run)"
-        else
-          if @failed
-            "NO NAME (Because of Error raised in matcher)"
+          reporter.add_behaviour(description)
+          before_all_errors = run_before_all(reporter, dry_run)
+
+          if before_all_errors.empty?
+            example = nil
+            ordered_example_definitions(reverse).each do |example_definition|
+              example = create_example(example_definition)
+              example.copy_instance_variables_from(@before_and_after_all_example)
+
+              unless example_definition.pending?
+                befores = before_each_proc(behaviour_type) {|e| raise e}
+                afters = after_each_proc(behaviour_type)
+              end
+              example_definition.run(reporter, befores, afters, dry_run, example, timeout)
+            end
+            @before_and_after_all_example.copy_instance_variables_from(example)
+          end
+
+          run_after_all(reporter, dry_run)
+        end
+
+        # Sets the #number on each ExampleDefinition and returns the next number
+        def set_sequence_numbers(number, reverse) #:nodoc:
+          ordered_example_definitions(reverse).each do |example|
+            example.number = number
+            number += 1
+          end
+          number
+        end
+
+        def shared?
+          false
+        end
+
+        protected
+
+        def retain_specified_examples
+          return if specified_examples.empty?
+          return if specified_examples.index(description.to_s)
+          matcher = ExampleMatcher.new(description.to_s)
+          example_definitions.reject! do |example|
+            !example.matches?(matcher, specified_examples)
+          end
+        end
+
+        def reporter
+          rspec_options.reporter
+        end
+
+        def dry_run
+          rspec_options.dry_run
+        end
+
+        def reverse
+          rspec_options.reverse
+        end
+
+        def timeout
+          rspec_options.timeout
+        end
+
+        def specified_examples
+          rspec_options.examples
+        end
+
+        def run_before_all(reporter, dry_run)
+          errors = []
+          unless dry_run
+            begin
+              @before_and_after_all_example = create_example(nil)
+              @before_and_after_all_example.instance_eval(&before_all_proc(behaviour_type))
+            rescue Exception => e
+              errors << e
+              location = "before(:all)"
+              # The easiest is to report this as an example failure. We don't have an ExampleDefinition
+              # at this point, so we'll just create a placeholder.
+              reporter.example_finished(create_example_definition(location), e, location)
+            end
+          end
+          errors
+        end
+
+        def run_after_all(reporter, dry_run)
+          unless dry_run
+            begin
+              @before_and_after_all_example ||= create_example(nil)
+              @before_and_after_all_example.instance_eval(&after_all_proc(behaviour_type))
+            rescue Exception => e
+              location = "after(:all)"
+              reporter.example_finished(create_example_definition(location), e, location)
+            end
+          end
+        end
+
+        def ordered_example_definitions(reverse)
+          reverse ? example_definitions.reverse : example_definitions
+        end
+
+        def before_each_proc(behaviour_type, &error_handler)
+          parts = []
+          parts.push(*Example.before_each_parts(nil))
+          parts.push(*Example.before_each_parts(behaviour_type)) if behaviour_type
+          parts.push(*before_each_parts(nil))
+          parts.push(*before_each_parts(behaviour_type)) if behaviour_type
+          CompositeProcBuilder.new(parts).proc(&error_handler)
+        end
+
+        def before_all_proc(behaviour_type, &error_handler)
+          parts = []
+          parts.push(*Example.before_all_parts(nil))
+          parts.push(*Example.before_all_parts(behaviour_type)) if behaviour_type
+          parts.push(*before_all_parts(nil))
+          parts.push(*before_all_parts(behaviour_type)) if behaviour_type
+          CompositeProcBuilder.new(parts).proc(&error_handler)
+        end
+
+        def after_all_proc(behaviour_type)
+          parts = []
+          parts.push(*after_all_parts(behaviour_type)) if behaviour_type
+          parts.push(*after_all_parts(nil))
+          parts.push(*Example.after_all_parts(behaviour_type)) if behaviour_type
+          parts.push(*Example.after_all_parts(nil))
+          CompositeProcBuilder.new(parts).proc
+        end
+
+        def after_each_proc(behaviour_type)
+          parts = []
+          parts.push(*after_each_parts(behaviour_type)) if behaviour_type
+          parts.push(*after_each_parts(nil))
+          parts.push(*Example.after_each_parts(behaviour_type)) if behaviour_type
+          parts.push(*Example.after_each_parts(nil))
+          CompositeProcBuilder.new(parts).proc
+        end
+
+        def create_example(example_definition)
+          new self, example_definition
+        end
+
+        def plugin_mock_framework
+          case mock_framework = Spec::Runner.configuration.mock_framework
+          when Module
+            include mock_framework
           else
-            "NO NAME (Because there were no expectations)"
+            require Spec::Runner.configuration.mock_framework
+            include Spec::Plugins::MockFramework
+          end
+        end
+
+        def include_example_modules(behaviour_type)
+          Spec::Runner.configuration.modules_for(behaviour_type).each do |mod|
+            include mod
+          end
+        end
+
+        def define_predicate_matchers(definitions) # :nodoc:
+          definitions.each_pair do |matcher_method, method_on_object|
+            define_method matcher_method do |*args|
+              eval("be_#{method_on_object.to_s.gsub('?','')}(*args)")
+            end
           end
         end
       end
-      
-      def before_example(execution_context, errors, &behaviour_before_block)
-        setup_mocks(execution_context)
-        Spec::Matchers.description_generated(@description_generated_proc)
-        
-        builder = CompositeProcBuilder.new
-        before_proc = builder.proc(&append_errors(errors))
-        execution_context.instance_eval(&before_proc)
-        
-        execution_context.instance_eval(&behaviour_before_block) if behaviour_before_block
-        return errors.empty?
-      rescue Exception => e
-        @failed = true
-        errors << e
-        return false
-      end
+      include ::Spec::Matchers
 
-      def run_example(execution_context, errors)
-        begin
-          execution_context.instance_eval(&@example_block) if @example_block
-          return true
-        rescue Exception => e
-          @failed = true
-          errors << e
-          return false
+      attr_reader :rspec_behaviour, :rspec_definition
+      alias_method :behaviour, :rspec_behaviour
+      alias_method :definition, :rspec_definition
+
+      def initialize(behaviour, definition) #:nodoc:
+        (class << self; self; end).class_eval do
+          plugin_mock_framework
+          include_example_modules behaviour.behaviour_type
+          define_predicate_matchers(behaviour.predicate_matchers)
+          define_predicate_matchers(Spec::Runner.configuration.predicate_matchers)
         end
+        @rspec_behaviour = behaviour
+        @rspec_definition = definition
+        @_result = Test::Unit::TestResult.new
       end
 
-      def after_example(execution_context, errors, &behaviour_after_each)
-        execution_context.instance_eval(&behaviour_after_each) if behaviour_after_each
+      def violated(message="")
+        raise Spec::Expectations::ExpectationNotMetError.new(message)
+      end
 
-        begin
-          verify_mocks(execution_context)
-        ensure
-          teardown_mocks(execution_context)
+      def inspect
+        "[RSpec example]"
+      end
+
+      def pending(message)
+        if block_given?
+          begin
+            yield
+          rescue Exception => e
+            raise Spec::DSL::ExamplePendingError.new(message)
+          end
+          raise Spec::DSL::PendingFixedError.new("Expected pending '#{message}' to fail. No Error was raised.")
+        else
+          raise Spec::DSL::ExamplePendingError.new(message)
         end
-
-        Spec::Matchers.unregister_description_generated(@description_generated_proc)
-
-        builder = CompositeProcBuilder.new
-        after_proc = builder.proc(&append_errors(errors))
-        execution_context.instance_eval(&after_proc)
-
-        return errors.empty?
-      rescue Exception => e
-        @failed = true
-        errors << e
-        return false
-      end
-      
-      def setup_mocks(execution_context)
-        execution_context.setup_mocks_for_rspec if execution_context.respond_to?(:setup_mocks_for_rspec)
-      end
-      
-      def verify_mocks(execution_context)
-        execution_context.verify_mocks_for_rspec if execution_context.respond_to?(:verify_mocks_for_rspec)
-      end
-      
-      def teardown_mocks(execution_context)
-        execution_context.teardown_mocks_for_rspec if execution_context.respond_to?(:teardown_mocks_for_rspec)
-      end
-      
-      def append_errors(errors)
-        proc {|error| errors << error}
-      end
-      
-      def failure_location(before_each_ok, example_ok, after_each_ok)
-        return 'before(:each)' unless before_each_ok
-        return description unless example_ok
-        return 'after(:each)' unless after_each_ok
       end
     end
   end

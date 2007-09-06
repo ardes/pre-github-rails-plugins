@@ -6,7 +6,7 @@ module Spec
       class HtmlFormatter < BaseTextFormatter
         include ERB::Util # for the #h method
         
-        def initialize(output)
+        def initialize(options, output)
           super
           @current_behaviour_number = 0
           @current_example_number = 0
@@ -104,7 +104,7 @@ module Spec
         end
 
         def dump_summary(duration, example_count, failure_count, pending_count)
-          if @dry_run
+          if dry_run?
             totals = "This was a dry-run"
           else
             totals = "#{example_count} example#{'s' unless example_count == 1}, #{failure_count} failure#{'s' unless failure_count == 1}"

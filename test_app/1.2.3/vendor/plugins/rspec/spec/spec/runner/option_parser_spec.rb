@@ -4,15 +4,16 @@ describe "OptionParser" do
   before(:each) do
     @out = StringIO.new
     @err = StringIO.new
-    @parser = Spec::Runner::OptionParser.new
+    @parser = Spec::Runner::OptionParser.new(@err, @out, true)
   end
 
   def parse(args)
-    @parser.parse(args, @err, @out, true)
+    @parser.parse(args)
   end
 
   def behaviour_runner(args)
-    @parser.create_behaviour_runner(args, @err, @out, true)
+    options = Spec::Runner::OptionParser.parse(args, @err, @out, true)
+    options.create_behaviour_runner
   end
 
   it "should accept dry run option" do
@@ -195,9 +196,13 @@ describe "OptionParser" do
   end
 
   it "should use custom diff format option when format is a custom format" do
-    options = parse(["--diff", "Custom::Formatter"])
+    Spec::Expectations.differ.should_not be_instance_of(Custom::Differ)
+
+    options = parse(["--diff", "Custom::Differ"])
+    options.parse_diff "Custom::Differ"
     options.diff_format.should == :custom
-    options.differ_class.should == Custom::Formatter
+    options.differ_class.should == Custom::Differ
+    Spec::Expectations.differ.should be_instance_of(Custom::Differ)
   end
 
   it "should print instructions about how to fix missing differ" do
@@ -317,7 +322,7 @@ describe "OptionParser" do
     Dir.chdir(File.dirname(__FILE__)) do
       FileUtils.touch "most_recent_spec.rb"
       all_files = ['command_line_spec.rb', 'most_recent_spec.rb']
-      sorted_files = behaviour_runner.sort_paths(all_files)
+        sorted_files = behaviour_runner.__send__(:sort_paths, all_files)
       sorted_files.should == ["most_recent_spec.rb", "command_line_spec.rb"]
       FileUtils.rm "most_recent_spec.rb"
     end
@@ -339,11 +344,13 @@ describe "OptionParser" do
   end
 
   it "should return the correct default behaviour runner" do
-    @parser.create_behaviour_runner([], @err, @out, true).should be_instance_of(Spec::Runner::BehaviourRunner)
+    options = Spec::Runner::OptionParser.parse([], @err, @out, true)
+    options.create_behaviour_runner.should be_instance_of(Spec::Runner::BehaviourRunner)
   end
 
   it "should return the correct default behaviour runner" do
-    @parser.create_behaviour_runner(["--runner", "Custom::BehaviourRunner"], @err, @out, true).should be_instance_of(Custom::BehaviourRunner)
+   options = Spec::Runner::OptionParser.parse(["--runner", "Custom::BehaviourRunner"], @err, @out, true)
+    options.create_behaviour_runner.should be_instance_of(Custom::BehaviourRunner)
   end
 
 end

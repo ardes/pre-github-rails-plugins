@@ -279,6 +279,13 @@ class ActionCacheTest < Test::Unit::TestCase
     assert_equal 'xml', path_object.extension
     assert_equal 'example.org/posts/index.xml', path_object.path
   end
+  
+  def test_correct_content_type_is_returned_for_cache_hit
+    # run it twice to cache it the first time
+    get :index, :id => 'content-type.xml'
+    get :index, :id => 'content-type.xml'
+    assert_equal 'application/xml', @response.content_type
+  end
 
   def test_empty_path_is_normalized
     @mock_controller.mock_url_for = 'http://example.org/'

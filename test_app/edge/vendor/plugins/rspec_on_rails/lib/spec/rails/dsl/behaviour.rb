@@ -1,9 +1,10 @@
-dir = File.dirname(__FILE__)
+dir = File.expand_path(File.join(File.dirname(__FILE__), '/behaviour'))
 
-require File.expand_path("#{dir}/behaviour/render_observer")
-require File.expand_path("#{dir}/behaviour/base")
-require File.expand_path("#{dir}/behaviour/functional")
-require File.expand_path("#{dir}/behaviour/model")
-require File.expand_path("#{dir}/behaviour/controller")
-require File.expand_path("#{dir}/behaviour/helper")
-require File.expand_path("#{dir}/behaviour/view")
+require "#{dir}/render_observer"
+
+require "#{dir}/rails_example"
+require "#{dir}/model_example"
+require "#{dir}/functional_example"
+require "#{dir}/controller_example"
+require "#{dir}/helper_example"
+require "#{dir}/view_example"

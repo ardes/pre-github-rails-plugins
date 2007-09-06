@@ -45,9 +45,12 @@ module Spec
       end
 
       it "should use custom diff format option when format is a custom format" do
-        @options.parse_diff "Custom::Formatter"
+        Spec::Expectations.differ.should_not be_instance_of(Custom::Differ)
+        
+        @options.parse_diff "Custom::Differ"
         @options.diff_format.should == :custom
-        @options.differ_class.should == Custom::Formatter
+        @options.differ_class.should == Custom::Differ
+        Spec::Expectations.differ.should be_instance_of(Custom::Differ)
       end
 
       it "should print instructions about how to fix missing differ" do
@@ -139,36 +142,20 @@ module Spec
       end
 
       it "does not set Expectations differ when differ_class is not set" do
-        @options.differ_class = nil
         Spec::Expectations.should_not_receive(:differ=)
-        @options.create_behaviour_runner
+        @options.differ_class = nil
       end
 
       it "sets Expectations differ when differ_class is set" do
-        @options.differ_class = Spec::Expectations::Differs::Default
         Spec::Expectations.should_receive(:differ=).with(anything()).and_return do |arg|
           arg.class.should == Spec::Expectations::Differs::Default
         end
-        @options.configure
+        @options.differ_class = Spec::Expectations::Differs::Default
       end
 
-      it "creates a Reporter" do
-        formatter = ::Spec::Runner::Formatter::BaseFormatter.new(:somewhere)
-        @options.formatters << formatter
-        reporter = Reporter.new(@formatters, @backtrace_tweaker)
-        Reporter.should_receive(:new).with(@options.formatters, @options.backtrace_tweaker).and_return(reporter)
-        @options.configure
-        @options.reporter.should === reporter
-      end
-
-      it "sets colour and dry_run on the formatters" do
-        @options.colour = true
-        @options.dry_run = true
-        formatter = ::Spec::Runner::Formatter::BaseTextFormatter.new(:somewhere)
-        formatter.should_receive(:colour=).with(true)
-        formatter.should_receive(:dry_run=).with(true)
-        @options.formatters << formatter
-        @options.configure
+      it "has a Reporter" do
+        @options.reporter.should be_instance_of(Reporter)
+        @options.reporter.options.should === @options
       end
     end
   end

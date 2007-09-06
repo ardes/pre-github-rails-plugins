@@ -1,7 +1,39 @@
-== Version 1.0.9
+== Version 1.0.9 (in SVN)
 
-Release notes here
+Textmate Bundle users - this release adds a new RSpec bundle that highlights describe, it, before and after and
+provides navigation to descriptions and examples (rather than classes and methods). When you first install this,
+it is going to try to hijack all of your .rb files. All you need to do is open a .rb file that does not end with
+'spec.rb' and change the bundle selection from RSpec to Ruby. TextMate will do the right thing from then on.
 
+* Behaviour subclasses Test::Unit::TestCase
+* Added stub_everything method to create a stub that will return itself for any message it doesn't understand
+* Added stories directory with stories/all.rb and stories/helper.rb when you script/generate rspec
+* Applied [#13554] Add "And" so you can say Given... And... When... Then... And...
+* Applied [#11254] RSpec syntax coloring and function pop-up integration in TextMate (Patch from Wincent Colaiuta)
+* Applied [#13143] ActionView::Helpers::RecordIdentificationHelper should be included if present (Patch from Jay Levitt)
+* Applied [#13567] patch to allow stubs to yield consecutive values (Patch from Rupert Voelcker)
+* Applied [#13559] reverse version of route_for (Patch from Rupert Voelcker)
+* Added [#13532] /lib specs should get base EvalContext
+* Applied [#13451] Add a null_object option to mock_model (Patch from James Deville)
+* Applied [#11919] Making non-implemented specs easy in textmate (Patch from Scott Taylor)
+* Applied [#13274] ThrowSymbol recognized a NameError triggered by Kernel#method_missing as a thrown Symbol
+* Applied [#12722] the alternate file command does not work in rails views due to scope (Patch from Carl Porth)
+* Moved instance method of Behaviour to Class methods
+* Instances of Behaviour are now executed as the spec
+* Renamed Example to ExampleDefinition
+* Added ExampleDefinition
+* Added story runner framework based on rbehave [#12628]
+* Applied [#13336] Helper directory incorrect for rake stats in statsetup task (Patch from Curtis Miller)
+* Applied [#13339] Add the ability for spec_parser to parse describes with :behaviour_type set (Patch from Will Leinweber and Dav Yaginuma)
+* Fixed [#13271] incorrect behaviour with expect_render and stub_render
+* Applied [#13129] Fix failing specs in spec_distributed (Patch from Bob Cotton)
+* Applied [#13118] Rinda support for Spec::Distributed (Patch from Bob Cotton)
+* Removed BehaviourEval
+* Removed Behaviour#inherit
+* Moved implementation of install_dependencies to example_rails_app
+* Renamed RSPEC_DEPS to VENDOR_DEPS
+* Added Example#not_implemented?
+* You can now stub!(:msg).with(specific args)
 * describe("A", Hash, "with one element") will generate description "A Hash with one element" (Tip from Ola Bini)
 * Applied [#13016] [DOC] Point out that view specs render, well, a view (Patch from Jay Levitt)
 * Applied [#13078] Develop rspec with autotest (Patch from Scott Taylor)
@@ -42,7 +74,7 @@ able to use the passed Example instance as if it were a String.
 * Applied [#12935] Remove requirement that mocha must be installed as a gem when used as mocking framework. (Patch from Ryan Kinderman).
 * Fixed [#12893] RSpec's Autotest should work with rspec's trunk
 * Fixed [#12865] Partial mock error when object has an @options instance var
-* Applied [#12701] Allow checking of content captured with content_for in view specs (Patch from Jens Krämer)
+* Applied [#12701] Allow checking of content captured with content_for in view specs (Patch from Jens Krï¿½mer)
 * Applied [#12817] Cannot include same shared behaviour when required with absolute paths (Patch from Ian Leitch)
 * Applied [#12719] rspec_on_rails should not include pagination helper (Patch from Matthijs Langenberg)
 * Fixed [#12714] helper spec not finding rails core helpers

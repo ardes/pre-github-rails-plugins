@@ -6,9 +6,12 @@ module Spec
     module ReporterSpecHelper
       def setup
         @io = StringIO.new
+        @options = Options.new(StringIO.new, @io)
         @backtrace_tweaker = stub("backtrace tweaker", :tweak_backtrace => nil)
+        @options.backtrace_tweaker = @backtrace_tweaker
         @formatter = mock("formatter")
-        @reporter = Reporter.new([@formatter], @backtrace_tweaker)
+        @options.formatters << @formatter
+        @reporter = Reporter.new(@options)
       end
 
       def failure
@@ -16,7 +19,7 @@ module Spec
       end
       
       def description(s)
-        Spec::DSL::Description.new(s)
+        Spec::DSL::BehaviourDescription.new(s)
       end
     end
     
