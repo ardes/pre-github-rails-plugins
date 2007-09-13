@@ -15,7 +15,7 @@ describe 'Animal (class with has_types :pony)' do
   it 'should be cleaned up after outstanding dependencies loaded' do
     Animal.should_not respond_to(:descends_from_active_record_with_has_types?)
     Animal.should_not respond_to(:descends_from_active_record_without_has_types?)
-    Animal.should respond_to?(:descends_from_active_record?)
+    Animal.should respond_to(:descends_from_active_record?)
   end
   
   it '#descends_from_active_record? should work' do
