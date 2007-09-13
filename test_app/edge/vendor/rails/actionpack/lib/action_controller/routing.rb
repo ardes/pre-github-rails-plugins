@@ -1,6 +1,7 @@
 require 'cgi'
 require 'uri'
 require 'action_controller/polymorphic_routes'
+require 'action_controller/routing_optimisation'
 
 class Object
   def to_param
@@ -247,13 +248,18 @@ module ActionController
   #  end
   #
   module Routing
-    SEPARATORS = %w( / . ? )
+    SEPARATORS = %w( / ; . , ? )
 
     HTTP_METHODS = [:get, :head, :post, :put, :delete]
 
     # The root paths which may contain controller files
     mattr_accessor :controller_paths
     self.controller_paths = []
+    
+    # Indicates whether or not optimise the generated named
+    # route helper methods
+    mattr_accessor :optimise_named_routes
+    self.optimise_named_routes = true
     
     # A helper module to hold URL related helpers.
     module Helpers
@@ -325,12 +331,24 @@ module ActionController
     end
   
     class Route #:nodoc:
-      attr_accessor :segments, :requirements, :conditions
+      attr_accessor :segments, :requirements, :conditions, :optimise
       
       def initialize
         @segments = []
         @requirements = {}
         @conditions = {}
+      end
+      
+      # Indicates whether the routes should be optimised with the string interpolation
+      # version of the named routes methods.
+      def optimise?
+        @optimise
+      end
+      
+      def segment_keys
+        segments.collect do |segment|
+          segment.key if segment.respond_to? :key
+        end.compact
       end
   
       # Write and compile a +generate+ method for this Route.
@@ -381,6 +399,7 @@ module ActionController
         end
         requirement_conditions * ' && ' unless requirement_conditions.empty?
       end
+      
       def generation_structure
         segments.last.string_structure segments[0..-2]
       end
@@ -548,7 +567,7 @@ module ActionController
     end
 
     class Segment #:nodoc:
-      RESERVED_PCHAR = ':@&=+$,;'
+      RESERVED_PCHAR = ':@&=+$'
       UNSAFE_PCHAR = Regexp.new("[^#{URI::REGEXP::PATTERN::UNRESERVED}#{RESERVED_PCHAR}]", false, 'N').freeze
 
       attr_accessor :is_optional
@@ -561,7 +580,7 @@ module ActionController
       def extraction_code
         nil
       end
-  
+
       # Continue generating string for the prior segments.
       def continue_string_structure(prior_segments)
         if prior_segments.empty?
@@ -977,9 +996,15 @@ module ActionController
         requirements = assign_route_options(segments, defaults, requirements)
 
         route = Route.new
+
         route.segments = segments
         route.requirements = requirements
         route.conditions = conditions
+        
+        # Routes cannot use the current string interpolation method
+        # if there are user-supplied :requirements as the interpolation
+        # code won't raise RoutingErrors when generating
+        route.optimise = !options.key?(:requirements) && ActionController::Routing.optimise_named_routes
 
         if !route.significant_keys.include?(:action) && !route.requirements[:action]
           route.requirements[:action] = "index"
@@ -1020,11 +1045,6 @@ module ActionController
           @set.add_named_route(name, path, options)
         end
         
-        def deprecated_named_route(name, deprecated_name, path, options = {})
-          named_route(name, path, options)
-          @set.add_deprecated_named_route(name, deprecated_name, path, options) unless deprecated_name == name
-        end
-        
         # Enables the use of resources in a module by setting the name_prefix, path_prefix, and namespace for the model.
         # Example:
         #
@@ -1056,8 +1076,8 @@ module ActionController
       # named routes.
       class NamedRouteCollection #:nodoc:
         include Enumerable
-
-        attr_reader :routes, :helpers, :deprecated_named_routes
+        include ActionController::Routing::Optimisation
+        attr_reader :routes, :helpers
 
         def initialize
           clear!
@@ -1066,7 +1086,6 @@ module ActionController
         def clear!
           @routes = {}
           @helpers = []
-          @deprecated_named_routes = {}
           
           @module ||= Module.new
           @module.instance_methods.each do |selector|
@@ -1080,12 +1099,6 @@ module ActionController
         end
 
         def get(name)
-          if @deprecated_named_routes.has_key?(name.to_sym)
-            ActiveSupport::Deprecation.warn(
-              "The named route \"#{name}\" uses a format that has been deprecated. " +
-              "You should use \"#{@deprecated_named_routes[name]}\" instead", caller
-            )
-          end
           routes[name.to_sym]
         end
 
@@ -1140,15 +1153,15 @@ module ActionController
           
           def define_url_helper(route, name, kind, options)
             selector = url_helper_name(name, kind)
-            
             # The segment keys used for positional paramters
-            segment_keys = route.segments.collect do |segment|
-              segment.key if segment.respond_to? :key
-            end.compact
+            
             hash_access_method = hash_access_name(name, kind)
             
             @module.send :module_eval, <<-end_eval # We use module_eval to avoid leaks
               def #{selector}(*args)
+
+                #{generate_optimisation_block(route, kind)}
+                
                 opts = if args.empty? || Hash === args.first
                   args.first || {}
                 else
@@ -1166,7 +1179,7 @@ module ActionController
                   #   foo_url(bar, baz, bang, :sort_by => 'baz')
                   #
                   options = args.last.is_a?(Hash) ? args.pop : {}
-                  args = args.zip(#{segment_keys.inspect}).inject({}) do |h, (v, k)|
+                  args = args.zip(#{route.segment_keys.inspect}).inject({}) do |h, (v, k)|
                     h[k] = v
                     h
                   end
@@ -1179,7 +1192,6 @@ module ActionController
             @module.send(:protected, selector)
             helpers << selector
           end
-          
       end
   
       attr_accessor :routes, :named_routes
@@ -1257,11 +1269,6 @@ module ActionController
         # TODO - is options EVER used?
         name = options[:name_prefix] + name.to_s if options[:name_prefix]
         named_routes[name.to_sym] = add_route(path, options)
-      end
-  
-      def add_deprecated_named_route(name, deprecated_name, path, options = {})
-        add_named_route(deprecated_name, path, options)
-        named_routes.deprecated_named_routes[deprecated_name.to_sym] = name
       end
   
       def options_as_params(options)
@@ -1439,4 +1446,3 @@ module ActionController
     Routes = RouteSet.new
   end
 end
-
