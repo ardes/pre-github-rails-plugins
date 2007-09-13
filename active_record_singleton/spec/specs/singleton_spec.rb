@@ -79,29 +79,32 @@ end
 
 # These tests use a modified Singleton class with a delay between the select
 # and insert for creating a new singleton row, see fixtures/delayed_thing.rb
-describe "An ActiveRecord::Singleton class (concurrent usage)" do
+describe "An ActiveRecord::Singleton class (multithreaded usage)" do
   include ActiveRecordSingletonSpecHelper
   
-  before(:each) { reset_singleton DelayedThing }
+  before(:each) { reset_singleton Thing }
     
   it "should instantiate the same object with multiple threads" do
     instances = []
-    threads = (1..4).to_a.collect { Thread.new { instances << DelayedThing.instance } }
+    threads = (1..20).to_a.collect { Thread.new { instances << Thing.instance } }
     threads.each {|thread| thread.join}
-    instances.each {|i| i.should equal(DelayedThing.instance) }
+    instances.each {|i| i.should equal(Thing.instance) }
   end
   
   it "should insert only one row with multiple threads" do
-    threads = (1..4).to_a.collect { Thread.new { DelayedThing.instance } }
+    Thing.count.should == 0
+    threads = (1..20).to_a.collect { Thread.new { Thing.instance } }
     threads.each {|thread| thread.join }
-    DelayedThing.count.should == 1   
+    Thing.count.should == 1   
   end
-  
-  it "should insert only one row with multiple processes" do
-    config = ActiveRecord::Base.remove_connection
-    pids = (1..4).to_a.collect { fork_with_new_connection(config) { DelayedThing.instance } }
-    ActiveRecord::Base.establish_connection(config)
-    pids.each {|pid| Process.waitpid pid}
-    DelayedThing.count.should == 1
+end
+
+describe "An ActiveRecord::Singleton class (concurrent usage)" do  
+  include ActiveRecordSingletonSpecHelper
+
+  it "should instantiate only one when concurrent processes get instance" do
+    reset_singleton Thing
+    Thing.count.should == 0
+    system("#{File.dirname(__FILE__)}/../concurrent_get_instance > /dev/null").should == true
   end
 end
