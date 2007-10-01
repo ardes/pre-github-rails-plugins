@@ -140,7 +140,7 @@ module ActionView
           javascript << "\n" << IO.read(filename)
         end
         
-        # load other librairies
+        # load other libraries
         (Dir.glob(File.join(JAVASCRIPT_PATH, '*')) - prototype_libs).each do |filename| 
           javascript << "\n" << IO.read(filename)
         end
@@ -149,7 +149,7 @@ module ActionView
 
       # Escape carrier returns and single and double quotes for JavaScript segments.
       def escape_javascript(javascript)
-        (javascript || '').gsub('\\','\0\0').gsub(/\r\n|\n|\r/, "\\n").gsub(/["']/) { |m| "\\#{m}" }
+        (javascript || '').gsub('\\','\0\0').gsub('</','<\/').gsub(/\r\n|\n|\r/, "\\n").gsub(/["']/) { |m| "\\#{m}" }
       end
 
       # Returns a JavaScript tag with the +content+ inside. Example:

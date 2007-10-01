@@ -198,6 +198,8 @@ module ActionView #:nodoc:
     
     @@erb_variable = '_erbout'
     cattr_accessor :erb_variable
+    
+    delegate :request_forgery_protection_token, :to => :controller
 
     @@template_handlers = HashWithIndifferentAccess.new
  
@@ -220,6 +222,10 @@ module ActionView #:nodoc:
     @@cached_template_extension = {}
     # Maps template paths / extensions to 
     @@cached_base_paths = {}
+
+    # Cache public asset paths
+    cattr_reader :computed_public_paths
+    @@computed_public_paths = {}
 
     @@templates_requiring_setup = Set.new(%w(builder rxml rjs))
 

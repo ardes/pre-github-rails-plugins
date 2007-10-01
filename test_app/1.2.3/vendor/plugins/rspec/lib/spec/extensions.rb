@@ -1,2 +1,2 @@
 require 'spec/extensions/object'
-require 'spec/extensions/testrunnermediator'
+require 'spec/extensions/main'

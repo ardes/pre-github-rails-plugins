@@ -49,7 +49,7 @@ class TimeExtCalculationsTest < Test::Unit::TestCase
     end
   end
 
-  def test_begining_of_week
+  def test_beginning_of_week
     assert_equal Time.local(2005,1,31), Time.local(2005,2,4,10,10,10).beginning_of_week
     assert_equal Time.local(2005,11,28), Time.local(2005,11,28,0,0,0).beginning_of_week #monday
     assert_equal Time.local(2005,11,28), Time.local(2005,11,29,0,0,0).beginning_of_week #tuesday
@@ -250,11 +250,13 @@ class TimeExtCalculationsTest < Test::Unit::TestCase
   end
 
   def test_next_week
-    assert_equal Time.local(2005,2,28), Time.local(2005,2,22,15,15,10).next_week
-    assert_equal Time.local(2005,2,29), Time.local(2005,2,22,15,15,10).next_week(:tuesday)
-    assert_equal Time.local(2005,3,4), Time.local(2005,2,22,15,15,10).next_week(:friday)
-    assert_equal Time.local(2006,10,30), Time.local(2006,10,23,0,0,0).next_week
-    assert_equal Time.local(2006,11,1), Time.local(2006,10,23,0,0,0).next_week(:wednesday)
+    with_timezone 'US/Eastern' do
+      assert_equal Time.local(2005,2,28), Time.local(2005,2,22,15,15,10).next_week
+      assert_equal Time.local(2005,2,29), Time.local(2005,2,22,15,15,10).next_week(:tuesday)
+      assert_equal Time.local(2005,3,4), Time.local(2005,2,22,15,15,10).next_week(:friday)
+      assert_equal Time.local(2006,10,30), Time.local(2006,10,23,0,0,0).next_week
+      assert_equal Time.local(2006,11,1), Time.local(2006,10,23,0,0,0).next_week(:wednesday)
+    end
   end
 
   def test_next_week_near_daylight_start
@@ -277,7 +279,8 @@ class TimeExtCalculationsTest < Test::Unit::TestCase
 
   def test_to_s
     time = Time.utc(2005, 2, 21, 17, 44, 30)
-    assert_equal "Mon Feb 21 17:44:30 UTC 2005",    time.to_s
+    assert_equal time.to_default_s,                 time.to_s
+    assert_equal time.to_default_s,                 time.to_s(:doesnt_exist)
     assert_equal "2005-02-21 17:44:30",             time.to_s(:db)
     assert_equal "21 Feb 17:44",                    time.to_s(:short)
     assert_equal "17:44",                           time.to_s(:time)
@@ -379,10 +382,10 @@ class TimeExtCalculationsTest < Test::Unit::TestCase
   end
 
   protected
-    def with_timezone new_tz='US/Eastern'
+    def with_timezone(new_tz = 'US/Eastern')
       old_tz, ENV['TZ'] = ENV['TZ'], new_tz
       yield
     ensure
-      ENV['TZ'] = old_tz
+      old_tz ? ENV['TZ'] = old_tz : ENV.delete('TZ')
     end
 end

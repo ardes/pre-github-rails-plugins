@@ -33,7 +33,8 @@ module MysqlCompat #:nodoc:
       end_eval
     end
 
-    unless target.instance_methods.include?('all_hashes')
+    unless target.instance_methods.include?('all_hashes') ||
+           target.instance_methods.include?(:all_hashes)
       raise "Failed to defined #{target.name}#all_hashes method. Mysql::VERSION = #{Mysql::VERSION.inspect}"
     end
   end
@@ -49,6 +50,11 @@ module ActiveRecord
         rescue LoadError => cannot_require_mysql
           # Use the bundled Ruby/MySQL driver if no driver is already in place
           begin
+            ActiveRecord::Base.logger.info(
+              "WARNING: You're using the Ruby-based MySQL library that ships with Rails. This library is not suited for production. " +
+              "Please install the C-based MySQL library instead (gem install mysql)."
+            ) if ActiveRecord::Base.logger
+
             require 'active_record/vendor/mysql'
           rescue LoadError
             raise cannot_require_mysql
@@ -403,7 +409,11 @@ module ActiveRecord
 
       def change_column(table_name, column_name, type, options = {}) #:nodoc:
         unless options_include_default?(options)
-          options[:default] = select_one("SHOW COLUMNS FROM #{table_name} LIKE '#{column_name}'")["Default"]
+          if result = select_one("SHOW COLUMNS FROM #{table_name} LIKE '#{column_name}'")
+            options[:default] = result['Default']
+          else
+            raise "No such column: #{table_name}.#{column_name}"
+          end
         end
 
         change_column_sql = "ALTER TABLE #{table_name} CHANGE #{quote_column_name(column_name)} #{quote_column_name(column_name)} #{type_to_sql(type, options[:limit], options[:precision], options[:scale])}"

@@ -177,4 +177,8 @@ class FormTagHelperTest < Test::Unit::TestCase
     expected = %(<fieldset>Hello world!</fieldset>)
     assert_dom_equal expected, _erbout
   end
+
+  def protect_against_forgery?
+    false
+  end
 end

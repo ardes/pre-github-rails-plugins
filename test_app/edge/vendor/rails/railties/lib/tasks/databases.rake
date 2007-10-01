@@ -60,8 +60,9 @@ namespace :db do
     drop_database(ActiveRecord::Base.configurations[RAILS_ENV || 'development'])
   end
 
-  desc "Migrate the database through scripts in db/migrate. Target specific version with VERSION=x"
+  desc "Migrate the database through scripts in db/migrate. Target specific version with VERSION=x. Turn off output with VERBOSE=false."
   task :migrate => :environment do
+    ActiveRecord::Migration.verbose = ENV["VERBOSE"] ? ENV["VERBOSE"] == "true" : true
     ActiveRecord::Migrator.migrate("db/migrate/", ENV["VERSION"] ? ENV["VERSION"].to_i : nil)
     Rake::Task["db:schema:dump"].invoke if ActiveRecord::Base.schema_format == :ruby
   end
@@ -254,7 +255,7 @@ namespace :db do
       raise "Task unavailable to this database (no migration support)" unless ActiveRecord::Base.connection.supports_migrations?
       require 'rails_generator'
       require 'rails_generator/scripts/generate'
-      Rails::Generator::Scripts::Generate.new.run(["session_migration", ENV["MIGRATION"] || "AddSessions"])
+      Rails::Generator::Scripts::Generate.new.run(["session_migration", ENV["MIGRATION"] || "CreateSessions"])
     end
 
     desc "Clear the sessions table"

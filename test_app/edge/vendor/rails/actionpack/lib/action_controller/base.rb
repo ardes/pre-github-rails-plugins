@@ -326,6 +326,13 @@ module ActionController #:nodoc:
     # Controls the resource action separator
     @@resource_action_separator = "/"
     cattr_accessor :resource_action_separator
+    
+    # Sets the token parameter name for RequestForgery.  Calling #protect_from_forgery sets it to :authenticity_token by default
+    cattr_accessor :request_forgery_protection_token
+    
+    # Controls whether request forgergy protection is turned on or not. Turned off by default only in test mode.
+    class_inheritable_accessor :allow_forgery_protection
+    self.allow_forgery_protection = true
 
     # Holds the request object that's primarily used to get environment variables through access like
     # <tt>request.env["REQUEST_URI"]</tt>.
@@ -573,7 +580,7 @@ module ActionController #:nodoc:
       # value that appears in the slot for <tt>:first</tt> is not equal to default value for <tt>:first</tt> we stop using
       # defaults. On it's own, this rule can account for much of the typical Rails URL behavior.
       #  
-      # Although a convienence, defaults can occasionaly get in your way. In some cases a default persists longer than desired.
+      # Although a convenience, defaults can occasionally get in your way. In some cases a default persists longer than desired.
       # The default may be cleared by adding <tt>:name => nil</tt> to <tt>url_for</tt>'s options.
       # This is often required when writing form helpers, since the defaults in play may vary greatly depending upon where the
       # helper is used from. The following line will redirect to PostController's default action, regardless of the page it is
@@ -826,6 +833,7 @@ module ActionController #:nodoc:
             render_for_text(xml.respond_to?(:to_xml) ? xml.to_xml : xml, options[:status])
 
           elsif json = options[:json]
+            json = json.to_json unless json.is_a?(String)
             json = "#{options[:callback]}(#{json})" unless options[:callback].blank?
             response.content_type = Mime::JSON
             render_for_text(json, options[:status])
@@ -978,7 +986,7 @@ module ActionController #:nodoc:
       #
       # When using <tt>redirect_to :back</tt>, if there is no referrer,
       # RedirectBackError will be raised. You may specify some fallback
-      # behavior for this case by rescueing RedirectBackError.
+      # behavior for this case by rescuing RedirectBackError.
       def redirect_to(options = {}) #:doc:
         case options
           when %r{^\w+://.*}

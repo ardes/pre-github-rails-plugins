@@ -136,17 +136,20 @@ module ActionController #:nodoc:
       end
 
       # Manually cache the +content+ in the key determined by +options+. If no content is provided, the contents of response.body is used
-      # If no options are provided, the current +options+ for this action is used. Example:
+      # If no options are provided, the requested url is used. Example:
       #   cache_page "I'm the cached content", :controller => "lists", :action => "show"
-      def cache_page(content = nil, options = {})
+      def cache_page(content = nil, options = nil)
         return unless perform_caching && caching_allowed
-        
-        if options.is_a?(Hash)
-          path = url_for(options.merge(:only_path => true, :skip_relative_url_root => true, :format => params[:format]))
-        else
-          path = options
+
+        path = case options
+          when Hash
+            url_for(options.merge(:only_path => true, :skip_relative_url_root => true, :format => params[:format]))
+          when String
+            options
+          else
+            request.path
         end
-        
+
         self.class.cache_page(content || response.body, path)
       end
 
@@ -288,7 +291,7 @@ module ActionController #:nodoc:
           end
           
           def extract_extension(file_path)
-            # Don't want just what comes after the last '.' to accomodate multi part extensions
+            # Don't want just what comes after the last '.' to accommodate multi part extensions
             # such as tar.gz.
             file_path[/^[^.]+\.(.+)$/, 1]
           end

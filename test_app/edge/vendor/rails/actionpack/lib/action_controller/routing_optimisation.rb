@@ -41,6 +41,8 @@ module ActionController
           end
         end
 
+        # Temporarily disabled :url optimisation pending proper solution to 
+        # Issues around request.host etc.
         def applicable?
           true
         end
@@ -58,9 +60,9 @@ module ActionController
           # if they're using foo_url(:id=>2) it's one 
           # argument, but we don't want to generate /foos/id2
           if number_of_arguments == 1
-            "args.size == 1 && !args.first.is_a?(Hash)"
+            "defined?(request) && request && args.size == 1 && !args.first.is_a?(Hash)"
           else
-            "args.size == #{number_of_arguments}"
+            "defined?(request) && request && args.size == #{number_of_arguments}"
           end
         end
 
@@ -73,10 +75,12 @@ module ActionController
             elements << '#{request.host_with_port}'
           end
 
+          elements << '#{request.relative_url_root if request.relative_url_root}'
+
           # The last entry in route.segments appears to # *always* be a
           # 'divider segment' for '/' but we have assertions to ensure that
           # we don't include the trailing slashes, so skip them.
-          ((route.segments.size == 1 && kind == :path) ? route.segments : route.segments[0..-2]).each do |segment|
+          (route.segments.size == 1 ? route.segments : route.segments[0..-2]).each do |segment|
             if segment.is_a?(DynamicSegment)
               elements << segment.interpolation_chunk("args[#{idx}].to_param")
               idx += 1
@@ -93,7 +97,7 @@ module ActionController
       # argument
       class PositionalArgumentsWithAdditionalParams < PositionalArguments
         def guard_condition
-          "args.size == #{route.segment_keys.size + 1}"
+          "defined?(request) && request && args.size == #{route.segment_keys.size + 1}"
         end
 
         # This case uses almost the Use the same code as positional arguments, 
@@ -105,7 +109,7 @@ module ActionController
         # To avoid generating http://localhost/?host=foo.example.com we
         # can't use this optimisation on routes without any segments
         def applicable?
-          route.segment_keys.size > 0 
+          super && route.segment_keys.size > 0 
         end
       end
 

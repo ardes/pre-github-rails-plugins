@@ -716,7 +716,7 @@ module ActiveRecord
             #
       # Option examples:
       #   has_one :credit_card, :dependent => :destroy  # destroys the associated credit card
-      #   has_one :credit_card, :dependent => :nullify  # updates the associated records foriegn key value to null rather than destroying it
+      #   has_one :credit_card, :dependent => :nullify  # updates the associated records foreign key value to null rather than destroying it
       #   has_one :last_comment, :class_name => "Comment", :order => "posted_on"
       #   has_one :project_manager, :class_name => "Person", :conditions => "role = 'project_manager'"
       #   has_one :attachment, :as => :attachable
@@ -841,7 +841,11 @@ module ActiveRecord
           module_eval(
             "before_destroy '#{reflection.name}.class.decrement_counter(\"#{cache_column}\", #{reflection.primary_key_name})" +
             " unless #{reflection.name}.nil?'"
-          )          
+          )
+          
+          module_eval(
+            "#{reflection.class_name}.send(:attr_readonly,\"#{cache_column}\".intern) if defined?(#{reflection.class_name})"
+          )
         end
       end
 
@@ -857,7 +861,7 @@ module ActiveRecord
       #
       # Deprecated: Any additional fields added to the join table will be placed as attributes when pulling records out through
       # +has_and_belongs_to_many+ associations. Records returned from join tables with additional attributes will be marked as
-      # +ReadOnly+ (because we can't save changes to the additional attrbutes). It's strongly recommended that you upgrade any
+      # +ReadOnly+ (because we can't save changes to the additional attributes). It's strongly recommended that you upgrade any
       # associations with attributes to a real join model (see introduction).
       #
       # Adds the following methods for retrieval and query:
@@ -1256,12 +1260,14 @@ module ActiveRecord
             throw :invalid_query
           end
         end
- 
+
         def select_limited_ids_list(options, join_dependency)
+          pk = columns_hash[primary_key]
+
           connection.select_all(
             construct_finder_sql_for_association_limiting(options, join_dependency),
             "#{name} Load IDs For Limited Eager Loading"
-          ).collect { |row| connection.quote(row[primary_key]) }.join(", ")
+          ).collect { |row| connection.quote(row[primary_key], pk) }.join(", ")
         end
 
         def construct_finder_sql_for_association_limiting(options, join_dependency)

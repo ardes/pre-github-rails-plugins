@@ -17,13 +17,13 @@ module ActiveSupport #:nodoc:
             if formatter.respond_to?(:call)
               formatter.call(self).to_s
             else
-              strftime(formatter).strip
+              strftime(formatter)
             end
           else
             to_datetime_default_s
           end
         end
-        
+
         # Overrides the default inspect method with a human readable one, e.g., "Mon, 21 Feb 2005 14:30:00 +0000"
         def readable_inspect
           to_s(:rfc822)
@@ -44,6 +44,10 @@ module ActiveSupport #:nodoc:
         # To be able to keep Times, Dates and DateTimes interchangeable on conversions
         def to_datetime
           self
+        end
+        
+        def xmlschema
+          strftime("%Y-%m-%dT%H:%M:%S#{offset == 0 ? 'Z' : '%Z'}")
         end
       end
     end

@@ -2,7 +2,7 @@ require 'fileutils'
 require File.dirname(__FILE__) + '/../abstract_unit'
 
 CACHE_DIR = 'test_cache'
-# Don't change '/../temp/' cavalierly or you might hoze something you don't want hozed
+# Don't change '/../temp/' cavalierly or you might hose something you don't want hosed
 FILE_STORE_PATH = File.join(File.dirname(__FILE__), '/../temp/', CACHE_DIR)
 ActionController::Base.page_cache_directory = FILE_STORE_PATH
 ActionController::Base.fragment_cache_store = :file_store, FILE_STORE_PATH
@@ -90,6 +90,15 @@ class PageCachingTest < Test::Unit::TestCase
 
     get :expire_custom_path
     assert !File.exist?("#{FILE_STORE_PATH}/index.html")
+  end
+
+  uses_mocha("should_cache_ok_at_custom_path") do
+    def test_should_cache_ok_at_custom_path
+      @request.expects(:path).returns("/index.html")
+      get :ok
+      assert_response :ok
+      assert File.exist?("#{FILE_STORE_PATH}/index.html")
+    end
   end
 
   [:ok, :no_content, :found, :not_found].each do |status|

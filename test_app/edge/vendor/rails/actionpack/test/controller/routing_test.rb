@@ -22,7 +22,7 @@ class UriReservedCharactersRoutingTest < Test::Unit::TestCase
       map.connect ':controller/:action/:variable'
     end
 
-    safe, unsafe = %w(: @ & = + $), %w(^ / ? # [ ] , ;)
+    safe, unsafe = %w(: @ & = + $ , ;), %w(^ / ? # [ ])
     hex = unsafe.map { |char| '%' + char.unpack('H2').first.upcase }
 
     @segment = "#{safe}#{unsafe}".freeze
@@ -49,11 +49,13 @@ class LegacyRouteSetTests < Test::Unit::TestCase
   def setup
     # These tests assume optimisation is on, so re-enable it.
     ActionController::Routing.optimise_named_routes = true
+
     @rs = ::ActionController::Routing::RouteSet.new
     @rs.draw {|m| m.connect ':controller/:action/:id' }
+
     ActionController::Routing.use_controllers! %w(content admin/user admin/news_feed)
   end
-  
+
   def test_default_setup
     assert_equal({:controller => "content", :action => 'index'}, rs.recognize_path("/content"))
     assert_equal({:controller => "content", :action => 'list'}, rs.recognize_path("/content/list"))
@@ -169,8 +171,17 @@ class LegacyRouteSetTests < Test::Unit::TestCase
   def test_basic_named_route
     rs.add_named_route :home, '', :controller => 'content', :action => 'list' 
     x = setup_for_named_route
-    assert_equal("http://named.route.test",
+    assert_equal("http://named.route.test/",
                  x.send(:home_url))
+  end
+
+  def test_basic_named_route_with_relative_url_root
+    rs.add_named_route :home, '', :controller => 'content', :action => 'list' 
+    x = setup_for_named_route
+    x.relative_url_root="/foo"
+    assert_equal("http://named.route.test/foo/",
+                 x.send(:home_url))
+    assert_equal "/foo/", x.send(:home_path)
   end
 
   def test_named_route_with_option
@@ -189,7 +200,7 @@ class LegacyRouteSetTests < Test::Unit::TestCase
   end
 
   def test_named_route_with_nested_controller
-    rs.add_named_route :users, '/admin/user', :controller => '/admin/user', :action => 'index'
+    rs.add_named_route :users, 'admin/user', :controller => 'admin/user', :action => 'index'
     x = setup_for_named_route
     assert_equal("http://named.route.test/admin/user",
                  x.send(:users_url))
@@ -201,9 +212,9 @@ class LegacyRouteSetTests < Test::Unit::TestCase
       rs.add_named_route :user, 'admin/user/:id', :controller=>'/admin/user', :action=>'show'
       x = setup_for_named_route
       x.expects(:url_for).never
-      x.send(:users_url)
+      # x.send(:users_url)
       x.send(:users_path)
-      x.send(:user_url, 2, :foo=>"bar")
+      # x.send(:user_url, 2, :foo=>"bar")
       x.send(:user_path, 3, :bar=>"foo")
     end
   end
@@ -225,7 +236,7 @@ class LegacyRouteSetTests < Test::Unit::TestCase
       map.root :controller => "hello"
     end                     
     x = setup_for_named_route       
-    assert_equal("http://named.route.test", x.send(:root_url))
+    assert_equal("http://named.route.test/", x.send(:root_url))
     assert_equal("/", x.send(:root_path))
   end
   
@@ -485,7 +496,7 @@ class LegacyRouteSetTests < Test::Unit::TestCase
     assert_equal '/', rs.generate(:controller => 'content')
     
     x = setup_for_named_route
-    assert_equal("http://named.route.test",
+    assert_equal("http://named.route.test/",
                  x.send(:home_url))
   end
   
@@ -764,7 +775,7 @@ class DynamicSegmentTest < Test::Unit::TestCase
     
     eval(segment.expiry_statement)
   rescue RuntimeError
-    flunk "Expiry check should not have occured!"
+    flunk "Expiry check should not have occurred!"
   end
   
   def test_expiry_should_occur_according_to_expire_on
@@ -897,11 +908,16 @@ uses_mocha 'RouteTest' do
     def request
       @request ||= MockRequest.new(:host => "named.route.test", :method => :get)
     end
+    
+    def relative_url_root=(value)
+      request.relative_url_root=value
+    end
   end
 
   class MockRequest
-    attr_accessor :path, :path_parameters, :host, :subdomains, :domain, :method
-
+    attr_accessor :path, :path_parameters, :host, :subdomains, :domain,
+                  :method, :relative_url_root
+    
     def initialize(values={})
       values.each { |key, value| send("#{key}=", value) }
       if values[:host]
@@ -917,7 +933,6 @@ uses_mocha 'RouteTest' do
     def host_with_port
       (subdomains * '.') + '.' +  domain
     end
-    
   end
 
 class RouteTest < Test::Unit::TestCase

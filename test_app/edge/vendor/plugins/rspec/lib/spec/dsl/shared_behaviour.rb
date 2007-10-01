@@ -28,15 +28,11 @@ module Spec
           $shared_behaviours ||= []
         end
       end
-      include ExampleApi
+      include Behaviour
       public :include
 
       def initialize(*args, &behaviour_block)
         describe(*args, &behaviour_block)
-      end
-
-      def shared?
-        true
       end
 
       def included(mod) # :nodoc:
@@ -45,7 +41,11 @@ module Spec
         after_each_parts.each    { |p| mod.after_each_parts << p }
         before_all_parts.each    { |p| mod.before_all_parts << p }
         after_all_parts.each     { |p| mod.after_all_parts << p }
-        included_modules.each    { |m| mod.include m }
+        included_modules.each    { |m| mod.__send__(:include, m) }
+      end
+
+      def register
+        Spec::DSL::SharedBehaviour.add_shared_behaviour(self)
       end
     end
   end

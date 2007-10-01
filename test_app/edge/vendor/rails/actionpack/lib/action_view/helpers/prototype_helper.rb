@@ -511,7 +511,7 @@ module ActionView
           #                    element's existing content.
           # <tt>:bottom</tt>:: HTML is inserted inside the element, after the
           #                    element's existing content.
-          # <tt>:before</tt>:: HTML is inserted immediately preceeding the element.
+          # <tt>:before</tt>:: HTML is inserted immediately preceding the element.
           # <tt>:after</tt>::  HTML is inserted immediately following the element.
           #
           # +options_for_render+ may be either a string of HTML to insert, or a hash
@@ -737,6 +737,15 @@ module ActionView
           js_options['parameters'] = "Form.serialize('#{options[:submit]}')"
         elsif options[:with]
           js_options['parameters'] = options[:with]
+        end
+        
+        if protect_against_forgery?
+          if js_options['parameters']
+            js_options['parameters'] << " + '&"
+          else
+            js_options['parameters'] = "'"
+          end
+          js_options['parameters'] << "#{request_forgery_protection_token}=' + encodeURIComponent('#{escape_javascript form_authenticity_token}')"
         end
       
         options_for_javascript(js_options)

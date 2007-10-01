@@ -248,7 +248,7 @@ module ActionController
   #  end
   #
   module Routing
-    SEPARATORS = %w( / ; . , ? )
+    SEPARATORS = %w( / . ? )
 
     HTTP_METHODS = [:get, :head, :post, :put, :delete]
 
@@ -567,7 +567,7 @@ module ActionController
     end
 
     class Segment #:nodoc:
-      RESERVED_PCHAR = ':@&=+$'
+      RESERVED_PCHAR = ':@&=+$,;'
       UNSAFE_PCHAR = Regexp.new("[^#{URI::REGEXP::PATTERN::UNRESERVED}#{RESERVED_PCHAR}]", false, 'N').freeze
 
       attr_accessor :is_optional
@@ -819,12 +819,16 @@ module ActionController
         regexp || "(.*)"
       end
 
+      def optionality_implied?
+        true
+      end
+
       class Result < ::Array #:nodoc:
         def to_s() join '/' end 
         def self.new_escaped(strings)
           new strings.collect {|str| URI.unescape str}
         end     
-      end     
+      end
     end
 
     class RouteBuilder #:nodoc:
@@ -976,7 +980,7 @@ module ActionController
               warn "Route segment \"#{segment.to_s}\" cannot be optional because it precedes a required segment. This segment will be required."
             end
             segment.is_optional = false
-          elsif allow_optional & segment.respond_to?(:default) && segment.default
+          elsif allow_optional && segment.respond_to?(:default) && segment.default
             # if a segment has a default, then it is optional
             segment.is_optional = true
           end

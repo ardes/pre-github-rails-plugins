@@ -33,11 +33,14 @@ class AssetTagHelperTest < Test::Unit::TestCase
 
     @request = Class.new do
       def relative_url_root() "" end
+      def protocol() 'http://' end
     end.new
 
     @controller.request = @request
 
     ActionView::Helpers::AssetTagHelper::reset_javascript_include_default
+
+    ActionView::Base.computed_public_paths.clear
   end
 
   def teardown
@@ -86,15 +89,15 @@ class AssetTagHelperTest < Test::Unit::TestCase
   }
 
   StyleLinkToTag = {
-    %(stylesheet_link_tag("style")) => %(<link href="/stylesheets/style.css" media="screen" rel="Stylesheet" type="text/css" />),
-    %(stylesheet_link_tag("style.css")) => %(<link href="/stylesheets/style.css" media="screen" rel="Stylesheet" type="text/css" />),
-    %(stylesheet_link_tag("/dir/file")) => %(<link href="/dir/file.css" media="screen" rel="Stylesheet" type="text/css" />),
-    %(stylesheet_link_tag("dir/file")) => %(<link href="/stylesheets/dir/file.css" media="screen" rel="Stylesheet" type="text/css" />),
-    %(stylesheet_link_tag("style", :media => "all")) => %(<link href="/stylesheets/style.css" media="all" rel="Stylesheet" type="text/css" />),
-    %(stylesheet_link_tag(:all)) => %(<link href="/stylesheets/bank.css" media="screen" rel="Stylesheet" type="text/css" />\n<link href="/stylesheets/robber.css" media="screen" rel="Stylesheet" type="text/css" />),
-    %(stylesheet_link_tag(:all, :media => "all")) => %(<link href="/stylesheets/bank.css" media="all" rel="Stylesheet" type="text/css" />\n<link href="/stylesheets/robber.css" media="all" rel="Stylesheet" type="text/css" />),
-    %(stylesheet_link_tag("random.styles", "/css/stylish")) => %(<link href="/stylesheets/random.styles" media="screen" rel="Stylesheet" type="text/css" />\n<link href="/css/stylish.css" media="screen" rel="Stylesheet" type="text/css" />),
-    %(stylesheet_link_tag("http://www.example.com/styles/style")) => %(<link href="http://www.example.com/styles/style.css" media="screen" rel="Stylesheet" type="text/css" />)
+    %(stylesheet_link_tag("style")) => %(<link href="/stylesheets/style.css" media="screen" rel="stylesheet" type="text/css" />),
+    %(stylesheet_link_tag("style.css")) => %(<link href="/stylesheets/style.css" media="screen" rel="stylesheet" type="text/css" />),
+    %(stylesheet_link_tag("/dir/file")) => %(<link href="/dir/file.css" media="screen" rel="stylesheet" type="text/css" />),
+    %(stylesheet_link_tag("dir/file")) => %(<link href="/stylesheets/dir/file.css" media="screen" rel="stylesheet" type="text/css" />),
+    %(stylesheet_link_tag("style", :media => "all")) => %(<link href="/stylesheets/style.css" media="all" rel="stylesheet" type="text/css" />),
+    %(stylesheet_link_tag(:all)) => %(<link href="/stylesheets/bank.css" media="screen" rel="stylesheet" type="text/css" />\n<link href="/stylesheets/robber.css" media="screen" rel="stylesheet" type="text/css" />),
+    %(stylesheet_link_tag(:all, :media => "all")) => %(<link href="/stylesheets/bank.css" media="all" rel="stylesheet" type="text/css" />\n<link href="/stylesheets/robber.css" media="all" rel="stylesheet" type="text/css" />),
+    %(stylesheet_link_tag("random.styles", "/css/stylish")) => %(<link href="/stylesheets/random.styles" media="screen" rel="stylesheet" type="text/css" />\n<link href="/css/stylish.css" media="screen" rel="stylesheet" type="text/css" />),
+    %(stylesheet_link_tag("http://www.example.com/styles/style")) => %(<link href="http://www.example.com/styles/style.css" media="screen" rel="stylesheet" type="text/css" />)
   }
 
   ImagePathToTag = {
@@ -127,6 +130,8 @@ class AssetTagHelperTest < Test::Unit::TestCase
   def test_javascript_include_tag
     ENV["RAILS_ASSET_ID"] = ""
     JavascriptIncludeToTag.each { |method, tag| assert_dom_equal(tag, eval(method)) }
+
+    ActionView::Base.computed_public_paths.clear
 
     ENV["RAILS_ASSET_ID"] = "1"
     assert_dom_equal(%(<script src="/javascripts/prototype.js?1" type="text/javascript"></script>\n<script src="/javascripts/effects.js?1" type="text/javascript"></script>\n<script src="/javascripts/dragdrop.js?1" type="text/javascript"></script>\n<script src="/javascripts/controls.js?1" type="text/javascript"></script>\n<script src="/javascripts/application.js?1" type="text/javascript"></script>), javascript_include_tag(:defaults))
@@ -248,14 +253,14 @@ class AssetTagHelperTest < Test::Unit::TestCase
     ActionController::Base.perform_caching = true
     
     assert_dom_equal(
-      %(<link href="http://a3.example.com/stylesheets/all.css" media="screen" rel="Stylesheet" type="text/css" />),
+      %(<link href="http://a3.example.com/stylesheets/all.css" media="screen" rel="stylesheet" type="text/css" />),
       stylesheet_link_tag(:all, :cache => true)
     )
 
     assert File.exists?(File.join(ActionView::Helpers::AssetTagHelper::STYLESHEETS_DIR, 'all.css'))
 
     assert_dom_equal(
-      %(<link href="http://a3.example.com/stylesheets/money.css" media="screen" rel="Stylesheet" type="text/css" />),
+      %(<link href="http://a3.example.com/stylesheets/money.css" media="screen" rel="stylesheet" type="text/css" />),
       stylesheet_link_tag(:all, :cache => "money")
     )
 
@@ -270,14 +275,14 @@ class AssetTagHelperTest < Test::Unit::TestCase
     ActionController::Base.perform_caching = false
     
     assert_dom_equal(
-      %(<link href="/stylesheets/bank.css" media="screen" rel="Stylesheet" type="text/css" />\n<link href="/stylesheets/robber.css" media="screen" rel="Stylesheet" type="text/css" />),
+      %(<link href="/stylesheets/bank.css" media="screen" rel="stylesheet" type="text/css" />\n<link href="/stylesheets/robber.css" media="screen" rel="stylesheet" type="text/css" />),
       stylesheet_link_tag(:all, :cache => true)
     )
 
     assert !File.exists?(File.join(ActionView::Helpers::AssetTagHelper::STYLESHEETS_DIR, 'all.css'))
     
     assert_dom_equal(
-      %(<link href="/stylesheets/bank.css" media="screen" rel="Stylesheet" type="text/css" />\n<link href="/stylesheets/robber.css" media="screen" rel="Stylesheet" type="text/css" />),
+      %(<link href="/stylesheets/bank.css" media="screen" rel="stylesheet" type="text/css" />\n<link href="/stylesheets/robber.css" media="screen" rel="stylesheet" type="text/css" />),
       stylesheet_link_tag(:all, :cache => "money")
     )
 
@@ -337,7 +342,7 @@ class AssetTagHelperNonVhostTest < Test::Unit::TestCase
 
   def test_should_ignore_asset_host_on_complete_url
     ActionController::Base.asset_host = "http://assets.example.com"
-    assert_dom_equal(%(<link href="http://bar.example.com/stylesheets/style.css" media="screen" rel="Stylesheet" type="text/css" />), stylesheet_link_tag("http://bar.example.com/stylesheets/style.css"))
+    assert_dom_equal(%(<link href="http://bar.example.com/stylesheets/style.css" media="screen" rel="stylesheet" type="text/css" />), stylesheet_link_tag("http://bar.example.com/stylesheets/style.css"))
   ensure
     ActionController::Base.asset_host = ""
   end

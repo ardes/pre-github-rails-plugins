@@ -47,6 +47,10 @@ class TightDescendant < TightPerson
   attr_accessible :phone_number
 end
 
+class ReadonlyTitlePost < Post
+  attr_readonly :title
+end
+
 class Booleantest < ActiveRecord::Base; end
 
 class Task < ActiveRecord::Base
@@ -800,7 +804,7 @@ class BasicsTest < Test::Unit::TestCase
     assert_nil keyboard.id
   end
 
-  def test_customized_primary_key_remains_protected_when_refered_to_as_id
+  def test_customized_primary_key_remains_protected_when_referred_to_as_id
     subscriber = Subscriber.new(:id => 'webster123', :name => 'nice try')
     assert_nil subscriber.id
 
@@ -839,6 +843,19 @@ class BasicsTest < Test::Unit::TestCase
 
     assert_nil TightDescendant.protected_attributes
     assert_equal [ :name, :address, :phone_number  ], TightDescendant.accessible_attributes
+  end
+  
+  def test_readonly_attributes
+    assert_equal [ :title ], ReadonlyTitlePost.readonly_attributes
+    
+    post = ReadonlyTitlePost.create(:title => "cannot change this", :body => "changeable")
+    post.reload
+    assert_equal "cannot change this", post.title
+    
+    post.update_attributes(:title => "try to change", :body => "changed")
+    post.reload
+    assert_equal "cannot change this", post.title
+    assert_equal "changed", post.body
   end
 
   def test_multiparameter_attributes_on_date
@@ -1222,12 +1239,12 @@ class BasicsTest < Test::Unit::TestCase
   end
 
   def test_increment_attribute
-    assert_equal 1, topics(:first).replies_count
-    topics(:first).increment! :replies_count
-    assert_equal 2, topics(:first, :reload).replies_count
-    
-    topics(:first).increment(:replies_count).increment!(:replies_count)
-    assert_equal 4, topics(:first, :reload).replies_count
+    assert_equal 50, accounts(:signals37).credit_limit
+    accounts(:signals37).increment! :credit_limit
+    assert_equal 51, accounts(:signals37, :reload).credit_limit    
+
+    accounts(:signals37).increment(:credit_limit).increment!(:credit_limit)
+    assert_equal 53, accounts(:signals37, :reload).credit_limit
   end
   
   def test_increment_nil_attribute
@@ -1237,14 +1254,13 @@ class BasicsTest < Test::Unit::TestCase
   end
   
   def test_decrement_attribute
-    topics(:first).increment(:replies_count).increment!(:replies_count)
-    assert_equal 3, topics(:first).replies_count
-    
-    topics(:first).decrement!(:replies_count)
-    assert_equal 2, topics(:first, :reload).replies_count
+    assert_equal 50, accounts(:signals37).credit_limit
 
-    topics(:first).decrement(:replies_count).decrement!(:replies_count)
-    assert_equal 0, topics(:first, :reload).replies_count
+    accounts(:signals37).decrement!(:credit_limit)
+    assert_equal 49, accounts(:signals37, :reload).credit_limit
+  
+    accounts(:signals37).decrement(:credit_limit).decrement!(:credit_limit)
+    assert_equal 47, accounts(:signals37, :reload).credit_limit
   end
   
   def test_toggle_attribute

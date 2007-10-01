@@ -6,11 +6,11 @@ class CookieTest < Test::Unit::TestCase
       cookies["user_name"] = "david"
     end
 
-    def authenticate_for_fourten_days
+    def authenticate_for_fourteen_days
       cookies["user_name"] = { "value" => "david", "expires" => Time.local(2005, 10, 10) }
     end
 
-    def authenticate_for_fourten_days_with_symbols
+    def authenticate_for_fourteen_days_with_symbols
       cookies[:user_name] = { :value => "david", :expires => Time.local(2005, 10, 10) }
     end
 
@@ -32,6 +32,10 @@ class CookieTest < Test::Unit::TestCase
       render :text => "hello world"
     end
 
+    def authenticate_with_http_only
+      cookies["user_name"] = { :value => "david", :http_only => true }
+    end
+
     def rescue_action(e) 
       raise unless ActionController::MissingTemplate # No templates here, and we don't care about the output 
     end
@@ -51,13 +55,19 @@ class CookieTest < Test::Unit::TestCase
   end
 
   def test_setting_cookie_for_fourteen_days
-    get :authenticate_for_fourten_days
+    get :authenticate_for_fourteen_days
     assert_equal [ CGI::Cookie::new("name" => "user_name", "value" => "david", "expires" => Time.local(2005, 10, 10)) ], @response.headers["cookie"]
   end
 
   def test_setting_cookie_for_fourteen_days_with_symbols
-    get :authenticate_for_fourten_days
+    get :authenticate_for_fourteen_days
     assert_equal [ CGI::Cookie::new("name" => "user_name", "value" => "david", "expires" => Time.local(2005, 10, 10)) ], @response.headers["cookie"]
+  end
+
+  def test_setting_cookie_with_http_only
+    get :authenticate_with_http_only
+    assert_equal [ CGI::Cookie::new("name" => "user_name", "value" => "david", "http_only" => true) ], @response.headers["cookie"]
+    assert_equal CGI::Cookie::new("name" => "user_name", "value" => "david", "path" => "/", "http_only" => true).to_s, @response.headers["cookie"].to_s
   end
 
   def test_multiple_cookies
@@ -86,5 +96,32 @@ class CookieTest < Test::Unit::TestCase
     get :delete_cookie_with_path
     assert_equal "/beaten", @response.headers["cookie"].first.path
     assert_not_equal "/", @response.headers["cookie"].first.path
+  end
+
+  def test_cookie_to_s_simple_values
+    assert_equal 'myname=myvalue; path=', CGI::Cookie.new('myname', 'myvalue').to_s
+  end
+
+  def test_cookie_to_s_hash
+    cookie_str = CGI::Cookie.new(
+      'name' => 'myname',
+      'value' => 'myvalue',
+      'domain' => 'mydomain',
+      'path' => 'mypath',
+      'expires' => Time.utc(2007, 10, 20),
+      'secure' => true,
+      'http_only' => true).to_s
+    assert_equal 'myname=myvalue; domain=mydomain; path=mypath; expires=Sat, 20 Oct 2007 00:00:00 GMT; secure; HttpOnly', cookie_str
+  end
+
+  def test_cookie_to_s_hash_default_not_secure_not_http_only
+    cookie_str = CGI::Cookie.new(
+      'name' => 'myname',
+      'value' => 'myvalue',
+      'domain' => 'mydomain',
+      'path' => 'mypath',
+      'expires' => Time.utc(2007, 10, 20))
+    assert cookie_str !~ /secure/
+    assert cookie_str !~ /HttpOnly/
   end
 end
