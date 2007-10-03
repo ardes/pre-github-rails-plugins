@@ -329,7 +329,12 @@ module ActionController #:nodoc:
     
     # Sets the token parameter name for RequestForgery.  Calling #protect_from_forgery sets it to :authenticity_token by default
     cattr_accessor :request_forgery_protection_token
-    
+
+    # Indicates whether or not optimise the generated named
+    # route helper methods
+    cattr_accessor :optimise_named_routes
+    self.optimise_named_routes = true
+
     # Controls whether request forgergy protection is turned on or not. Turned off by default only in test mode.
     class_inheritable_accessor :allow_forgery_protection
     self.allow_forgery_protection = true
@@ -392,7 +397,7 @@ module ActionController #:nodoc:
       # More methods can be hidden using <tt>hide_actions</tt>.
       def hidden_actions
         unless read_inheritable_attribute(:hidden_actions)
-          write_inheritable_attribute(:hidden_actions, ActionController::Base.public_instance_methods)
+          write_inheritable_attribute(:hidden_actions, ActionController::Base.public_instance_methods.map(&:to_s))
         end
 
         read_inheritable_attribute(:hidden_actions)
@@ -400,12 +405,12 @@ module ActionController #:nodoc:
 
       # Hide each of the given methods from being callable as actions.
       def hide_action(*names)
-        write_inheritable_attribute(:hidden_actions, hidden_actions | names.collect { |n| n.to_s })
+        write_inheritable_attribute(:hidden_actions, hidden_actions | names.map(&:to_s))
       end
-      
+
 
       @@view_paths = {}
-      
+
       # View load paths determine the bases from which template references can be made. So a call to
       # render("test/template") will be looked up in the view load paths array and the closest match will be
       # returned.
@@ -844,19 +849,19 @@ module ActionController #:nodoc:
 
             if collection = options[:collection]
               render_for_text(
-                @template.send(:render_partial_collection, partial, collection, 
+                @template.send!(:render_partial_collection, partial, collection, 
                 options[:spacer_template], options[:locals]), options[:status]
               )
             else
               render_for_text(
-                @template.send(:render_partial, partial, 
+                @template.send!(:render_partial, partial, 
                 ActionView::Base::ObjectWrapper.new(options[:object]), options[:locals]), options[:status]
               )
             end
 
           elsif options[:update]
             add_variables_to_assigns
-            @template.send :evaluate_assigns
+            @template.send! :evaluate_assigns
 
             generator = ActionView::Helpers::PrototypeHelper::JavaScriptGenerator.new(@template, &block)
             response.content_type = Mime::JS
@@ -1104,7 +1109,7 @@ module ActionController #:nodoc:
           send(action_name)
           render unless performed?
         elsif respond_to? :method_missing
-          send(:method_missing, action_name)
+          method_missing action_name
           render unless performed?
         elsif template_exists? && template_public?
           render
@@ -1135,7 +1140,7 @@ module ActionController #:nodoc:
       end
 
       def self.action_methods
-        @action_methods ||= Set.new(public_instance_methods - hidden_actions)
+        @action_methods ||= Set.new(public_instance_methods.map(&:to_s)) - hidden_actions
       end
 
       def add_variables_to_assigns
