@@ -1,6 +1,38 @@
 *SVN*
 
-* Fixed Date#xmlschema for dates outside the range of what can be created with Time #9744 [gbuesing]
+* Multibyte: String#slice supports regexp argument.  #9646 [yob]
+
+* object.duplicable? returns true if object.dup is safe. False for nil, true, false, symbols, and numbers; true otherwise.  #9333 [sur]
+
+* Time, Date and DateTime #advance accept :weeks option.  #9866 [Geoff Buesing]
+
+* Fix Time#years_ago and #years_since from leap days.  #9865 [Geoff Buesing]
+
+* Time and DateTime#advance accept :hours, :minutes, and :seconds options.  #9825 [Geoff Buesing]
+
+* Fix Date#years_ago and #years_since from leap days.  #9864 [Geoff Buesing]
+
+* Refactor Time and Date#months_since and #months_ago to use #advance.  #9863 [Geoff Buesing]
+
+* Rebundle Builder 2.1.2 but prefer a newer RubyGem if available.  [Jeremy Kemper]
+
+* Add Range#overlaps?(range), Range#include?(range), and Range#step without a block. [brandon]
+
+* Correct BufferedLogger#level? checks.  #9806 [wildchild, Johan Sorensen]
+
+* String#to_xs uses Eric Wong's fast_xs extension, if available, for Builder speedup.  http://bogomips.org/fast_xs/  [Jeremy Kemper]
+
+* Introduce BasicObject as Builder::BlankSlate for Ruby 1.9 forward compatibility.  [Jeremy Kemper]
+
+* Unbundle Builder in favor of a gem dependency.  [Jeremy Kemper]
+
+* Disambiguate Time, Date, and DateTime#to_json formatting.  #9750 [Geoff Buesing, Chu Yeow]
+
+* Hash#to_json takes :only or :except options to specific or omit certain hash keys. Enumerable#to_json passes through its options to each element.  #9751 [Chu Yeow]
+
+* BufferedLogger#auto_flushing = N flushes the log every N messages. Buffers with an array instead of string. Disabling auto_flushing still flushes when the buffer hits a maximum size, as a failsafe against memory-gobbling.  [Jeremy Kemper]
+
+* Fixed Date#xmlschema for dates outside the range of what can be created with Time #9744 [Geoff Buesing]
 
 
 *2.0.0 [Preview Release]* (September 29th, 2007)

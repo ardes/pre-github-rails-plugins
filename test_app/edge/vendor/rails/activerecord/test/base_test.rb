@@ -11,6 +11,7 @@ require 'fixtures/column_name'
 require 'fixtures/subscriber'
 require 'fixtures/keyboard'
 require 'fixtures/post'
+require 'fixtures/minimalistic'
 
 class Category < ActiveRecord::Base; end
 class Smarts < ActiveRecord::Base; end
@@ -64,7 +65,14 @@ class TopicWithProtectedContentAndAccessibleAuthorName < ActiveRecord::Base
 end
 
 class BasicsTest < Test::Unit::TestCase
-  fixtures :topics, :companies, :developers, :projects, :computers, :accounts
+  fixtures :topics, :companies, :developers, :projects, :computers, :accounts, :minimalistics
+
+  # whiny_protected_attributes is turned off since several tests were
+  # not written with it in mind, and would otherwise raise exceptions
+  # as an irrelevant side-effect.
+  def setup
+    ActiveRecord::Base.whiny_protected_attributes = false
+  end
 
   def test_table_exists
     assert !NonExistentTable.table_exists?
@@ -184,6 +192,15 @@ class BasicsTest < Test::Unit::TestCase
     assert_nil topic.title
   end
 
+  def test_save_for_record_with_only_primary_key
+    minimalistic = Minimalistic.new
+    assert_nothing_raised { minimalistic.save }
+  end
+
+  def test_save_for_record_with_only_primary_key_that_is_provided
+    assert_nothing_raised { Minimalistic.create!(:id => 2) }
+  end
+
   def test_hashes_not_mangled
     new_topic = { :title => "New Topic" }
     new_topic_values = { :title => "AnotherTopic" }
@@ -239,6 +256,11 @@ class BasicsTest < Test::Unit::TestCase
     topicReloaded.title = "A New Topic"
     topicReloaded.send :write_attribute, 'does_not_exist', 'test'
     assert_nothing_raised { topicReloaded.save }
+  end
+
+  def test_update_for_record_with_only_primary_key
+    minimalistic = minimalistics(:first)
+    assert_nothing_raised { minimalistic.save }
   end
   
   def test_write_attribute
@@ -845,6 +867,17 @@ class BasicsTest < Test::Unit::TestCase
     assert_equal [ :name, :address, :phone_number  ], TightDescendant.accessible_attributes
   end
   
+  def test_whiny_protected_attributes
+    ActiveRecord::Base.whiny_protected_attributes = true
+    assert_raise(ActiveRecord::ProtectedAttributeAssignmentError) do
+      LoosePerson.create!(:administrator => true)
+    end
+    ActiveRecord::Base.whiny_protected_attributes = false
+    assert_nothing_raised do
+      LoosePerson.create!(:administrator => true)
+    end
+  end
+
   def test_readonly_attributes
     assert_equal [ :title ], ReadonlyTitlePost.readonly_attributes
     
@@ -975,6 +1008,10 @@ class BasicsTest < Test::Unit::TestCase
     cloned_topic.title["a"] = "c" 
     assert_equal "b", topic.title["a"]
 
+    #test if attributes set as part of after_initialize are cloned correctly
+    assert_equal topic.author_email_address, cloned_topic.author_email_address
+
+    # test if saved clone object differs from original
     cloned_topic.save
     assert !cloned_topic.new_record?
     assert cloned_topic.id != topic.id

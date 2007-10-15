@@ -1,5 +1,27 @@
 *SVN*
 
+* Memcached sessions: add session data on initialization; don't silently discard exceptions; add unit tests.  #9823 [kamk]
+
+* error_messages_for also takes :message and :header_message options which defaults to the old "There were problems with the following fields:" and "<count> errors prohibited this <object_name> from being saved".  #8270 [rmm5t, zach-inglis-lt3]
+
+* Make sure that custom inflections are picked up by map.resources.  #9815 [mislav]
+
+* Changed SanitizeHelper#sanitize to only allow the custom attributes and tags when specified in the call [DHH]
+
+* Extracted sanitization methods from TextHelper to SanitizeHelper [DHH]
+
+* rescue_from accepts :with => lambda { |exception| ... } or a normal block.  #9827 [lifofifo]
+
+* Add :status to redirect_to allowing users to choose their own response code without manually setting headers. #8297 [codahale, chasgrundy]
+
+* Add link_to :back which uses your referrer with a fallback to a javascript link. #7366 [eventualbuddha, tarmo]
+
+* error_messages_for and friends also work with local variables.  #9699 [Frederick Cheung]
+
+* Fix url_for, redirect_to, etc. with :controller => :symbol instead of 'string'.  #8562, #9525 [Justin Lynn, Tarmo Tänav, shoe]
+
+* Use #require_library_or_gem to load the memcache library for the MemCache session and fragment cache stores.  Closes #8662. [Rick]
+
 * Move ActionController::Routing.optimise_named_routes to ActionController::Base.optimise_named_routes.  Now you can set it in the config. [Rick]
 
   config.action_controller.optimise_named_routes = false
@@ -87,6 +109,8 @@
 * Fixed that default layouts did not take the format into account #9564 [lifofifo]
 
 * Fixed optimized route segment escaping.  #9562 [wildchild, Jeremy Kemper]
+
+* Added block acceptance to JavaScriptHelper#javascript_tag.  #7527 [Bob Silva, Tarmo Tänav, rmm5t]
 
 * root_path returns '/' not ''.  #9563 [lifofifo]
 

@@ -748,16 +748,22 @@ module ActionController #:nodoc:
       #
       # === Rendering JSON
       #
-      # Rendering JSON sets the content type to text/x-json and optionally wraps the JSON in a callback. It is expected
-      # that the response will be eval'd for use as a data structure.
+      # Rendering JSON sets the content type to application/json and optionally wraps the JSON in a callback. It is expected
+      # that the response will be parsed (or eval'd) for use as a data structure.
       #
-      #   # Renders '{name: "David"}'
+      #   # Renders '{"name": "David"}'
       #   render :json => {:name => "David"}.to_json
       #
-      # Sometimes the result isn't handled directly by a script (such as when the request comes from a SCRIPT tag),
-      # so the callback option is provided for these cases.
+      # It's not necessary to call <tt>to_json</tt> on the object you want to render, since <tt>render</tt> will
+      # automatically do that for you:
       #
-      #   # Renders 'show({name: "David"})'
+      #   # Also renders '{"name": "David"}'
+      #   render :json => {:name => "David"}
+      #
+      # Sometimes the result isn't handled directly by a script (such as when the request comes from a SCRIPT tag),
+      # so the <tt>:callback</tt> option is provided for these cases.
+      #
+      #   # Renders 'show({"name": "David"})'
       #   render :json => {:name => "David"}.to_json, :callback => 'show'
       #
       # === Rendering an inline template
@@ -987,32 +993,47 @@ module ActionController #:nodoc:
       #   redirect_to "/images/screenshot.jpg"
       #   redirect_to :back
       #
-      # The redirection happens as a "302 Moved" header.
+      # The redirection happens as a "302 Moved" header unless otherwise specified. 
+      #
+      # Examples:
+      #   redirect_to post_url(@post), :status=>:found
+      #   redirect_to :action=>'atom', :status=>:moved_permanently
+      #   redirect_to post_url(@post), :status=>301
+      #   redirect_to :action=>'atom', :status=>302
       #
       # When using <tt>redirect_to :back</tt>, if there is no referrer,
       # RedirectBackError will be raised. You may specify some fallback
       # behavior for this case by rescuing RedirectBackError.
-      def redirect_to(options = {}) #:doc:
+      def redirect_to(options = {}, response_status = {}) #:doc: 
+        
+        if options.is_a?(Hash) && options[:status] 
+          status = options.delete(:status) 
+        elsif response_status[:status] 
+          status = response_status[:status] 
+        else 
+          status = 302 
+        end
+        
         case options
           when %r{^\w+://.*}
             raise DoubleRenderError if performed?
-            logger.info("Redirected to #{options}") if logger
-            response.redirect(options)
+            logger.info("Redirected to #{options}") if logger && logger.info?
+            response.redirect(options, interpret_status(status))
             response.redirected_to = options
             @performed_redirect = true
 
           when String
-            redirect_to(request.protocol + request.host_with_port + options)
+            redirect_to(request.protocol + request.host_with_port + options, :status=>status)
 
           when :back
-            request.env["HTTP_REFERER"] ? redirect_to(request.env["HTTP_REFERER"]) : raise(RedirectBackError)
+            request.env["HTTP_REFERER"] ? redirect_to(request.env["HTTP_REFERER"], :status=>status) : raise(RedirectBackError)
 
           when Hash
-            redirect_to(url_for(options))
+            redirect_to(url_for(options), :status=>status)
             response.redirected_to = options
 
           else
-            redirect_to(url_for(options))
+            redirect_to(url_for(options), :status=>status)
         end
       end
 
@@ -1097,7 +1118,7 @@ module ActionController #:nodoc:
       end
 
       def log_processing
-        if logger
+        if logger && logger.info?
           logger.info "\n\nProcessing #{controller_class_name}\##{action_name} (for #{request_origin}) [#{request.method.to_s.upcase}]"
           logger.info "  Session ID: #{@_session.session_id}" if @_session and @_session.respond_to?(:session_id)
           logger.info "  Parameters: #{respond_to?(:filter_parameters) ? filter_parameters(params).inspect : params.inspect}"
