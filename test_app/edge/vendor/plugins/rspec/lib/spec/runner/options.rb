@@ -25,6 +25,7 @@ module Spec
         :context_lines,
         :diff_format,
         :dry_run,
+        :profile,
         :examples,
         :failure_file,
         :formatters,
@@ -52,6 +53,7 @@ module Spec
         @examples = []
         @formatters = []
         @colour = false
+        @profile = false
         @dry_run = false
         @reporter = Reporter.new(self)
         @context_lines = 3
@@ -67,6 +69,7 @@ module Spec
       end
 
       def run_examples
+        return true if behaviours.empty?
         runner = custom_runner || BehaviourRunner.new(self)
         success = runner.run
         @examples_run = true

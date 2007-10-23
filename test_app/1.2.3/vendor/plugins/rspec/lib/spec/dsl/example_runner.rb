@@ -10,13 +10,12 @@ module Spec
         @example_definition = example.rspec_definition
         @errors = []
         @behaviour = example.rspec_behaviour
-        @behaviour_type = @behaviour.behaviour_type
       end
 
       def run
         reporter.example_started(example_definition)
         if dry_run
-          example_definition.description = "NO NAME (Because of --dry-run)"
+          example_definition.description = "NO NAME (Because of --dry-run)" if example_definition.description == :__generate_description
           return reporter.example_finished(example_definition, nil, example_definition.description)
         end
 

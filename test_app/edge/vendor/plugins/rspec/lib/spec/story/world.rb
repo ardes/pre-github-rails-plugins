@@ -35,7 +35,11 @@ module Spec
         def step_mother
           @step_mother ||= StepMother.new
         end
-        
+                
+        def use(step_matchers)
+          step_mother.use(step_matchers)
+        end
+
         # TODO: investigate duplication between #run_with_suspended_listeners and #store_and_call
         
         def run_with_suspended_listeners(instance, type, name, step)
@@ -43,7 +47,7 @@ module Spec
           begin
             listeners.each { |l| l.found_step(type, name) }
             @listeners.clear
-            step.perform(instance) unless ::Spec::Story::Runner.dry_run
+            step.perform(instance, name) unless ::Spec::Story::Runner.dry_run
           ensure
             @listeners.replace(current_listeners)
           end
@@ -55,7 +59,7 @@ module Spec
           end
           step = step_mother.find(type, name)
           listeners.each { |l| l.found_step(type, name, *args) }
-          step.perform(instance, *args) unless ::Spec::Story::Runner.dry_run
+          step.perform(instance, name, *args) unless ::Spec::Story::Runner.dry_run
         end
       end
       

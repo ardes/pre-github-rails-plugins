@@ -66,10 +66,6 @@ module Spec
         Kernel.warn("Example disabled: #{description}")
       end
 
-      def behaviour_type #:nodoc:
-        description[:behaviour_type]
-      end
-
       def described_type
         description.described_type
       end
@@ -88,37 +84,31 @@ module Spec
 
       def prepend_before(*args, &block)
         scope, options = scope_and_options(*args)
-        add(scope, options, :before, :unshift, &block)
+        parts = before_parts_from_scope(scope)
+        parts.unshift(block)
       end
       def append_before(*args, &block)
         scope, options = scope_and_options(*args)
-        add(scope, options, :before, :<<, &block)
+        parts = before_parts_from_scope(scope)
+        parts << block
       end
       alias_method :before, :append_before
 
       def prepend_after(*args, &block)
         scope, options = scope_and_options(*args)
-        add(scope, options, :after, :unshift, &block)
+        parts = after_parts_from_scope(scope)
+        parts.unshift(block)
       end
       alias_method :after, :prepend_after
       def append_after(*args, &block)
         scope, options = scope_and_options(*args)
-        add(scope, options, :after, :<<, &block)
+        parts = after_parts_from_scope(scope)
+        parts << block
       end
 
       def scope_and_options(*args)
         args, options = args_and_options(*args)
         scope = (args[0] || :each), options
-      end
-
-      def add(scope, options, where, how, &block)
-        scope ||= :each
-        options ||= {}
-        behaviour_type = options[:behaviour_type]
-        case scope
-          when :each; self.__send__("#{where}_each_parts", behaviour_type).__send__(how, block)
-          when :all;  self.__send__("#{where}_all_parts", behaviour_type).__send__(how, block)
-        end
       end
 
       def remove_after(scope, &block)
@@ -135,24 +125,20 @@ module Spec
         after(:each, &block)
       end
 
-      def before_all_parts(behaviour_type=nil) # :nodoc:
-        @before_all_parts ||= {}
-        @before_all_parts[behaviour_type] ||= []
+      def before_all_parts # :nodoc:
+        @before_all_parts ||= []
       end
 
-      def after_all_parts(behaviour_type=nil) # :nodoc:
-        @after_all_parts ||= {}
-        @after_all_parts[behaviour_type] ||= []
+      def after_all_parts # :nodoc:
+        @after_all_parts ||= []
       end
 
-      def before_each_parts(behaviour_type=nil) # :nodoc:
-        @before_each_parts ||= {}
-        @before_each_parts[behaviour_type] ||= []
+      def before_each_parts # :nodoc:
+        @before_each_parts ||= []
       end
 
-      def after_each_parts(behaviour_type=nil) # :nodoc:
-        @after_each_parts ||= {}
-        @after_each_parts[behaviour_type] ||= []
+      def after_each_parts # :nodoc:
+        @after_each_parts ||= []
       end
 
       def clear_before_and_after! # :nodoc:
@@ -163,6 +149,20 @@ module Spec
       end
       
       protected
+
+      def before_parts_from_scope(scope)
+        case scope
+        when :each; before_each_parts
+        when :all; before_all_parts
+        end
+      end
+
+      def after_parts_from_scope(scope)
+        case scope
+        when :each; after_each_parts
+        when :all; after_all_parts
+        end
+      end      
 
       def before_eval
       end

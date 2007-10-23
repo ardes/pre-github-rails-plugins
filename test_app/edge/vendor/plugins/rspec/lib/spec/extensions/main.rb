@@ -16,7 +16,7 @@ module Spec
       # different matcher methods available from within the <tt>describe</tt>
       # block.
       #
-      # See Spec::DSL::ExampleFactory#add_example_class for details about 
+      # See Spec::DSL::ExampleFactory#register for details about
       # how to register special Spec::DSL::Example implementations.
       #
       def describe(*args, &block)
@@ -30,6 +30,11 @@ module Spec
       end
       alias :context :describe
       
+      def run_story(*args,&block)
+        runner = Spec::Story::Runner::PlainTextStoryRunner.new(*args,&block)
+        runner.run
+      end
+
     private
     
       def rspec_options

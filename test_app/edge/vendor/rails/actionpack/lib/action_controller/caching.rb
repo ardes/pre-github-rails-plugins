@@ -100,9 +100,8 @@ module ActionController #:nodoc:
         # matches the triggering url.
         def caches_page(*actions)
           return unless perform_caching
-          actions.each do |action|
-            class_eval "after_filter { |c| c.cache_page if c.action_name == '#{action}' }"
-          end
+          actions = actions.map(&:to_s)
+          after_filter { |c| c.cache_page if actions.include?(c.action_name) }
         end
 
         private
@@ -252,7 +251,7 @@ module ActionController #:nodoc:
 
         private
           def set_content_type!(controller, extension)
-            controller.response.content_type = Mime::EXTENSION_LOOKUP[extension].to_s if extension
+            controller.response.content_type = Mime::Type.lookup_by_extension(extension).to_s if extension
           end
 
           def path_options_for(controller, options)

@@ -53,10 +53,6 @@ module Spec
           @flash = ActionController::Flash::FlashHash.new
           session['flash'] = @flash
 
-          # This is to fix the JavaScriptGenerator::GeneratorMethods issue
-          # TODO: Refactor me
-          @lines = []
-
           ActionView::Helpers::AssetTagHelper::reset_javascript_include_default
         end
 
@@ -68,7 +64,14 @@ module Spec
           ERB.new(text).result(binding)
         end
 
-        Spec::DSL::BehaviourFactory.add_example_class(:helper, self)
+
+        # TODO: BT - Helper Examples should proxy method_missing to a Rails View instance.
+        # When that is done, remove this method
+        def protect_against_forgery?
+          false
+        end
+
+        Spec::DSL::BehaviourFactory.register(:helper, self)
       end
 
       class HelperBehaviourController < ApplicationController #:nodoc:

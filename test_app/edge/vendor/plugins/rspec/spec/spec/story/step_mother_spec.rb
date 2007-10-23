@@ -3,6 +3,11 @@ require File.dirname(__FILE__) + '/story_helper'
 module Spec
   module Story
     describe StepMother do
+      before(:each) do
+        @step_matchers, $rspec_story_step_matchers = $rspec_story_step_matchers, mock("step matcher collection")
+        $rspec_story_step_matchers.stub!(:find)
+      end
+      
       it 'should store a step by name and type' do
         # given
         step_mother = StepMother.new
@@ -38,7 +43,7 @@ module Spec
         step.should be_an_instance_of(SimpleStep)
         
         lambda do
-          step.perform(Object.new)
+          step.perform(Object.new, nil)
         end.should raise_error(Spec::DSL::ExamplePendingError, /Unimplemented/)
       end
       
@@ -53,6 +58,34 @@ module Spec
         
         # then
         step_mother.should be_empty
+      end
+      
+      it "should look for a step matcher" do
+        #given
+        step_mother = StepMother.new
+        step_mother.use(matchers = mock("matchers"))
+        
+        during {
+          #when
+          step_mother.find(:given, "some text")
+        }.expect {
+          #then
+          matchers.should_receive(:find).with(:given, "some text")
+        }
+      end
+      
+      it "should use assigned step_matchers" do
+        step_mother = StepMother.new
+        
+        step_mother.use(matchers = mock("matchers"))
+        
+        matchers.should_receive(:find).with(:given, "a guy named Jose")
+        
+        step_mother.find(:given, "a guy named Jose")
+      end
+      
+      after(:each) do
+        $rspec_story_step_matchers, @step_matchers = @step_matchers, nil
       end
     end
   end

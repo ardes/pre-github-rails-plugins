@@ -356,18 +356,15 @@ module Spec
     class ExampleSubclass < Example
     end
 
-    describe "Example", " subclass" do
+    describe "Example subclass", "#described_type" do
+      after do
+        BehaviourFactory.unregister(:subclass)
+      end
+
       it "should have access to the described_type" do
         behaviour = Class.new(ExampleSubclass).describe(ExampleDefinition){}
         behaviour.send(:described_type).should == ExampleDefinition
       end
-
-      it "should figure out its behaviour_type based on its name ()" do
-        behaviour = Class.new(ExampleSubclass).describe(ExampleDefinition){}
-        behaviour.send(:behaviour_type).should == :subclass
-      end
-
-      # TODO - add an example about shared behaviours
     end
 
     describe Enumerable do
