@@ -56,13 +56,13 @@ module Ardes#:nodoc:
     module TypeFactory
       def new(attributes = nil)
         descends_from_active_record? # to load dependencies
-        if attributes && attributes.stringify_keys! && attributes["type"] && attributes["type"].to_s != self.name
+        if attributes && attributes.stringify_keys! && attributes["type"] 
           type = attributes.delete("type").to_s.classify
-          subclass_names = send(:subclasses).collect(&:name)
-          raise ArgumentError, "type: #{type} must be one of #{subclass_names.to_sentence(:connector => 'or')}" unless subclass_names.include?(type)
+          allowed_types = [self.name] + send(:subclasses).collect(&:name)
+          allowed_types.include?(type) or raise ArgumentError, "type: #{type} must be one of #{allowed_types.to_sentence(:connector => 'or')}"
           type.constantize.new(attributes)
         else
-         super(attributes)
+          super(attributes)
         end
       end
     end
