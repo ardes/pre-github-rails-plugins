@@ -45,6 +45,6 @@ CachedDbFile (saved, when there IS a cache file)
 CachedDbFile (when cache file is bad)
 - should log exceptions when destroying the cached file
 
-Finished in 0.260766 seconds
+Finished in 0.333622 seconds
 
 28 examples, 0 failures
