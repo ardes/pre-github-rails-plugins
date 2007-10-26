@@ -54,15 +54,19 @@ module Ardes#:nodoc:
     
     # extended into model when :type_factory => true
     module TypeFactory
-      def new(attributes = nil)
+      def new(attributes = nil, &block)
         descends_from_active_record? # to load dependencies
         if attributes && attributes.stringify_keys! && attributes["type"] 
           type = attributes.delete("type").to_s.classify
           allowed_types = [self.name] + send(:subclasses).collect(&:name)
           allowed_types.include?(type) or raise ArgumentError, "type: #{type} must be one of #{allowed_types.to_sentence(:connector => 'or')}"
-          type.constantize.new(attributes)
+          # Scope subclass to same create attributes as this class.
+          klass = type.constantize
+          klass.send(:with_scope, :create => (scope(:create) || {})) do
+            return klass.new(attributes, &block)
+          end
         else
-          super(attributes)
+          super(attributes, &block)
         end
       end
     end

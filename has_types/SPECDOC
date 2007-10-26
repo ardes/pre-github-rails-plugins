@@ -24,7 +24,8 @@ class FixedDwelling < Dwelling
 - should return a House with new(:type => "House")
 - should raise argument error with new(:type => "Dwelling")
 - should return FixedDwelling with new(:type => "FixedDwelling")
+- should be fine with FixedDwelling.new
 
-Finished in 0.12419 seconds
+Finished in 0.089024 seconds
 
-14 examples, 0 failures
+15 examples, 0 failures
