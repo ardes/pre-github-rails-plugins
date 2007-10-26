@@ -10,13 +10,20 @@
     with_pulse/   ones that I'll be looking to refactor
   test_app/       for CI with cruisecontrol.rb
     1.2.3/        against rails 1.2.3
-    edge/         againts rails edge
+    1.2.5/        against rails 1.2.5
+    edge/         against rails edge
   template/       A template for plugins - with Rakefile and spec dir set up
 
   the rest are plugins
   
 == The plugins
 
-  All are spec'd using rspec 1.0
+  All are spec'd using rspec 1.x
   When in a rails plugin directory, run rake --tasks to see how to run specs
   and generate docs
+  
+== The test app
+
+  The main app is edge, and the other ones symlink edge for many common files
+  so it's best to check out test_app/* even if you just want to run the 1.2.x 
+  test app
