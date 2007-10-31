@@ -43,7 +43,7 @@ module Spec
         # TODO: investigate duplication between #run_with_suspended_listeners and #store_and_call
         
         def run_with_suspended_listeners(instance, type, name, step)
-          current_listeners = Array.new(@listeners)
+          current_listeners = Array.new(listeners)
           begin
             listeners.each { |l| l.found_step(type, name) }
             @listeners.clear
@@ -55,7 +55,7 @@ module Spec
         
         def store_and_call(instance, type, name, *args, &block)
           if block_given?
-            step_mother.store(type, name, SimpleStep.new(name, &block))
+            step_mother.store(type, Step.new(name, &block))
           end
           step = step_mother.find(type, name)
           listeners.each { |l| l.found_step(type, name, *args) }
