@@ -86,14 +86,14 @@ describe "An ActiveRecord::Singleton class (multithreaded usage)" do
     
   it "should instantiate the same object with multiple threads" do
     instances = []
-    threads = (1..20).to_a.collect { Thread.new { instances << Thing.instance } }
+    threads = (1..3).to_a.collect { Thread.new { instances << Thing.instance } }
     threads.each {|thread| thread.join}
     instances.each {|i| i.should equal(Thing.instance) }
   end
   
   it "should insert only one row with multiple threads" do
     Thing.count.should == 0
-    threads = (1..20).to_a.collect { Thread.new { Thing.instance } }
+    threads = (1..3).to_a.collect { Thread.new { Thing.instance } }
     threads.each {|thread| thread.join }
     Thing.count.should == 1   
   end
