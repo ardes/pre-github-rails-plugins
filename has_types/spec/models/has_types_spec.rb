@@ -23,16 +23,30 @@ describe 'Animal (class with has_types :pony)' do
     Pony.descends_from_active_record?.should == false
   end
 end
-  
-describe 'has_types' do
-  it 'should load subclasses when any descendent loaded, and have correct SQL on #find' do
-    defined?(PortableDwelling).should == nil
-    defined?(Dwelling).should == nil
-    PortableDwelling.connection.should_receive(:select).with(
-      "SELECT * FROM `dwellings` WHERE ( (`dwellings`.`type` = 'PortableDwelling' OR `dwellings`.`type` = 'Caravan' ) ) ",
-      "PortableDwelling Load").and_return([])
-    PortableDwelling.find(:all)
-    Dwelling.send(:subclasses).collect(&:name).sort.should == ['Caravan', 'FixedDwelling', 'House', 'PortableDwelling']
+
+if defined?(RAILS_GEM_VERSION) && RAILS_GEM_VERSION =~ /^1\.2/
+  describe 'has_types (Rails 1.2.x)' do
+    it 'should load subclasses when any descendent loaded, and have correct SQL on #find' do
+      defined?(PortableDwelling).should == nil
+      defined?(Dwelling).should == nil
+      PortableDwelling.connection.should_receive(:select).with(
+        "SELECT * FROM dwellings WHERE ( (dwellings.`type` = 'PortableDwelling' OR dwellings.`type` = 'Caravan' ) ) ",
+        "PortableDwelling Load").and_return([])
+      PortableDwelling.find(:all)
+      Dwelling.send(:subclasses).collect(&:name).sort.should == ['Caravan', 'FixedDwelling', 'House', 'PortableDwelling']
+    end
+  end
+else
+  describe 'has_types' do
+    it 'should load subclasses when any descendent loaded, and have correct SQL on #find' do
+      defined?(PortableDwelling).should == nil
+      defined?(Dwelling).should == nil
+      PortableDwelling.connection.should_receive(:select).with(
+        "SELECT * FROM `dwellings` WHERE ( (`dwellings`.`type` = 'PortableDwelling' OR `dwellings`.`type` = 'Caravan' ) ) ",
+        "PortableDwelling Load").and_return([])
+      PortableDwelling.find(:all)
+      Dwelling.send(:subclasses).collect(&:name).sort.should == ['Caravan', 'FixedDwelling', 'House', 'PortableDwelling']
+    end
   end
 end
   
