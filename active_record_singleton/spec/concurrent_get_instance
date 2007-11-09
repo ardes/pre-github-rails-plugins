@@ -1,10 +1,9 @@
-#! /usr/bin/env ruby
-
+#!/usr/bin/env ruby
+ENV["RAILS_ENV"] = "development"
 require File.expand_path(File.join(File.dirname(__FILE__), "../../../../config/environment"))
-require File.expand_path(File.join(File.dirname(__FILE__), "singleton_spec_helper"))
 require File.expand_path(File.join(File.dirname(__FILE__), "app"))
 
-pids = (1..20).to_a.collect do |i|
+pids = (1..5).to_a.collect do |i|
   fork do
     ActiveRecord::Base.establish_connection
 

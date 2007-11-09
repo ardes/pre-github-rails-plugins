@@ -26,15 +26,4 @@ module ActiveRecordSingletonSpecHelper
     klass.reset_instance
     klass.delete_all
   end
-  
-  def fork_with_new_connection(config, klass = ActiveRecord::Base)
-    fork do
-      begin
-        klass.establish_connection(config)
-        yield
-      ensure
-        klass.remove_connection
-      end
-    end
-  end
 end
