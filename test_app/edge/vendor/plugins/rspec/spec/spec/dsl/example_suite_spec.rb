@@ -33,7 +33,7 @@ module Spec
 
       after :each do
         $rspec_options = @original_rspec_options
-        Example.clear_before_and_after!
+        Example.reset!
       end
     end
 
@@ -94,8 +94,7 @@ module Spec
       end
 
       after do
-        BehaviourFactory.unregister :special
-        BehaviourFactory.unregister :non_special
+        BehaviourFactory.reset!
       end
 
       it "should send reporter add_behaviour" do

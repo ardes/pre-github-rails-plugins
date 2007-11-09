@@ -32,7 +32,7 @@ module Spec
 
       after :each do
         $rspec_options = @original_rspec_options
-        Example.clear_before_and_after!
+        Example.reset!
       end
     end
     
@@ -411,7 +411,7 @@ module Spec
 
     describe "Example subclass", "#described_type" do
       after do
-        BehaviourFactory.unregister(:subclass)
+        BehaviourFactory.reset!
       end
 
       it "should have access to the described_type" do

@@ -312,12 +312,12 @@ describe "OptionParser" do
     FileUtils.rm 'test.spec.opts'
   end
 
-  it "should call DrbCommandLine when --drb is specified" do
-    options = Spec::Runner::OptionParser.parse(["some/spec.rb", "--diff", "--colour"], @err, @out)
+  it "when --drb is specified, calls DrbCommandLine all of the other ARGV arguments" do
+    options = Spec::Runner::OptionParser.parse([
+      "some/spec.rb", "--diff", "--colour"
+    ], @err, @out)
     Spec::Runner::DrbCommandLine.should_receive(:run).and_return do |options|
-      options.differ_class.should == Spec::Expectations::Differs::Default
-      options.colour.should be_true
-      options.files.should == ["some/spec.rb"]
+      options.current_argv.should == ["some/spec.rb", "--diff", "--colour"]
     end
     parse(["some/spec.rb", "--diff", "--drb", "--colour"])
   end
@@ -332,7 +332,7 @@ describe "OptionParser" do
       options.files << 'command_line_spec.rb'
       options.files << 'most_recent_spec.rb'
       FileUtils.touch "most_recent_spec.rb"
-      options.paths.should == ["most_recent_spec.rb", "command_line_spec.rb"]
+      options.files_to_load.should == ["most_recent_spec.rb", "command_line_spec.rb"]
       FileUtils.rm "most_recent_spec.rb"
     end
   end

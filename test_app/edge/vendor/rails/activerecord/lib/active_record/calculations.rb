@@ -19,13 +19,13 @@ module ActiveRecord
       #    or names associations in the same form used for the :include option.
       #   If the value is a string, then the records will be returned read-only since they will have attributes that do not correspond to the table's columns.
       #   Pass :readonly => false to override.
-      #   See adding joins for associations under Association.
+      #   See adding joins for associations under Associations.
       # * <tt>:include</tt>: Named associations that should be loaded alongside using LEFT OUTER JOINs. The symbols named refer
-      #   to already defined associations. When using named associations count returns the number DISTINCT items for the model you're counting.
+      #   to already defined associations. When using named associations, count returns the number of DISTINCT items for the model you're counting.
       #   See eager loading under Associations.
       # * <tt>:order</tt>: An SQL fragment like "created_at DESC, name" (really only used with GROUP BY calculations).
       # * <tt>:group</tt>: An attribute name by which the result should be grouped. Uses the GROUP BY SQL-clause.
-      # * <tt>:select</tt>: By default, this is * as in SELECT * FROM, but can be changed if you for example want to do a join, but not
+      # * <tt>:select</tt>: By default, this is * as in SELECT * FROM, but can be changed if you, for example, want to do a join but not
       #   include the joined columns.
       # * <tt>:distinct</tt>: Set this to true to make this a distinct calculation, such as SELECT COUNT(DISTINCT posts.id) ...
       #
@@ -47,35 +47,35 @@ module ActiveRecord
         calculate(:count, *construct_count_options_from_args(*args))
       end
 
-      # Calculates average value on a given column.  The value is returned as a float.  See #calculate for examples with options.
+      # Calculates the average value on a given column.  The value is returned as a float.  See #calculate for examples with options.
       #
       #   Person.average('age')
       def average(column_name, options = {})
         calculate(:avg, column_name, options)
       end
 
-      # Calculates the minimum value on a given column.  The value is returned with the same data type of the column..  See #calculate for examples with options.
+      # Calculates the minimum value on a given column.  The value is returned with the same data type of the column.  See #calculate for examples with options.
       #
       #   Person.minimum('age')
       def minimum(column_name, options = {})
         calculate(:min, column_name, options)
       end
 
-      # Calculates the maximum value on a given column.  The value is returned with the same data type of the column..  See #calculate for examples with options.
+      # Calculates the maximum value on a given column.  The value is returned with the same data type of the column.  See #calculate for examples with options.
       #
       #   Person.maximum('age')
       def maximum(column_name, options = {})
         calculate(:max, column_name, options)
       end
 
-      # Calculates the sum value on a given column.  The value is returned with the same data type of the column..  See #calculate for examples with options.
+      # Calculates the sum of values on a given column.  The value is returned with the same data type of the column.  See #calculate for examples with options.
       #
       #   Person.sum('age')
       def sum(column_name, options = {})
         calculate(:sum, column_name, options)
       end
 
-      # This calculates aggregate values in the given column:  Methods for count, sum, average, minimum, and maximum have been added as shortcuts.
+      # This calculates aggregate values in the given column.  Methods for count, sum, average, minimum, and maximum have been added as shortcuts.
       # Options such as :conditions, :order, :group, :having, and :joins can be passed to customize the query.
       #
       # There are two basic forms of output:
@@ -97,14 +97,14 @@ module ActiveRecord
       #       end
       #
       # Options:
-      # * <tt>:conditions</tt>: An SQL fragment like "administrator = 1" or [ "user_name = ?", username ]. See conditions in the intro.
-      # * <tt>:joins</tt>: An SQL fragment for additional joins like "LEFT JOIN comments ON comments.post_id = id". (Rarely needed).
+      # * <tt>:conditions</tt> - An SQL fragment like "administrator = 1" or [ "user_name = ?", username ]. See conditions in the intro.
+      # * <tt>:joins</tt> - An SQL fragment for additional joins like "LEFT JOIN comments ON comments.post_id = id". (Rarely needed).
       #   The records will be returned read-only since they will have attributes that do not correspond to the table's columns.
-      # * <tt>:order</tt>: An SQL fragment like "created_at DESC, name" (really only used with GROUP BY calculations).
-      # * <tt>:group</tt>: An attribute name by which the result should be grouped. Uses the GROUP BY SQL-clause.
-      # * <tt>:select</tt>: By default, this is * as in SELECT * FROM, but can be changed if you for example want to do a join, but not
+      # * <tt>:order</tt> - An SQL fragment like "created_at DESC, name" (really only used with GROUP BY calculations).
+      # * <tt>:group</tt> - An attribute name by which the result should be grouped. Uses the GROUP BY SQL-clause.
+      # * <tt>:select</tt> - By default, this is * as in SELECT * FROM, but can be changed if you for example want to do a join, but not
       #   include the joined columns.
-      # * <tt>:distinct</tt>: Set this to true to make this a distinct calculation, such as SELECT COUNT(DISTINCT posts.id) ...
+      # * <tt>:distinct</tt> - Set this to true to make this a distinct calculation, such as SELECT COUNT(DISTINCT posts.id) ...
       #
       # Examples:
       #   Person.calculate(:count, :all) # The same as Person.count
@@ -112,9 +112,7 @@ module ActiveRecord
       #   Person.minimum(:age, :conditions => ['last_name != ?', 'Drake']) # Selects the minimum age for everyone with a last name other than 'Drake'
       #   Person.minimum(:age, :having => 'min(age) > 17', :group => :last_name) # Selects the minimum age for any family without any minors
       def calculate(operation, column_name, options = {})
-        options, ar_joins = *extract_ar_join_from_options(options)
         validate_calculation_options(operation, options)
-        options[:ar_joins] = ar_joins if ar_joins
         column_name     = options[:select] if options[:select]
         column_name     = '*' if column_name == :all
         column          = column_for column_name
@@ -154,14 +152,8 @@ module ActiveRecord
           operation = operation.to_s.downcase
           options = options.symbolize_keys
 
-          scope = scope(:find)
-          if scope && scope[:ar_joins]
-            scope = scope.dup
-            options = options.dup
-            options[:ar_joins] = scope.delete(:ar_joins)
-          end
+          scope           = scope(:find)
           merged_includes = merge_includes(scope ? scope[:include] : [], options[:include])
-          merged_includes = merge_includes(merged_includes, options[:ar_joins])
           aggregate_alias = column_alias_for(operation, column_name)
 
           if operation == 'count'
@@ -184,7 +176,7 @@ module ActiveRecord
           sql << " FROM (SELECT DISTINCT #{column_name}" if use_workaround
           sql << " FROM #{connection.quote_table_name(table_name)} "
           if merged_includes.any?
-            join_dependency = ActiveRecord::Associations::ClassMethods::JoinDependency.new(self, merged_includes, options[:joins], options[:ar_joins])
+            join_dependency = ActiveRecord::Associations::ClassMethods::JoinDependency.new(self, merged_includes, options[:joins])
             sql << join_dependency.join_associations.collect{|join| join.association_join }.join
           end
           add_joins!(sql, options, scope)
@@ -248,7 +240,7 @@ module ActiveRecord
         end
 
         # Converts a given key to the value that the database adapter returns as
-        # as a usable column name.
+        # a usable column name.
         #   users.id #=> users_id
         #   sum(id) #=> sum_id
         #   count(distinct users.id) #=> count_distinct_users_id

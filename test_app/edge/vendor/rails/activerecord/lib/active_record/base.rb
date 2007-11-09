@@ -40,7 +40,7 @@ module ActiveRecord #:nodoc:
   class DangerousAttributeError < ActiveRecordError #:nodoc:
   end
 
-  # Raised when you've tried to access a column, which wasn't
+  # Raised when you've tried to access a column which wasn't
   # loaded by your finder.  Typically this is because :select
   # has been specified
   class MissingAttributeError < NoMethodError
@@ -72,7 +72,7 @@ module ActiveRecord #:nodoc:
   # == Creation
   #
   # Active Records accept constructor parameters either in a hash or as a block. The hash method is especially useful when
-  # you're receiving the data from somewhere else, like a HTTP request. It works like this:
+  # you're receiving the data from somewhere else, like an HTTP request. It works like this:
   #
   #   user = User.new(:name => "David", :occupation => "Code Artist")
   #   user.name # => "David"
@@ -112,7 +112,7 @@ module ActiveRecord #:nodoc:
   #   end
   #
   # The <tt>authenticate_unsafely</tt> method inserts the parameters directly into the query and is thus susceptible to SQL-injection
-  # attacks if the <tt>user_name</tt> and +password+ parameters come directly from a HTTP request. The <tt>authenticate_safely</tt>  and
+  # attacks if the <tt>user_name</tt> and +password+ parameters come directly from an HTTP request. The <tt>authenticate_safely</tt>  and
   # <tt>authenticate_safely_simply</tt> both will sanitize the <tt>user_name</tt> and +password+ before inserting them in the query, 
   # which will ensure that an attacker can't escape the query and fake the login (or worse).
   #
@@ -137,9 +137,9 @@ module ActiveRecord #:nodoc:
   #
   # == Overwriting default accessors
   #
-  # All column values are automatically available through basic accessors on the Active Record object, but some times you
-  # want to specialize this behavior. This can be done by either by overwriting the default accessors (using the same
-  # name as the attribute) calling read_attribute(attr_name) and write_attribute(attr_name, value) to actually change things.
+  # All column values are automatically available through basic accessors on the Active Record object, but sometimes you
+  # want to specialize this behavior. This can be done by overwriting the default accessors (using the same
+  # name as the attribute) and calling read_attribute(attr_name) and write_attribute(attr_name, value) to actually change things.
   # Example:
   #
   #   class Song < ActiveRecord::Base
@@ -230,7 +230,7 @@ module ActiveRecord #:nodoc:
   #
   # == Single table inheritance
   #
-  # Active Record allows inheritance by storing the name of the class in a column that by default is called "type" (can be changed
+  # Active Record allows inheritance by storing the name of the class in a column that by default is named "type" (can be changed
   # by overwriting <tt>Base.inheritance_column</tt>). This means that an inheritance looking like this:
   #
   #   class Company < ActiveRecord::Base; end
@@ -251,7 +251,7 @@ module ActiveRecord #:nodoc:
   #
   # Connections are usually created through ActiveRecord::Base.establish_connection and retrieved by ActiveRecord::Base.connection.
   # All classes inheriting from ActiveRecord::Base will use this connection. But you can also set a class-specific connection.
-  # For example, if Course is a ActiveRecord::Base, but resides in a different database you can just say Course.establish_connection
+  # For example, if Course is an ActiveRecord::Base, but resides in a different database, you can just say Course.establish_connection
   # and Course *and all its subclasses* will use this connection instead.
   #
   # This feature is implemented by keeping a connection pool in ActiveRecord::Base that is a Hash indexed by the class. If a connection is
@@ -260,12 +260,12 @@ module ActiveRecord #:nodoc:
   # == Exceptions
   #
   # * +ActiveRecordError+ -- generic error class and superclass of all other errors raised by Active Record
-  # * +AdapterNotSpecified+ -- the configuration hash used in <tt>establish_connection</tt> didn't include a
+  # * +AdapterNotSpecified+ -- the configuration hash used in <tt>establish_connection</tt> didn't include an
   #   <tt>:adapter</tt> key.
-  # * +AdapterNotFound+ -- the <tt>:adapter</tt> key used in <tt>establish_connection</tt> specified an non-existent adapter
+  # * +AdapterNotFound+ -- the <tt>:adapter</tt> key used in <tt>establish_connection</tt> specified a non-existent adapter
   #   (or a bad spelling of an existing one).
   # * +AssociationTypeMismatch+ -- the object assigned to the association wasn't of the type specified in the association definition.
-  # * +SerializationTypeMismatch+ -- the object serialized wasn't of the class specified as the second parameter.
+  # * +SerializationTypeMismatch+ -- the serialized object wasn't of the class specified as the second parameter.
   # * +ConnectionNotEstablished+ -- no connection has been established. Use <tt>establish_connection</tt> before querying.
   # * +RecordNotFound+ -- no record responded to the find* method.
   #   Either the row with the given ID doesn't exist or the row didn't meet the additional restrictions.
@@ -360,7 +360,7 @@ module ActiveRecord #:nodoc:
     @@schema_format = :ruby
 
     # Determines whether to raise an exception on mass-assignment to protected
-    # attribute. Defaults to true.
+    # attributes. Defaults to true.
     cattr_accessor :whiny_protected_attributes, :instance_writer => false
     @@whiny_protected_attributes = true
 
@@ -370,24 +370,24 @@ module ActiveRecord #:nodoc:
       # * Find by id: This can either be a specific id (1), a list of ids (1, 5, 6), or an array of ids ([5, 6, 10]).
       #   If no record can be found for all of the listed ids, then RecordNotFound will be raised.
       # * Find first: This will return the first record matched by the options used. These options can either be specific
-      #   conditions or merely an order. If no record can matched, nil is returned.
+      #   conditions or merely an order. If no record can be matched, nil is returned.
       # * Find all: This will return all the records matched by the options used. If no records are found, an empty array is returned.
       #
-      # All approaches accept an option hash as their last parameter. The options are:
+      # All approaches accept an options hash as their last parameter. The options are:
       #
       # * <tt>:conditions</tt>: An SQL fragment like "administrator = 1" or [ "user_name = ?", username ]. See conditions in the intro.
       # * <tt>:order</tt>: An SQL fragment like "created_at DESC, name".
       # * <tt>:group</tt>: An attribute name by which the result should be grouped. Uses the GROUP BY SQL-clause.
       # * <tt>:limit</tt>: An integer determining the limit on the number of rows that should be returned.
       # * <tt>:offset</tt>: An integer determining the offset from where the rows should be fetched. So at 5, it would skip rows 0 through 4.
-      # * <tt>:joins</tt>: Either an SQL fragment for additional joins like "LEFT JOIN comments ON comments.post_id = id". (Rarely needed).
-      #    or names associations in the same form used for the :include option.
-      #   If the value is a string, then the records will be returned read-only since they will have attributes that do not correspond to the table's columns.
+      # * <tt>:joins</tt>: An SQL fragment for additional joins like "LEFT JOIN comments ON comments.post_id = id" (Rarely needed).
+      #   Accepts named associations in the form of :include, which will perform an INNER JOIN on the associated table(s).
+      #   The records will be returned read-only since they will have attributes that do not correspond to the table's columns.
       #   Pass :readonly => false to override.
-      #   See adding joins for associations under Association.
+      #   See adding joins for associations under Associations.
       # * <tt>:include</tt>: Names associations that should be loaded alongside using LEFT OUTER JOINs. The symbols named refer
       #   to already defined associations. See eager loading under Associations.
-      # * <tt>:select</tt>: By default, this is * as in SELECT * FROM, but can be changed if you for example want to do a join, but not
+      # * <tt>:select</tt>: By default, this is * as in SELECT * FROM, but can be changed if you, for example, want to do a join but not
       #   include the joined columns.
       # * <tt>:from</tt>: By default, this is the table name of the class, but can be changed to an alternate table name (or even the name
       #   of a database view). 
@@ -399,7 +399,7 @@ module ActiveRecord #:nodoc:
       #   Person.find(1)       # returns the object for ID = 1
       #   Person.find(1, 2, 6) # returns an array for objects with IDs in (1, 2, 6)
       #   Person.find([7, 17]) # returns an array for objects with IDs in (7, 17)
-      #   Person.find([1])     # returns an array for objects the object with ID = 1
+      #   Person.find([1])     # returns an array for the object with ID = 1
       #   Person.find(1, :conditions => "administrator = 1", :order => "created_on DESC")
       #
       # Note that returned records may not be in the same order as the ids you
@@ -431,16 +431,14 @@ module ActiveRecord #:nodoc:
       def find(*args)
         options = args.extract_options!
         # Note:  we extract any :joins option with a non-string value from the options, and turn it into
-        #  an internal option :ar_joins.  This allows code called from her to find the ar_joins, and
+        #  an internal option :ar_joins.  This allows code called from here to find the ar_joins, and
         #  it bypasses marking the result as read_only.
         #  A normal string join marks the result as read-only because it contains attributes from joined tables
         #  which are not in the base table and therefore prevent the result from being saved.
         #  In the case of an ar_join, the JoinDependency created to instantiate the results eliminates these
         #  bogus attributes.  See JoinDependency#instantiate, and JoinBase#instantiate in associations.rb.
-        options, ar_joins = *extract_ar_join_from_options(options)
         validate_find_options(options)
         set_readonly_option!(options)
-        options[:ar_joins] = ar_joins if ar_joins
 
         case args.first
           when :first then find_initial(options)
@@ -531,14 +529,14 @@ module ActiveRecord #:nodoc:
         connection.update(sql, "#{name} Update")
       end
 
-      # Destroys the objects for all the records that match the +condition+ by instantiating each object and calling
+      # Destroys the objects for all the records that match the +conditions+ by instantiating each object and calling
       # the destroy method. Example:
       #   Person.destroy_all "last_login < '2004-04-04'"
       def destroy_all(conditions = nil)
         find(:all, :conditions => conditions).each { |object| object.destroy }
       end
 
-      # Deletes all the records that match the +condition+ without instantiating the objects first (and hence not
+      # Deletes all the records that match the +conditions+ without instantiating the objects first (and hence not
       # calling the destroy method). Example:
       #   Post.delete_all "person_id = 5 AND (category = 'Something' OR category = 'Else')"
       def delete_all(conditions = nil)
@@ -586,7 +584,7 @@ module ActiveRecord #:nodoc:
       #
       # This is used for caching aggregate values, so that they don't need to be computed every time. 
       # For example, a DiscussionBoard may cache post_count and comment_count otherwise every time the board is 
-      # shown it would have to run a SQL query to find how many posts and comments there are.
+      # shown it would have to run an SQL query to find how many posts and comments there are.
       #
       # ==== Options
       #
@@ -645,24 +643,31 @@ module ActiveRecord #:nodoc:
         read_inheritable_attribute("attr_protected")
       end
 
-      # If this macro is used, only those attributes named in it will be accessible for mass-assignment, such as
-      # <tt>new(attributes)</tt> and <tt>attributes=(attributes)</tt>. This is the more conservative choice for mass-assignment
-      # protection.
+      # Similar to the attr_protected macro, this protects attributes of your model from mass-assignment, 
+      # such as <tt>new(attributes)</tt> and <tt>attributes=(attributes)</tt>
+      # however, it does it in the opposite way.  This locks all attributes and only allows access to the 
+      # attributes specified.  Assignment to attributes not in this list will be ignored and need to be set 
+      # using the direct writer methods instead.  This is meant to protect sensitive attributes from being 
+      # overwritten by URL/form hackers. If you'd rather start from an all-open default and restrict 
+      # attributes as needed, have a look at attr_protected.
+      # 
+      # ==== Options
       #
-      # Example:
+      # <tt>*attributes</tt>   A comma separated list of symbols that represent columns _not_ to be protected
+      #
+      # ==== Examples
       #
       #   class Customer < ActiveRecord::Base
-      #     attr_accessible :phone, :email
+      #     attr_accessible :name, :nickname
       #   end
       #
-      # Passing an empty argument list protects all attributes:
+      #   customer = Customer.new(:name => "David", :nickname => "Dave", :credit_rating => "Excellent")
+      #   customer.credit_rating # => nil
+      #   customer.attributes = { :name => "Jolly fellow", :credit_rating => "Superb" }
+      #   customer.credit_rating # => nil
       #
-      #   class Product < ActiveRecord::Base
-      #     attr_accessible # none
-      #   end
-      #
-      # If you'd rather start from an all-open default and restrict attributes as needed, have a look at
-      # attr_protected.
+      #   customer.credit_rating = "Average"
+      #   customer.credit_rating # => "Average"
       def attr_accessible(*attributes)
         write_inheritable_array("attr_accessible", attributes - (accessible_attributes || []))
       end
@@ -690,7 +695,7 @@ module ActiveRecord #:nodoc:
       # ==== Options
       #
       # +attr_name+   The field name that should be serialized
-      # +class_name+  Optional, class name that the object should be equal to
+      # +class_name+  Optional, class name that the object type should be equal to
       #
       # ==== Example
       #   # Serialize a preferences attribute
@@ -710,7 +715,7 @@ module ActiveRecord #:nodoc:
       # Guesses the table name (in forced lower-case) based on the name of the class in the inheritance hierarchy descending
       # directly from ActiveRecord. So if the hierarchy looks like: Reply < Message < ActiveRecord, then Message is used
       # to guess the table name from even when called on Reply. The rules used to do the guess are handled by the Inflector class
-      # in Active Support, which knows almost all common English inflections (report a bug if your inflection isn't covered).
+      # in Active Support, which knows almost all common English inflections. You can add new inflections in config/initializers/inflections.rb.
       #
       # Nested classes are given table names prefixed by the singular form of
       # the parent's table name. Example:
@@ -967,7 +972,7 @@ module ActiveRecord #:nodoc:
         connection.quote(value,column)
       end
 
-      # Used to sanitize objects before they're used in an SELECT SQL-statement. Delegates to <tt>connection.quote</tt>.
+      # Used to sanitize objects before they're used in an SQL SELECT statement. Delegates to <tt>connection.quote</tt>.
       def sanitize(object) #:nodoc:
         connection.quote(object)
       end
@@ -1031,17 +1036,8 @@ module ActiveRecord #:nodoc:
           find_every(options).first
         end
 
-        # If options contains :joins, with a non-string value
-        #  remove it from options
-        # return the updated or unchanged options, and the ar_join value or nil
-        def extract_ar_join_from_options(options)
-          new_options = options.dup
-          join_option = new_options.delete(:joins)
-          (join_option && !join_option.kind_of?(String)) ? [new_options, join_option] : [options, nil]
-        end
-
         def find_every(options)
-          records = scoped?(:find, :include) || options[:include] || scoped?(:find, :ar_joins) || (options[:ar_joins]) ?
+          records = scoped?(:find, :include) || options[:include] ?
             find_with_associations(options) : 
             find_by_sql(construct_finder_sql(options))
 
@@ -1239,7 +1235,13 @@ module ActiveRecord #:nodoc:
         def add_joins!(sql, options, scope = :auto)
           scope = scope(:find) if :auto == scope
           join = (scope && scope[:joins]) || options[:joins]
-          sql << " #{join} " if join
+          case join
+          when Symbol, Hash, Array
+            join_dependency = ActiveRecord::Associations::ClassMethods::InnerJoinDependency.new(self, join, nil)
+            sql << " #{join_dependency.join_associations.collect{|join| join.association_join }.join} "
+          else
+            sql << " #{join} "
+          end
         end
 
         # Adds a sanitized version of +conditions+ to the +sql+ string. Note that the passed-in +sql+ string is changed.
@@ -1272,7 +1274,7 @@ module ActiveRecord #:nodoc:
 
         # Enables dynamic finders like find_by_user_name(user_name) and find_by_user_name_and_password(user_name, password) that are turned into
         # find(:first, :conditions => ["user_name = ?", user_name]) and  find(:first, :conditions => ["user_name = ? AND password = ?", user_name, password])
-        # respectively. Also works for find(:all), but using find_all_by_amount(50) that are turned into find(:all, :conditions => ["amount = ?", 50]).
+        # respectively. Also works for find(:all) by using find_all_by_amount(50) that is turned into find(:all, :conditions => ["amount = ?", 50]).
         #
         # It's even possible to use all the additional parameters to find. For example, the full interface for find_all_by_amount
         # is actually find_all_by_amount(amount, options).
@@ -1441,7 +1443,7 @@ module ActiveRecord #:nodoc:
         #     end
         #   end
         #
-        # You can ignore any previous scopings by using <tt>with_exclusive_scope</tt> method.
+        # You can ignore any previous scopings by using the <tt>with_exclusive_scope</tt> method.
         #
         #   class Article < ActiveRecord::Base
         #     def self.find_with_exclusive_scope
@@ -1465,13 +1467,7 @@ module ActiveRecord #:nodoc:
 
           if f = method_scoping[:find]
             f.assert_valid_keys(VALID_FIND_OPTIONS)
-            # see note about :joins and :ar_joins in ActiveRecord::Base#find
-            f, ar_joins = *extract_ar_join_from_options(f)
             set_readonly_option! f
-            if ar_joins
-              f[:ar_joins] = ar_joins
-              method_scoping[:find] = f
-            end
           end
 
           # Merge scopings
@@ -1484,7 +1480,7 @@ module ActiveRecord #:nodoc:
                       merge = hash[method][key] && params[key] # merge if both scopes have the same key
                       if key == :conditions && merge
                         hash[method][key] = [params[key], hash[method][key]].collect{ |sql| "( %s )" % sanitize_sql(sql) }.join(" AND ")
-                      elsif ([:include, :ar_joins].include?(key)) && merge
+                      elsif key == :include && merge
                         hash[method][key] = merge_includes(hash[method][key], params[key]).uniq
                       else
                         hash[method][key] = hash[method][key] || params[key]
@@ -1901,7 +1897,7 @@ module ActiveRecord #:nodoc:
       # Allows you to set all the attributes at once by passing in a hash with keys
       # matching the attribute names (which again matches the column names). Sensitive attributes can be protected
       # from this form of mass-assignment by using the +attr_protected+ macro. Or you can alternatively
-      # specify which attributes *can* be accessed in with the +attr_accessible+ macro. Then all the
+      # specify which attributes *can* be accessed with the +attr_accessible+ macro. Then all the
       # attributes not included in that won't be allowed to be mass-assigned. 
       def attributes=(new_attributes, guard_protected_attributes = true)
         return if new_attributes.nil?
@@ -2132,7 +2128,7 @@ module ActiveRecord #:nodoc:
         default
       end
 
-      # Returns copy of the attributes hash where all the values have been safely quoted for use in
+      # Returns a copy of the attributes hash where all the values have been safely quoted for use in
       # an SQL statement.
       def attributes_with_quotes(include_primary_key = true, include_readonly_attributes = true)
         quoted = attributes.inject({}) do |quoted, (name, value)|
@@ -2171,7 +2167,7 @@ module ActiveRecord #:nodoc:
       # So having the pairs written_on(1) = "2004", written_on(2) = "6", written_on(3) = "24", will instantiate
       # written_on (a date type) with Date.new("2004", "6", "24"). You can also specify a typecast character in the
       # parentheses to have the parameters typecasted before they're used in the constructor. Use i for Fixnum, f for Float,
-      # s for String, and a for Array. If all the values for a given attribute is empty, the attribute will be set to nil.
+      # s for String, and a for Array. If all the values for a given attribute are empty, the attribute will be set to nil.
       def assign_multiparameter_attributes(pairs)
         execute_callstack_for_multiparameter_attributes(
           extract_callstack_for_multiparameter_attributes(pairs)

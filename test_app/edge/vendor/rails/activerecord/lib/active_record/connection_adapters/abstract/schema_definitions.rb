@@ -173,7 +173,7 @@ module ActiveRecord
             Time.send(Base.default_timezone, year, mon, mday, hour, min, sec, microsec)
           # Over/underflow to DateTime
           rescue ArgumentError, TypeError
-            zone_offset = if Base.default_timezone == :local then DateTime.now.offset else 0 end
+            zone_offset = Base.default_timezone == :local ? DateTime.local_offset : 0
             # Append zero calendar reform start to account for dates skipped by calendar reform
             DateTime.new(year, mon, mday, hour, min, sec, zone_offset, 0) rescue nil
           end
@@ -272,7 +272,7 @@ module ActiveRecord
     end
 
     # Represents a SQL table in an abstract way.
-    # Columns are stored as ColumnDefinition in the #columns attribute.
+    # Columns are stored as a ColumnDefinition in the #columns attribute.
     class TableDefinition
       attr_accessor :columns
 
@@ -300,17 +300,17 @@ module ActiveRecord
       # <tt>:date</tt>, <tt>:binary</tt>, <tt>:boolean</tt>.
       #
       # Available options are (none of these exists by default):
-      # * <tt>:limit</tt>:
+      # * <tt>:limit</tt> -
       #   Requests a maximum column length (<tt>:string</tt>, <tt>:text</tt>,
       #   <tt>:binary</tt> or <tt>:integer</tt> columns only)
-      # * <tt>:default</tt>:
+      # * <tt>:default</tt> -
       #   The column's default value. Use nil for NULL.
-      # * <tt>:null</tt>:
+      # * <tt>:null</tt> -
       #   Allows or disallows +NULL+ values in the column.  This option could
       #   have been named <tt>:null_allowed</tt>.
-      # * <tt>:precision</tt>:
+      # * <tt>:precision</tt> -
       #   Specifies the precision for a <tt>:decimal</tt> column. 
-      # * <tt>:scale</tt>:
+      # * <tt>:scale</tt> -
       #   Specifies the scale for a <tt>:decimal</tt> column. 
       #
       # Please be aware of different RDBMS implementations behavior with
@@ -451,7 +451,7 @@ module ActiveRecord
       alias :belongs_to :references
 
       # Returns a String whose contents are the column definitions
-      # concatenated together.  This string can then be pre and appended to
+      # concatenated together.  This string can then be prepended and appended to
       # to generate the final SQL to create the table.
       def to_sql
         @columns * ', '

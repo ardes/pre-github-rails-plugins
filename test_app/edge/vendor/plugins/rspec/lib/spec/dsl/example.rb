@@ -14,33 +14,17 @@ module Spec
         end
 
         def suite
-          description = description ? description.description : "Rspec Description Suite"
+          description = description ? description.description : "RSpec Description Suite"
           suite = ExampleSuite.new(description, self)
           ordered_example_definitions.each do |example_definition|
             suite << new(example_definition)
           end
-          instance_methods.each do |method_name|
-            if (is_test?(method_name) || is_spec?(method_name)) && (
-              instance_method(method_name).arity == 0 ||
-              instance_method(method_name).arity == -1
-            )
-              example_definition = ExampleDefinition.new(method_name) do
-                __send__ method_name
-              end
-              suite << new(example_definition)
-            end
-          end
+          
+          add_examples_from_methods(suite)
+          
           suite
         end
         
-        def is_test?(method_name)
-          method_name =~ /^test./
-        end
-        
-        def is_spec?(method_name)
-          !(method_name =~ /^should(_not)?$/) && method_name =~ /^should/
-        end
-
         # Sets the #number on each ExampleDefinition and returns the next number
         def set_sequence_numbers(number) #:nodoc:
           ordered_example_definitions.each do |example_definition|
@@ -54,17 +38,66 @@ module Spec
           rspec_options.add_behaviour self
         end
 
-        def behaviour_chain
-          behaviours = []
-          current_class = self
-          while current_class.is_a?(Behaviour)
-            behaviours << current_class
-            current_class = current_class.superclass
+        def run_before_each(example)
+          execute_in_class_hierarchy(false) do |behaviour_class|
+            example.eval_each_fail_fast(behaviour_class.before_each_parts)
           end
-          behaviours
+        end
+        
+        def run_before_all(example)
+          execute_in_class_hierarchy(false) do |behaviour_class|
+            example.eval_each_fail_fast(behaviour_class.before_all_parts)
+          end
         end
 
-        protected
+        def run_after_all(example)
+          execute_in_class_hierarchy(true) do |behaviour_class|
+            example.eval_each_fail_slow(behaviour_class.after_all_parts)
+          end
+        end
+        
+        def run_after_each(example)
+          execute_in_class_hierarchy(true) do |behaviour_class|
+            example.eval_each_fail_slow(behaviour_class.after_each_parts)
+          end
+        end
+
+      private
+
+        def execute_in_class_hierarchy(superclass_first)
+          classes = []
+          current_class = self
+          while current_class.is_a?(Behaviour)
+            superclass_first ? classes << current_class : classes.unshift(current_class)
+            current_class = current_class.superclass
+          end
+
+          classes.each do |behaviour_class|
+            yield behaviour_class
+          end
+        end
+
+        def add_examples_from_methods(suite)
+          instance_methods.each do |method_name|
+            if (is_test?(method_name) || is_spec?(method_name)) && (
+              instance_method(method_name).arity == 0 ||
+              instance_method(method_name).arity == -1
+            )
+              example_definition = ExampleDefinition.new(method_name) do
+                __send__ method_name
+              end
+              suite << new(example_definition)
+            end
+          end
+        end
+
+        def is_test?(method_name)
+          method_name =~ /^test./
+        end
+        
+        def is_spec?(method_name)
+          !(method_name =~ /^should(_not)?$/) && method_name =~ /^should/
+        end
 
         def ordered_example_definitions
           rspec_options.reverse ? example_definitions.reverse : example_definitions
@@ -97,9 +130,12 @@ module Spec
 
       def initialize(definition) #:nodoc:
         @rspec_definition = definition
+        @behaviour_class = self.class
+        
         @_result = ::Test::Unit::TestResult.new
 
-        predicate_matchers = self.class.predicate_matchers
+        predicate_matchers = @behaviour_class.predicate_matchers
+
         (class << self; self; end).class_eval do
           plugin_mock_framework
           define_predicate_matchers predicate_matchers
@@ -115,62 +151,44 @@ module Spec
         super(obj, [:@rspec_definition, :@_result])
       end
 
-      def before_each
-        behaviours = self.class.behaviour_chain
-        behaviours.reverse!
-        behaviours.each do |behaviour|
-          run_before_parts behaviour.before_each_parts
-        end
+      def run_before_all
+        @behaviour_class.run_before_all(self)
       end
 
-      def before_all
-        behaviours = self.class.behaviour_chain
-        behaviours.reverse!
-        behaviours.each do |behaviour|
-          run_before_parts behaviour.before_all_parts
-        end
+      def run_before_each
+        @behaviour_class.run_before_each(self)
       end
 
-      def after_all
-        exception = nil
-        behaviours = self.class.behaviour_chain
-        behaviours.each do |behaviour|
-          exception = run_after_parts(exception, behaviour.after_all_parts)
-        end
-        raise exception if exception
+      def run_after_each
+        @behaviour_class.run_after_each(self)
       end
 
-      def after_each
-        exception = nil
-        behaviours = self.class.behaviour_chain
-        behaviours.each do |behaviour|
-          exception = run_after_parts(exception, behaviour.after_each_parts)
-        end
-        raise exception if exception
+      def run_after_all
+        @behaviour_class.run_after_all(self)
       end
 
       def run_example
-        self.instance_eval(&rspec_definition.example_block)
+        instance_eval(&rspec_definition.example_block)
       end
 
-      protected
-      def run_before_parts(parts)
-        parts.each do |part|
-          self.instance_eval(&part)
+      def eval_each_fail_fast(procs) #:nodoc:
+        procs.each do |proc|
+          instance_eval(&proc)
         end
       end
 
-      def run_after_parts(original_exception, parts)
-        new_exception = nil
-        parts.each do |part|
+      def eval_each_fail_slow(procs) #:nodoc:
+        first_exception = nil
+        procs.each do |proc|
           begin
-            self.instance_eval(&part)
+            instance_eval(&proc)
           rescue Exception => e
-            new_exception ||= e
+            first_exception ||= e
           end
         end
-        return original_exception || new_exception
+        raise first_exception if first_exception
       end
+
     end
   end
   
