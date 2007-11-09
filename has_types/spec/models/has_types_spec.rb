@@ -42,7 +42,7 @@ else
       defined?(PortableDwelling).should == nil
       defined?(Dwelling).should == nil
       PortableDwelling.connection.should_receive(:select).with(
-        "SELECT * FROM `dwellings` WHERE ( (`dwellings`.`type` = 'PortableDwelling' OR `dwellings`.`type` = 'Caravan' ) ) ",
+        "SELECT * FROM `dwellings`   WHERE ( (`dwellings`.`type` = 'PortableDwelling' OR `dwellings`.`type` = 'Caravan' ) ) ",
         "PortableDwelling Load").and_return([])
       PortableDwelling.find(:all)
       Dwelling.send(:subclasses).collect(&:name).sort.should == ['Caravan', 'FixedDwelling', 'House', 'PortableDwelling']
