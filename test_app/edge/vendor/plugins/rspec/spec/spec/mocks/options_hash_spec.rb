@@ -6,11 +6,11 @@ module Spec
       before do
         @options = ::Spec::Runner::Options.new(StringIO.new, StringIO.new)
         @reporter = ::Spec::Runner::Reporter.new(@options)
-        @behaviour = Class.new(::Spec::DSL::Example).describe("My Behaviour")
+        @behaviour = Class.new(::Spec::DSL::ExampleGroup).describe("Some Examples")
       end
 
       it "should report the file and line submitted with :expected_from" do
-        example_definition = @behaviour.create_example_definition "spec" do
+        example_definition = @behaviour.create_example "spec" do
           mock = Spec::Mocks::Mock.new("a mock")
           mock.should_receive(:message, :expected_from => "/path/to/blah.ext:37")
           mock.rspec_verify
@@ -25,7 +25,7 @@ module Spec
       end
 
       it "should use the message supplied with :message" do
-        example_definition = @behaviour.create_example_definition "spec" do
+        example_definition = @behaviour.create_example "spec" do
           mock = Spec::Mocks::Mock.new("a mock")
           mock.should_receive(:message, :message => "recebi nada")
           mock.rspec_verify
