@@ -1,9 +1,14 @@
 module Spec
   module DSL
-    class ExampleGroup < ::Test::Unit::TestCase
-      remove_method :default_test if respond_to?(:default_test)
+    # The superclass for all regular RSpec examples.
+    # See also Test::Unit::TestCase::ExampleGroup
+    class ExampleGroup
       extend ExampleGroupMethods
       include ExampleMethods
+
+      def initialize(example) #:nodoc:
+        @example = example
+      end
     end
   end
 end
