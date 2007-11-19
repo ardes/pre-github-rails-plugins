@@ -5,8 +5,9 @@
 ##########
 
 ActionController::Routing::Routes.draw do |map|
-  # this tests :erp (equivalent resource path), for named routes that map to resources
-  map.home '', :controller => 'forums', :action => 'index', :erp => '/forums'
+  # this tests :resource_path (or :erp), for named routes that map to resources
+  map.root :controller => 'forums', :action => 'index', :resource_path => '/forums'
+  map.create_forum 'create_forum', :controller => 'forums', :action => 'create', :resource_path => '/forums', :resource_method => :post
 
   map.namespace :admin do |admin|
     admin.resources :forums do |forum|
@@ -166,8 +167,8 @@ end
 ##############
 
 # explicitly set the actions to the default (in case another plugin has changed this)
-Ardes::ResourcesController.actions = Ardes::ResponseForResourcesController::Actions
-Ardes::ResourcesController.singleton_actions = Ardes::ResponseForResourcesController::SingletonActions
+Ardes::ResourcesController.actions = Ardes::ResourcesController::Actions
+Ardes::ResourcesController.singleton_actions = Ardes::ResourcesController::SingletonActions
 
 
 class ApplicationController < ActionController::Base
