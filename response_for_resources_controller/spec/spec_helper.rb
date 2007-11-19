@@ -21,9 +21,3 @@ Spec::Runner.configure do |config|
   # If you declare global fixtures, be aware that they will be declared
   # for all of your examples, even those that don't use them.
 end
-
-require File.expand_path(File.join(File.dirname(__FILE__), 'app'))
-
-Ardes::ResourcesController.actions = Ardes::ResponseForResourcesController::Actions
-Ardes::ResourcesController.singleton_actions = Ardes::ResponseForResourcesController::SingletonActions
-
