@@ -65,13 +65,13 @@ module Ardes#:nodoc:
 
       def create
         self.resource = new_resource
-        resource_saved?
+        save_resource
       end
       
       def update
         self.resource = find_resource
         resource.attributes = params[resource_name]
-        resource_saved?
+        save_resource
       end
 
       def destroy
