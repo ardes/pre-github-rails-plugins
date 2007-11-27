@@ -2,7 +2,7 @@ require File.dirname(__FILE__) + '/story_helper'
 
 module Spec
   module Story
-    describe Step do
+    describe Step, "matching" do
       it "should match a text string" do
         step_matcher = Step.new("this text") {}
         step_matcher.matches?("this text").should be_true
@@ -13,7 +13,7 @@ module Spec
         step_matcher.matches?("Xthis text").should be_false
       end
       
-      it "should not match a text string that does not start the same" do
+      it "should not match a text string that does not end the same" do
         step_matcher = Step.new("this text") {}
         step_matcher.matches?("this textX").should be_false
       end
@@ -58,6 +58,14 @@ module Spec
         step_matcher.matches?("other anything text").should be_false
       end
       
+      it "should not get bogged down by parens in strings" do
+        step_matcher = Step.new("before () after") {}
+        step_matcher.matches?("before () after").should be_true
+      end
+      
+    end
+    
+    describe Step do
       it "should make complain with no block" do
         lambda {
           step_matcher = Step.new("foo")
@@ -88,7 +96,8 @@ module Spec
         instance = Object.new
         
         # when
-        step.perform(instance, "an account with 3 dollars")
+        args = step.parse_args("an account with 3 dollars")
+        step.perform(instance, *args)
         
         # then
         $result.should == "3"
@@ -103,7 +112,7 @@ module Spec
         instance = Object.new
         
         # when
-        step.perform(instance, "an account with a balance of", 20)
+        step.perform(instance, 20)
         
         # then
         $result.should == 20
@@ -120,7 +129,8 @@ module Spec
         instance = Object.new
         
         # when
-        step.perform(instance, "a savings account with 3 dollars")
+        args = step.parse_args("a savings account with 3 dollars")
+        step.perform(instance, *args)
         
         # then
         $account_type.should == "savings"

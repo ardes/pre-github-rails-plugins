@@ -68,7 +68,7 @@ module Spec
         :dry_run => ["-d", "--dry-run", "Invokes formatters without executing the examples."],
         :options_file => ["-O", "--options PATH", "Read options from a file"],
         :generate_options => ["-G", "--generate-options PATH", "Generate an options file for --options"],
-        :runner => ["-U", "--runner RUNNER", "Use a custom BehaviourRunner."],
+        :runner => ["-U", "--runner RUNNER", "Use a custom Runner."],
         :drb => ["-X", "--drb", "Run examples via DRb. (For example against script/spec_server)"],
         :version => ["-v", "--version", "Show version"],
         :help => ["-h", "--help", "You're looking at it"]
@@ -111,7 +111,7 @@ module Spec
 
       def order!(argv, &blk)
         @argv = argv
-        @options.current_argv = @argv.dup
+        @options.argv = @argv.dup
         return if parse_generate_options
         return if parse_drb
         
@@ -122,10 +122,6 @@ module Spec
 
         if @options.line_number
           set_spec_from_line_number
-        end
-
-        if @options.formatters.empty?
-          @options.create_formatter(Formatter::ProgressBarFormatter)
         end
 
         @options
@@ -172,13 +168,13 @@ module Spec
 
       def parse_drb
         is_drb = false
-        current_argv = @options.current_argv
-        is_drb ||= current_argv.delete(OPTIONS[:drb][0])
-        is_drb ||= current_argv.delete(OPTIONS[:drb][1])
+        argv = @options.argv
+        is_drb ||= argv.delete(OPTIONS[:drb][0])
+        is_drb ||= argv.delete(OPTIONS[:drb][1])
         return nil unless is_drb
         @options.examples_should_not_be_run
         DrbCommandLine.run(
-          self.class.parse(current_argv, @error_stream, @out_stream)
+          self.class.parse(argv, @error_stream, @out_stream)
         )
         true
       end

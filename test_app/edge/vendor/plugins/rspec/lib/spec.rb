@@ -1,12 +1,16 @@
-require 'test/unit'
 require 'spec/version'
 require 'spec/matchers'
 require 'spec/expectations'
 require 'spec/translator'
-require 'spec/dsl'
+require 'spec/example'
 require 'spec/extensions'
 require 'spec/runner'
 require 'spec/story'
+
+if Object.const_defined?(:Test); \
+  require 'spec/interop/test'; \
+end
+
 module Spec
   class << self
     def run?
@@ -20,5 +24,16 @@ module Spec
       result; \
     end
     attr_writer :run
+
+    def exit?; \
+      !Object.const_defined?(:Test) || Test::Unit.run?; \
+    end
   end
+end
+
+at_exit do \
+  unless $! || Spec.run?; \
+    success = Spec.run; \
+    exit success if Spec.exit?; \
+  end \
 end
