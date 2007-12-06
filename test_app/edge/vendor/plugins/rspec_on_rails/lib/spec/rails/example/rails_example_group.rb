@@ -30,9 +30,6 @@ module Spec
           end
         end
 
-        before(:each) {setup}
-        after(:each) {teardown}
-
         include Spec::Rails::Matchers
 
         @@model_id = 1000
@@ -79,7 +76,7 @@ module Spec
           stubs.each {|k,v| m.stub!(k).and_return(v)}
           m
         end
-        Spec::Example::ExampleGroupFactory.register(:default, self)
+        Spec::Example::ExampleGroupFactory.default(self)
       end
     end
   end

@@ -76,7 +76,7 @@ module Spec
       end
 
       describe ExampleGroup, ".examples" do
-        it "should return an ExampleSuite with Examples" do
+        it "should have Examples" do
           example_group = Class.new(ExampleGroup) do
             describe('example')
             it "should pass" do
@@ -87,7 +87,7 @@ module Spec
           example_group.examples.first.description.should == "should pass"
         end
 
-        it "should include methods that begin with test and has an arity of 0 in suite" do
+        it "should not include methods that begin with test (only when TU interop is loaded)" do
           example_group = Class.new(ExampleGroup) do
             describe('example')
             def test_any_args(*args)
@@ -103,9 +103,7 @@ module Spec
               raise "This is not a real test"
             end
           end
-          example_group.examples.length.should == 2
-          descriptions = example_group.examples.collect {|example| example.description}.sort
-          descriptions.should == ["test_any_args", "test_something"]
+          example_group.examples.length.should == 0
           example_group.run.should be_true
         end
 
@@ -157,16 +155,30 @@ module Spec
           example_group = Class.new(ExampleGroup) do
             describe('example')
             def should_invalid(foo)
-              1.should == 1
+              1.should == 2
             end
             def shouldInvalidCamelCase(foo)
-              1.should == 1
+              1.should == 3
             end
             def should_not_invalid(foo)
+              1.should == 4
+            end
+            def should_valid
               1.should == 1
             end
           end
-          example_group.examples.length.should == 0
+          example_group.examples.length.should == 1
+          example_group.run.should be_true
+        end
+
+        it "should run should_methods" do
+          example_group = Class.new(ExampleGroup) do
+            def should_valid
+              1.should == 2
+            end
+          end
+          example_group.examples.length.should == 1
+          example_group.run.should be_false
         end
       end
 
@@ -279,7 +291,7 @@ module Spec
     end
 
     class ExampleModuleScopingSpec < ExampleGroup
-      describe ExampleGroup, " via a class definition"
+      describe ExampleGroup, "via a class definition"
 
       module Foo
         module Bar
@@ -302,7 +314,7 @@ module Spec
     end
 
     class ExampleClassVariablePollutionSpec < ExampleGroup
-      describe ExampleGroup, " via a class definition without a class variable"
+      describe ExampleGroup, "via a class definition without a class variable"
 
       it "should not retain class variables from other Example classes" do
         proc do
@@ -360,10 +372,29 @@ module Spec
       it "should have copy of example_group" do
         the_example_group.superclass.should == ExampleGroup
       end
+
+      it "should set instance variables from passed in hash" do
+        instance_variables = {
+          '@foo' => 'bar',
+          '@test' => 1
+        }
+        example_group_instance = ExampleGroup.new(nil, instance_variables)
+        example_group_instance.instance_variable_get('@foo').should == 'bar'
+        example_group_instance.instance_variable_get('@test').should == 1
+      end
+
+      it "should overwrite @_example, even if its to be set" do
+        instance_variables = {
+          '@_example' => 'should not be this value'
+        }
+        example = Example.new
+        example_group_instance = ExampleGroup.new(example, instance_variables)
+        example_group_instance.instance_variable_get('@_example').should == example
+      end
     end
 
     describe ExampleGroup, "#pending" do
-      it"should raise a Pending error when its block fails" do
+      it "should raise a Pending error when its block fails" do
         block_ran = false
         lambda {
           pending("something") do
@@ -374,7 +405,7 @@ module Spec
         block_ran.should == true
       end
 
-      it"should raise Spec::Example::PendingExampleFixedError when its block does not fail" do
+      it "should raise Spec::Example::PendingExampleFixedError when its block does not fail" do
         block_ran = false
         lambda {
           pending("something") do
@@ -382,12 +413,6 @@ module Spec
           end
         }.should raise_error(Spec::Example::PendingExampleFixedError, "Expected pending 'something' to fail. No Error was raised.")
         block_ran.should == true
-      end
-    end
-
-    describe ExampleGroup, "#run without failure in example", :shared => true do
-      it "should not add an example failure to the TestResult" do
-        example_group.run.should be_true
       end
     end
 
@@ -426,7 +451,7 @@ module Spec
         ExampleGroup.reset
       end
 
-      it"should not run when there are no examples" do
+      it "should not run when there are no examples" do
         example_group = Class.new(ExampleGroup) do
           describe("Foobar")
         end
@@ -472,9 +497,97 @@ module Spec
         end
       end
 
-      describe ExampleGroup, "#run with success" do
-        it_should_behave_like "Spec::Example::ExampleGroup#run without failure in example"
-        
+      describe ExampleGroup, "#run with specified examples" do
+        attr_reader :examples_that_were_run
+        before do
+          @examples_that_were_run = []
+        end
+
+        describe ExampleGroup, "#run when specified_examples matches entire ExampleGroup" do
+          before do
+            examples_that_were_run = @examples_that_were_run
+            @example_group = Class.new(ExampleGroup) do
+              describe("the ExampleGroup")
+              it("should be run") do
+                examples_that_were_run << 'should be run'
+              end
+
+              it("should also be run") do
+                examples_that_were_run << 'should also be run'
+              end
+            end
+            options.examples = ["the ExampleGroup"]
+          end
+
+          it "should not run the Examples in the ExampleGroup" do
+            example_group.run
+            examples_that_were_run.should == ['should be run', 'should also be run']
+          end
+        end
+
+        describe ExampleGroup, "#run when specified_examples matches only Example description" do
+          before do
+            examples_that_were_run = @examples_that_were_run
+            @example_group = Class.new(ExampleGroup) do
+              describe("example")
+              it("should be run") do
+                examples_that_were_run << 'should be run'
+              end
+            end
+            options.examples = ["should be run"]
+          end
+
+          it "should not run the example" do
+            example_group.run
+            examples_that_were_run.should == ['should be run']
+          end
+        end
+
+        describe ExampleGroup, "#run when specified_examples does not match an Example description" do
+          before do
+            examples_that_were_run = @examples_that_were_run
+            @example_group = Class.new(ExampleGroup) do
+              describe("example")
+              it("should be something else") do
+                examples_that_were_run << 'should be something else'
+              end
+            end
+            options.examples = ["does not match anything"]
+          end
+
+          it "should not run the example" do
+            example_group.run
+            examples_that_were_run.should == []
+          end
+        end
+
+        describe ExampleGroup, "#run when specified_examples matches an Example description" do
+          before do
+            examples_that_were_run = @examples_that_were_run
+            @example_group = Class.new(ExampleGroup) do
+              describe("example")
+              it("should be run") do
+                examples_that_were_run << 'should be run'
+              end
+              it("should not be run") do
+                examples_that_were_run << 'should not be run'
+              end
+            end
+            options.examples = ["should be run"]
+          end
+
+          it "should run only the example, when there in only one" do
+            example_group.run
+            examples_that_were_run.should == ["should be run"]
+          end
+
+          it "should run only the one example" do
+            example_group.run
+            examples_that_were_run.should == ["should be run"]          end
+        end
+      end
+
+      describe ExampleGroup, "#run with success" do        
         before do
           @special_example_group = Class.new(ExampleGroup)
           ExampleGroupFactory.register(:special, @special_example_group)
@@ -488,8 +601,8 @@ module Spec
 
         it "should send reporter add_example_group" do
           example_group.run
-          @reporter.added_example_group.should == "example"
-        end
+          reporter.example_groups.should == [example_group]
+        end 
 
         it "should run example on run" do
           example_ran = false
@@ -602,9 +715,6 @@ module Spec
         end
 
         it "should order after callbacks from local to global" do
-          @reporter.should_receive(:add_example_group).with any_args()
-          @reporter.should_receive(:example_finished).with any_args()
-
           fiddle = []
           example_group.after(:each) { fiddle << "after(:each)" }
           example_group.append_after(:each) { fiddle << "append_after(:each)" }
@@ -624,9 +734,6 @@ module Spec
         end
 
         it "should have accessible instance methods from included module" do
-          @reporter.should_receive(:add_example_group).with any_args()
-          @reporter.should_receive(:example_finished).with any_args()
-
           mod1_method_called = false
           mod1 = Module.new do
             define_method :mod1_method do
@@ -689,10 +796,15 @@ module Spec
                 $included_module = mod
               end
             end
+            
+            def teardown_mocks_for_rspec
+              $torn_down = true
+            end
           end
 
           begin
             $included_module = nil
+            $torn_down = true
             Spec::Runner.configuration.mock_with mod
 
             example_group = Class.new(ExampleGroup) do
@@ -702,6 +814,7 @@ module Spec
             example_group.run
 
             $included_module.should_not be_nil
+            $torn_down.should == true
           ensure
             Spec::Runner.configuration.mock_with :rspec
           end
@@ -709,8 +822,6 @@ module Spec
       end
 
       describe ExampleGroup, "#run with pending example that has a failing assertion" do
-        it_should_behave_like "Spec::Example::ExampleGroup#run without failure in example"
-        
         before do
           example_group.it("should be pending") do
             pending("Example fails") {false.should be_true}
@@ -767,10 +878,9 @@ module Spec
         end
 
         it "should supply before(:all) as description" do
-          @reporter.should_receive(:example_finished) do |example, error, location|
-            example.description.should eql("before(:all)")
+          @reporter.should_receive(:failure) do |example, error|
+            example.should eql("before(:all)")
             error.message.should eql("before(:all) failure")
-            location.should eql("before(:all)")
           end
 
           example_group.it("test") {true}
@@ -828,10 +938,9 @@ module Spec
         end
         
         it "should run second after(:each) block" do
-          reporter.should_receive(:example_finished) do |example, error, location|
+          reporter.should_receive(:example_finished) do |example, error|
             example.should equal(example)
             error.message.should eql("first")
-            location.should eql("after(:each)")
           end
           example_group.run
           example_group.first_after_ran.should be_true
@@ -859,11 +968,8 @@ module Spec
         end
         
         it "should not run second before(:each)" do
-          reporter.should_receive(:example_finished) do |name, error, location, example_not_implemented|
-            name.should eql("example")
+          reporter.should_receive(:example_finished) do |name, error|
             error.message.should eql("first")
-            location.should eql("before(:each)")
-            example_not_implemented.should be_false
           end
           example_group.run
           example_group.first_before_ran.should be_true
@@ -881,16 +987,6 @@ module Spec
         it "should return false" do
           example_group.run.should be_false
         end
-
-        it "should provide after(:all) as description" do
-          @reporter.should_receive(:example_finished) do |example, error, location|
-            example.description.should eql("after(:all)")
-            error.message.should eql("in after(:all)")
-            location.should eql("after(:all)")
-          end
-
-          example_group.run
-        end
       end
     end
 
@@ -907,6 +1003,15 @@ module Spec
           describe(Array)
         end
         example_group.send(:described_type).should == Array
+      end
+      
+      it "should concat descriptions when nested" do
+        example_group = Class.new(ExampleSubclass) do
+          describe(Array)
+          $nested_group = describe("when empty") do
+          end
+        end
+        $nested_group.description.to_s.should == "Array when empty"
       end
     end
 

@@ -1,4 +1,5 @@
 require File.dirname(__FILE__) + '/../../../spec_helper.rb'
+require 'spec/runner/formatter/profile_formatter'
 
 module Spec
   module Runner
@@ -19,7 +20,7 @@ module Spec
         
         it "should set the current example_group" do
           @formatter.add_example_group('Test')
-          @formatter.instance_variable_get("@example_group").should == 'Test'
+          @formatter.instance_variable_get("@example_group_description").should == 'Test'
         end
         
         it "should record the current time when starting a new example" do

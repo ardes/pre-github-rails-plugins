@@ -1,5 +1,22 @@
 *SVN*
 
+* Add warning to documentation about using transactional fixtures when the code under test uses transactions itself. Closes #7548 [thijsv]
+
+* Update Prototype to 1.6.0.1.  [sam]
+
+* Update script.aculo.us to 1.8.0.1.  [madrobby]
+
+* Added db:fixtures:identity as a way of locating what ID a foxy fixture was assigned #10332 [jbarnette]
+
+* Generated fixtures should not specify ids since theyre expected to be foxy fixtures #10330 [jbarnette]
+
+
+*2.0.0 [RC2]* (November 28th, 2007)
+
+* Update to Prototype -r8232.  [sam]
+
+* Introduce SecretKeyGenerator for more secure session secrets than CGI::Session's pseudo-random id generator. Consider extracting to Active Support later.  #10286 [Hongli Lai]
+
 * RAILS_GEM_VERSION may be set to any valid gem version specifier.  #10057 [Chad Woolley, Chu Yeow]
 
 * Load config/preinitializer.rb, if present, before loading the environment.  #9943 [Chad Woolley]

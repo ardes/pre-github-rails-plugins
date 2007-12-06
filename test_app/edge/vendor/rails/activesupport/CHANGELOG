@@ -1,4 +1,6 @@
-*SVN*
+*2.0.0 [RC2]* (November 28th, 2007)
+
+* Added Array#from and Array#to that behaves just from String#from and String#to [DHH]
 
 * Fix that empty collections should be treated as empty arrays regardless of whitespace for Hash#from_xml #10255 [adamj]
 
