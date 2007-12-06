@@ -18,6 +18,10 @@ describe ScopeSpecModel, " (in general)" do
     ScopeSpecModel.should_receive(:count)
     ScopeSpecModel.count_published
   end
+  
+  it "foo_published should raise NameError" do
+    lambda{ ScopeSpecModel.foo_published }.should raise_error(NameError)
+  end
 end
 
 describe ScopeSpecModel, " (use case: 2 published, 1 unpublished record)" do
