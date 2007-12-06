@@ -1,0 +1,31 @@
+http://plugins.ardes.com > response_for
+
+= has_scope
+
+if you do this in your model:
+
+  has_scope :published, :find => {:conditions => ['published = ?', true]}, :create => {:published => true}
+
+You get these:
+
+  with_published { # whatever }
+  find_published
+  find_published_by_title
+  count_published
+  sum_published(:readers)
+  new_published
+  destroy_all_published
+
+Basically, when you send a method with '_published' in it a new method will be
+constructed with the published scope around it, and that method called.
+
+  
+=== Specs and Coverage
+* {SPECDOC}[link:files/SPECDOC.html] lists the specifications
+* {RSpec Report}[link:rspec_report.html] is a report of spec pass/fails
+* {RCov Report}[link:coverage/index.html] is the rcov report
+
+=== Testing
+RSpec is used for testing, so the tests are in <tt>spec/</tt> rather than
+<tt>test/</tt> Do rake --tasks for more details.
+

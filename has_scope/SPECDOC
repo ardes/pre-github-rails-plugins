@@ -1,0 +1,15 @@
+
+ScopeSpecModel (in general)
+- #with_published should call #with_scope with published scope options
+- #find_published_by_id should call #with_published with block that calls #find_by_id
+- count_published should call #with_published with a block that calls :count
+
+ScopeSpecModel (use case: 2 published, 1 unpublished record)
+- #count_published should == 2
+- #destroy_all_published should not destroy unpublished
+- #find_published(:all) should find published
+- #new_published should set published
+
+Finished in 0.112477 seconds
+
+7 examples, 0 failures
