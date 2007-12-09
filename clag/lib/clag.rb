@@ -40,7 +40,7 @@
 # * all of the features of fixture replacement type thingies
 #
 class Clag
-  class << self
+  module Dispatcher
     def respond_to?(method)
       super(method) || /^(create|new)_(\w+)(!?)$/.match(method.to_s)
     end
@@ -55,13 +55,20 @@ class Clag
     
     def dispatch(model, method, options)
       klass = model.classify.constantize
-      attrs = self.new.method(model)
+      clag = self.is_a?(Class) ? self : self.class
+      attrs = clag.new.method(model)
       if attrs.arity == 0
         klass.send method, attrs.call.merge(options || {})
       else
         klass.send method, attrs.call(options || {})
       end
     end
+  end
+  
+  include Dispatcher
+  
+  class << self
+    include Dispatcher
     
     def unique?(key, value)
       @@unique ||= {}
