@@ -37,6 +37,7 @@ module Ardes#:nodoc:
         self.named_scopes ||= {}
         self.named_scopes[name.to_sym] = options
         module_eval "def self.with_#{name}; with_scope(self.named_scopes[:#{name}]) { yield }; end"
+        module_eval "def self.#{name}; with_#{name} { find(:all) }; end"
       end
       
       # NB: taking a leaf out of Rails book and not defining the corresponding
