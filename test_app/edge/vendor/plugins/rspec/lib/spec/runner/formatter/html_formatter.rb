@@ -31,7 +31,8 @@ module Spec
           @output.flush
         end
 
-        def add_example_group(example_group_description)
+        def add_example_group(example_group)
+          super
           @example_group_red = false
           @example_group_red = false
           @current_example_group_number += 1
@@ -41,7 +42,7 @@ module Spec
           end
           @output.puts "<div class=\"example_group\">"
           @output.puts "  <dl>"
-          @output.puts "  <dt id=\"example_group_#{current_example_group_number}\">#{h(example_group_description)}</dt>"
+          @output.puts "  <dt id=\"example_group_#{current_example_group_number}\">#{h(example_group.description)}</dt>"
           @output.flush
         end
 

@@ -63,6 +63,7 @@ module Spec
       #   end
       class ControllerExampleGroup < FunctionalExampleGroup
         class << self
+                    
           # Use this to instruct RSpec to render views in your controller examples (Integration Mode).
           #
           #   describe ThingController do

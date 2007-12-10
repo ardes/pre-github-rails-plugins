@@ -2,14 +2,20 @@ module Spec
   module Example
 
     module ExampleGroupMethods
-      attr_reader :description
+      class << self
+        def description_text(*args)
+          args.inject("") do |result, arg|
+            result << " " unless (result == "" || arg.to_s =~ /^(\s|\.|#)/)
+            result << arg.to_s
+          end
+        end
+      end
+
+      attr_reader :description_text, :description_args, :spec_path
 
       def inherited(klass)
         super
-        unless klass.name.to_s == ""
-          klass.describe(klass.name)
-          klass.register
-        end
+        klass.register
       end
 
       # Makes the describe/it syntax available from a class. For example:
@@ -28,10 +34,8 @@ module Spec
       #
       def describe(*args, &example_group_block)
         if example_group_block
-          args.unshift(description) unless description.nil?
           self.subclass("Subclass") do
             describe(*args)
-            register
             module_eval(&example_group_block)
           end
         else
@@ -41,8 +45,8 @@ module Spec
         end
       end
 
-      # Use this to pull in examples from shared behaviours.
-      # See Spec::Runner for information about shared behaviours.
+      # Use this to pull in examples from shared example groups.
+      # See Spec::Runner for information about shared example groups.
       def it_should_behave_like(shared_example_group)
         case shared_example_group
         when SharedExampleGroup
@@ -89,7 +93,7 @@ module Spec
       end
 
       # Creates an instance of Spec::Example::Example and adds
-      # it to a collection of examples of the current behaviour.
+      # it to a collection of examples of the current example group.
       def it(description=nil, &implementation)
         example = create_example(description, &implementation)
         example_objects << example
@@ -114,15 +118,33 @@ module Spec
         success, before_all_instance_variables = run_before_all
         success, after_all_instance_variables  = execute_examples(success, before_all_instance_variables, examples)
         success                                = run_after_all(success, after_all_instance_variables)
-        success
       end
 
-      def add_example(example)
-        example_objects << example
+      def description
+        ExampleGroupMethods.description_text(*description_parts)
       end
 
-      def described_type #:nodoc:
-        description.described_type
+      def described_type
+        description_parts.find {|part| part.is_a?(Module)}
+      end
+
+      def description_parts #:nodoc:
+        parts = []
+        execute_in_class_hierarchy do |example_group|
+          parts << example_group.description_args
+        end
+        parts.flatten.compact
+      end
+
+      def set_description(*args)
+        args, options = args_and_options(*args)
+        @description_args = args
+        @description_text = ExampleGroupMethods.description_text(*args)
+        @spec_path = File.expand_path(options[:spec_path]) if options[:spec_path]
+        if described_type.class == Module
+          include described_type
+        end
+        self
       end
 
       def examples #:nodoc:
@@ -211,18 +233,18 @@ module Spec
         rspec_options.add_example_group self
       end
 
-      def unregister
+      def unregister #:nodoc:
         rspec_options.remove_example_group self
       end
 
       def run_before_each(example)
-        execute_in_class_hierarchy(false) do |example_group|
+        execute_in_class_hierarchy do |example_group|
           example.eval_each_fail_fast(example_group.before_each_parts)
         end
       end
 
       def run_after_each(example)
-        execute_in_class_hierarchy(true) do |example_group|
+        execute_in_class_hierarchy(:superclass_first) do |example_group|
           example.eval_each_fail_slow(example_group.after_each_parts)
         end
       end
@@ -239,7 +261,7 @@ module Spec
       def run_before_all
         example_group_instance = new(nil)
         begin
-          execute_in_class_hierarchy(false) do |example_group|
+          execute_in_class_hierarchy do |example_group|
             example_group_instance.eval_each_fail_fast(example_group.before_all_parts)
           end
           return [true, example_group_instance.instance_variable_hash]
@@ -265,7 +287,7 @@ module Spec
 
       def run_after_all(success, instance_variables)
         example = new(nil, instance_variables)
-        execute_in_class_hierarchy(true) do |example_group|
+        execute_in_class_hierarchy(:superclass_first) do |example_group|
           example.eval_each_fail_slow(example_group.after_all_parts)
         end
         return success
@@ -307,17 +329,17 @@ module Spec
         @example_objects ||= []
       end
 
-      def execute_in_class_hierarchy(superclass_first)
+      def execute_in_class_hierarchy(superclass_last=false)
         classes = []
         current_class = self
         while is_example_group?(current_class)
-          superclass_first ? classes << current_class : classes.unshift(current_class)
+          superclass_last ? classes << current_class : classes.unshift(current_class)
           current_class = current_class.superclass
         end
-        superclass_first ? classes << ExampleMethods : classes.unshift(ExampleMethods)
+        superclass_last ? classes << ExampleMethods : classes.unshift(ExampleMethods)
 
-        classes.each do |behaviour|
-          yield behaviour
+        classes.each do |example_group|
+          yield example_group
         end
       end
 
@@ -366,18 +388,6 @@ module Spec
       end
 
       def before_eval
-      end
-
-      def set_description(*args)
-        unless self.class == ExampleGroup
-          args << {} unless Hash === args.last
-          args.last[:example_group] = self
-        end
-        @description = ExampleGroupDescription.new(*args)
-        if described_type.class == Module
-          include described_type
-        end
-        description
       end
 
       def add_method_examples(examples)

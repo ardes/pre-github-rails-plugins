@@ -125,6 +125,21 @@ namespace :db do
     puts "Current version: #{ActiveRecord::Migrator.current_version}"
   end
 
+  desc "Raises an error if there are pending migrations"
+  task :abort_if_pending_migrations => :environment do
+    if defined? ActiveRecord
+      pending_migrations = ActiveRecord::Migrator.new(:up, 'db/migrate').pending_migrations
+
+      if pending_migrations.any?
+        puts "You have #{pending_migrations.size} pending migrations:"
+        pending_migrations.each do |pending_migration|
+          puts '  %4d %s' % [pending_migration.version, pending_migration.name]
+        end
+        abort "Run `rake db:migrate` to update your database then try again."
+      end
+    end
+  end
+
   namespace :fixtures do
     desc "Load fixtures into the current environment's database.  Load specific fixtures using FIXTURES=x,y"
     task :load => :environment do
@@ -290,8 +305,8 @@ namespace :db do
     end
 
     desc 'Prepare the test database and load the schema'
-    task :prepare => :environment do
-      if defined?(ActiveRecord::Base) && !ActiveRecord::Base.configurations.blank?
+    task :prepare => %w(environment db:abort_if_pending_migrations) do
+      if defined?(ActiveRecord) && !ActiveRecord::Base.configurations.blank?
         Rake::Task[{ :sql  => "db:test:clone_structure", :ruby => "db:test:clone" }[ActiveRecord::Base.schema_format]].invoke
       end
     end

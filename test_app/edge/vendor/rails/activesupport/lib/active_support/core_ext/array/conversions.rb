@@ -16,7 +16,7 @@ module ActiveSupport #:nodoc:
             when 0
               ""
             when 1
-              self[0]
+              self[0].to_s
             when 2
               "#{self[0]} #{options[:connector]}#{self[1]}"
             else
@@ -27,6 +27,15 @@ module ActiveSupport #:nodoc:
         # When an array is given to url_for, it is converted to a slash separated string.
         def to_param
           join '/'
+        end
+
+        # Converts an array into a string suitable for use as a URL query string, using the given <tt>key</tt> as the
+        # param name.
+        #
+        # ==== Example:
+        #   ['Rails', 'coding'].to_query('hobbies') => "hobbies%5B%5D=Rails&hobbies%5B%5D=coding"
+        def to_query(key)
+          collect { |value| value.to_query("#{key}[]") } * '&'
         end
 
         def self.included(base) #:nodoc:
