@@ -146,9 +146,9 @@ describe CachedDbFile, " (saved, but when there is NOT a cache file)" do
 end
 
 describe CachedDbFile, " (saved, when there IS a cache file)" do
-  before(:all) do
+  before do
     @foo_db_file = DbFile.create(:data => 'foo')
-    @foo_cache = CachedDbFile.create :filename => 'foo.txt', :db_file => @foo_db_file
+    @foo_cache = CachedDbFile.create! :filename => 'foo.txt', :db_file => @foo_db_file
   end
   
   before do
