@@ -2,7 +2,7 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 
 module Spec
   module Example
-    describe ExampleGroupMethods do
+    describe 'ExampleGroupMethods' do
       it_should_behave_like "sandboxed rspec_options"
       attr_reader :example_group, :result, :reporter
       before(:each) do
@@ -294,6 +294,11 @@ module Spec
           it ".spec_path should expand the passed in :spec_path option passed into the constructor" do
             example_group.spec_path.should == File.expand_path("blah")
           end
+
+          it ".description_options should return all the options passed in" do
+            example_group.description_options.should == {:a => "b", :spec_path => "blah"}
+          end
+
         end
       end
 
@@ -340,7 +345,7 @@ module Spec
           ]
         end
       end
-      
+
       describe "#described_type" do
         it "should return passed in type" do
           child_example_group = Class.new(example_group) do

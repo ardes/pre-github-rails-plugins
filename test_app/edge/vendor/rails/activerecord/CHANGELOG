@@ -1,4 +1,14 @@
-*SVN*
+*2.0.2* (December 16th, 2007)
+
+* Ensure optimistic locking handles nil #lock_version values properly.  Closes #10510 [rick]
+
+* Make the Fixtures Test::Unit enhancements more supporting for double-loaded test cases.  Closes #10379 [brynary]
+
+* Fix that validates_acceptance_of still works for non-existent tables (useful for bootstrapping new databases).  Closes #10474 [hasmanyjosh]
+
+* Ensure that the :uniq option for has_many :through associations retains the order.  #10463 [remvee]
+
+* Base.exists? doesn't rescue exceptions to avoid hiding SQL errors.  #10458 [Michael Klishin]
 
 * Documentation: Active Record exceptions, destroy_all and delete_all.  #10444, #10447 [Michael Klishin]
 
@@ -31,7 +41,7 @@ so newlines etc are escaped #10385 [Norbert Crombach]
 
     render :partial => @client.becomes(Company) # renders companies/company instead of clients/client
 
-* Fixed that to_xml should not automatically pass :procs to associations included with :include #10162 [Chu Yeow]
+* Fixed that to_xml should not automatically pass :procs to associations included with :include #10162 [Cheah Chu Yeow]
 
 * Fix documentation typo introduced in [8250]. Closes #10339 [Henrik N]
 
@@ -187,7 +197,7 @@ single-table inheritance.  #3833, #9886 [Gabriel Gironda, rramdas, François Bea
 
 * Added the possibility of using symbols in addition to concrete classes with ActiveRecord::Observer#observe.  #3998 [Robby Russell, Tarmo Tänav]
 
-* Added ActiveRecord::Base#to_json/from_json [DHH, Chu Yeow]
+* Added ActiveRecord::Base#to_json/from_json [DHH, Cheah Chu Yeow]
 
 * Added ActiveRecord::Base#from_xml [DHH]. Example:
 

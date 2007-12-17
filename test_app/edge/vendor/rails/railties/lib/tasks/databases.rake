@@ -16,7 +16,7 @@ namespace :db do
         #    <<: *defaults
         next unless config['database']
         # Only connect to local databases
-        if config['host'] == 'localhost' || config['host'].blank?
+        if %w( 127.0.0.1 localhost ).include?(config['host']) || config['host'].blank?
           create_database(config)
         else
           p "This task only creates local databases. #{config['database']} is on a remote host."
@@ -84,6 +84,14 @@ namespace :db do
     ActiveRecord::Migration.verbose = ENV["VERBOSE"] ? ENV["VERBOSE"] == "true" : true
     ActiveRecord::Migrator.migrate("db/migrate/", ENV["VERSION"] ? ENV["VERSION"].to_i : nil)
     Rake::Task["db:schema:dump"].invoke if ActiveRecord::Base.schema_format == :ruby
+  end
+
+  namespace :migrate do
+    desc  'Rollbacks the database one migration and re migrate up. If you want to rollback more than one step, define STEP=x'
+    task :redo => [ 'db:rollback', 'db:migrate' ]
+
+    desc 'Resets your database using your migrations for the current environment'
+    task :reset => ["db:drop", "db:create", "db:migrate"]
   end
 
   desc 'Rolls the schema back to the previous version. Specify the number of steps with STEP=n'

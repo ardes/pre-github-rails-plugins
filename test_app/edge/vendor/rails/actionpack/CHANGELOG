@@ -1,10 +1,30 @@
-*SVN*
+*2.0.2* (December 16th, 2007)
 
-* Ensure asset cache directories are automatically created.  #10337 [Josh Peek, Chu Yeow]
+* Added delete_via_redirect and put_via_redirect to integration testing #10497 [philodespotos]
 
-* render :xml and :json preserve custom content types.  #10388 [jmettraux, Chu Yeow]
+* Allow headers['Accept'] to be set by hand when calling xml_http_request #10461 [BMorearty]
 
-* Refactor Action View template handlers.  #10437 [Josh Peek]
+* Added OPTIONS to list of default accepted HTTP methods #10449 [holoway]
+
+* Added option to pass proc to ActionController::Base.asset_host for maximum configurability #10521 [chuyeow]. Example:
+
+    ActionController::Base.asset_host = Proc.new { |source|
+      if source.starts_with?('/images')
+        "http://images.example.com"
+      else
+        "http://assets.example.com"
+      end
+    }
+
+* Fixed that ActionView#file_exists? would be incorrect if @first_render is set #10569 [dbussink]
+
+* Added that Array#to_param calls to_param on all it's elements #10473 [brandon]
+
+* Ensure asset cache directories are automatically created.  #10337 [Josh Peek, Cheah Chu Yeow]
+
+* render :xml and :json preserve custom content types.  #10388 [jmettraux, Cheah Chu Yeow]
+
+* Refactor Action View template handlers.  #10437, #10455 [Josh Peek]
 
 * Fix DoubleRenderError message and leave out mention of returning false from filters.  Closes #10380 [Frederick Cheung]
 
