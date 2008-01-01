@@ -1,3 +1,14 @@
+*SVN*
+
+* Fix that auto_link looks for ='s in url paths (Amazon urls have them).  Closes #10640 [bgreenlee]
+
+* Ensure that test case setup is run even if overridden.  #10382 [Josh Peek]
+
+* Fix HTML Sanitizer to allow trailing spaces in CSS style attributes.  Closes #10566 [wesley.moxam]
+
+* Add :default option to time_zone_select.  #10590 [Matt Aimonetti]
+
+
 *2.0.2* (December 16th, 2007)
 
 * Added delete_via_redirect and put_via_redirect to integration testing #10497 [philodespotos]

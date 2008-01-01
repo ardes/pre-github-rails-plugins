@@ -9,8 +9,11 @@ module Spec
           before :each do
             # given
             @out = StringIO.new
+            @tweaker = mock('tweaker')
+            @tweaker.stub!(:tweak_backtrace)
             @options = mock('options')
             @options.stub!(:colour).and_return(false)
+            @options.stub!(:backtrace_tweaker).and_return(@tweaker)
             @formatter = PlainTextFormatter.new(@options, @out)
           end
         
@@ -57,6 +60,40 @@ module Spec
           
             # then
             @out.string.should include("3 scenarios: 1 succeeded, 2 failed")
+          end
+        
+          it 'should end cleanly (no characters on the last line) with successes' do
+            # when
+            @formatter.run_started(1)
+            @formatter.scenario_started(nil, nil)
+            @formatter.scenario_succeeded('story', 'scenario')
+            @formatter.run_ended
+          
+            # then
+            @out.string.should =~ /\n\z/
+          end
+        
+          it 'should end cleanly (no characters on the last line) with failures' do
+            # when
+            @formatter.run_started(1)
+            @formatter.scenario_started(nil, nil)
+            @formatter.scenario_failed('story', 'scenario', exception_from { raise RuntimeError, 'oops' })
+            @formatter.run_ended
+          
+            # then
+            @out.string.should =~ /\n\z/
+          end
+        
+          it 'should end cleanly (no characters on the last line) with pending steps' do
+            # when
+            @formatter.run_started(1)
+            @formatter.scenario_started(nil, nil)
+            @formatter.step_pending(:then, 'do pend')
+            @formatter.scenario_pending('story', 'scenario', exception_from { raise RuntimeError, 'oops' })
+            @formatter.run_ended
+          
+            # then
+            @out.string.should =~ /\n\z/
           end
         
           it 'should summarize the number of pending scenarios when the run ends' do
@@ -146,14 +183,18 @@ module Spec
           it 'should produce details of each pending step when the run ends' do
             # when
             @formatter.run_started(2)
-            @formatter.scenario_pending('story', 'scenario2', 'todo2')
-            @formatter.scenario_pending('story', 'scenario3', 'todo3')
+            @formatter.story_started('story 1', 'narrative')
+            @formatter.scenario_started('story 1', 'scenario 1')
+            @formatter.step_pending(:given, 'todo 1', [])
+            @formatter.story_started('story 2', 'narrative')
+            @formatter.scenario_started('story 2', 'scenario 2')
+            @formatter.step_pending(:given, 'todo 2', [])
             @formatter.run_ended
           
             # then
             @out.string.should include("Pending Steps:\n")
-            @out.string.should include("1) story (scenario2): todo2")
-            @out.string.should include("2) story (scenario3): todo3")
+            @out.string.should include("1) story 1 (scenario 1): todo 1")
+            @out.string.should include("2) story 2 (scenario 2): todo 2")
           end
         
           it 'should document a story title and narrative' do
