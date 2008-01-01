@@ -149,9 +149,6 @@ describe CachedDbFile, " (saved, when there IS a cache file)" do
   before do
     @foo_db_file = DbFile.create(:data => 'foo')
     @foo_cache = CachedDbFile.create! :filename => 'foo.txt', :db_file => @foo_db_file
-  end
-  
-  before do
     @foo_cache.class.remove_cache
     @foo_cache.send :write_cached_file
     @cache = CachedDbFile.find(@foo_cache.id)
