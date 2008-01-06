@@ -1,5 +1,4 @@
-require File.dirname(__FILE__) + '/../../abstract_unit'
-require 'test/unit'
+require 'abstract_unit'
 
 class SanitizerTest < Test::Unit::TestCase
   def setup
@@ -204,9 +203,9 @@ class SanitizerTest < Test::Unit::TestCase
   end
 
   def test_should_sanitize_with_trailing_space
-	raw = "display:block; "
-	expected = "display: block;"
-	assert_equal expected, sanitize_css(raw)
+    raw = "display:block; "
+    expected = "display: block;"
+    assert_equal expected, sanitize_css(raw)
   end
 
   def test_should_sanitize_xul_style_attributes

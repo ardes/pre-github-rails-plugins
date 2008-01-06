@@ -644,8 +644,16 @@ class Fixtures < (RUBY_VERSION < '1.9' ? YAML::Omap : Hash)
     end
 
     def model_class
-      @model_class ||= @class_name.is_a?(Class) ?
-        @class_name : @class_name.constantize rescue nil
+      unless defined?(@model_class)
+        @model_class =
+          if @class_name.nil? || @class_name.is_a?(Class)
+            @class_name
+          else
+            @class_name.constantize rescue nil
+          end
+      end
+
+      @model_class
     end
 
     def primary_key_name
@@ -681,7 +689,7 @@ class Fixtures < (RUBY_VERSION < '1.9' ? YAML::Omap : Hash)
         Dir.entries(@fixture_path).each do |file|
           path = File.join(@fixture_path, file)
           if File.file?(path) and file !~ @file_filter
-            self[file] = Fixture.new(path, @class_name)
+            self[file] = Fixture.new(path, model_class)
           end
         end
       end
@@ -704,25 +712,26 @@ class Fixtures < (RUBY_VERSION < '1.9' ? YAML::Omap : Hash)
           end
 
         yaml_value.each do |fixture|
-          fixture.each do |name, data|
+          raise Fixture::FormatError, "Bad data for #{@class_name} fixture named #{fixture}" unless fixture.respond_to?(:each)
+	  fixture.each do |name, data|
             unless data
               raise Fixture::FormatError, "Bad data for #{@class_name} fixture named #{name} (nil)"
             end
 
-            self[name] = Fixture.new(data, @class_name)
+            self[name] = Fixture.new(data, model_class)
           end
         end
       end
     end
 
     def read_csv_fixture_files
-      reader = CSV::Reader.create(erb_render(IO.read(csv_file_path)))
+      reader = CSV.parse(erb_render(IO.read(csv_file_path)))
       header = reader.shift
       i = 0
       reader.each do |row|
         data = {}
         row.each_with_index { |cell, j| data[header[j].to_s.strip] = cell.to_s.strip }
-        self["#{Inflector::underscore(@class_name)}_#{i+=1}"]= Fixture.new(data, @class_name)
+        self["#{Inflector::underscore(@class_name)}_#{i+=1}"] = Fixture.new(data, model_class)
       end
     end
 
@@ -758,9 +767,9 @@ class Fixture #:nodoc:
   class FormatError < FixtureError #:nodoc:
   end
 
-  attr_reader :class_name
+  attr_reader :model_class
 
-  def initialize(fixture, class_name)
+  def initialize(fixture, model_class)
     case fixture
       when Hash, YAML::Omap
         @fixture = fixture
@@ -770,7 +779,11 @@ class Fixture #:nodoc:
         raise ArgumentError, "Bad fixture argument #{fixture.inspect} during creation of #{class_name} fixture"
     end
 
-    @class_name = class_name
+    @model_class = model_class.is_a?(Class) ? model_class : model_class.constantize rescue nil
+  end
+
+  def class_name
+    @model_class.name if @model_class
   end
 
   def each
@@ -791,21 +804,18 @@ class Fixture #:nodoc:
   end
 
   def value_list
-    klass = @class_name.constantize rescue nil
-
     list = @fixture.inject([]) do |fixtures, (key, value)|
-      col = klass.columns_hash[key] if klass.respond_to?(:ancestors) && klass.ancestors.include?(ActiveRecord::Base)
+      col = model_class.columns_hash[key] if model_class.respond_to?(:ancestors) && model_class.ancestors.include?(ActiveRecord::Base)
       fixtures << ActiveRecord::Base.connection.quote(value, col).gsub('[^\]\\n', "\n").gsub('[^\]\\r', "\r")
     end
     list * ', '
   end
 
   def find
-    klass = @class_name.is_a?(Class) ? @class_name : Object.const_get(@class_name) rescue nil
-    if klass
-      klass.find(self[klass.primary_key])
+    if model_class
+      model_class.find(self[model_class.primary_key])
     else
-      raise FixtureClassNotFound, "The class #{@class_name.inspect} was not found."
+      raise FixtureClassNotFound, "No class attached to find."
     end
   end
 
@@ -877,6 +887,7 @@ module Test #:nodoc:
       end
 
       def self.setup_fixture_accessors(table_names = nil)
+        table_names = [table_names] if table_names && !table_names.respond_to?(:each)
         (table_names || fixture_table_names).each do |table_name|
           table_name = table_name.to_s.tr('.', '_')
 
