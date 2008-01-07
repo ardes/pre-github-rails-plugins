@@ -26,6 +26,6 @@ class FixedDwelling < Dwelling
 - should return FixedDwelling with new(:type => "FixedDwelling")
 - should be fine with FixedDwelling.new
 
-Finished in 0.089024 seconds
+Finished in 0.126674 seconds
 
 15 examples, 0 failures

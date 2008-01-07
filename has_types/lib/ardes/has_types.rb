@@ -28,23 +28,27 @@ module Ardes#:nodoc:
       
         extend TypeFactory if options[:type_factory]
         
-        class<<self
-          # Intercept calls to descend_from_active_record? and load outstanding dependencies, then wipe
-          # all trace of this method intercept
-          def descends_from_active_record_with_has_types?
-            type_class_names.each {|d| require_dependency(d.underscore) }
-            returning descends_from_active_record_without_has_types? do
-              class<<self
-                alias_method :descends_from_active_record?, :descends_from_active_record_without_has_types?
-                undef_method :descends_from_active_record_with_has_types?
-                undef_method :descends_from_active_record_without_has_types?
+        # define intercept hook on descend_from_active_record? which loads up subclasses
+        # only define this when it's not already there, in case has_types is specified more than once
+        unless respond_to?(:descends_from_active_record_with_has_types?)
+          class<<self
+            # Intercept calls to descend_from_active_record? and load outstanding dependencies, then wipe
+            # all trace of this method intercept
+            def descends_from_active_record_with_has_types?
+              (type_class_names - [self.name]).each(&:constantize)
+              returning descends_from_active_record_without_has_types? do
+                class<<self
+                  alias_method :descends_from_active_record?, :descends_from_active_record_without_has_types?
+                  undef_method :descends_from_active_record_with_has_types?
+                  undef_method :descends_from_active_record_without_has_types?
+                end
               end
             end
-          end
-          alias_method_chain :descends_from_active_record?, :has_types
+            alias_method_chain :descends_from_active_record?, :has_types
             
-          def inherited(child)
-            type_class_names.include?(child.name) ? super : raise(NameError, "#{child.name} is not declared in #{child.base_class.name}. Add has_types :#{child.name.underscore} to #{child.base_class.name} class definition")
+            def inherited(child)
+              type_class_names.include?(child.name) ? super : raise(NameError, "#{child.name} is not declared in #{child.base_class.name}. Add has_types :#{child.name.underscore} to #{child.base_class.name} class definition")
+            end
           end
         end
       end
