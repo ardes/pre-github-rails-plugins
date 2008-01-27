@@ -54,7 +54,7 @@ class Clag
     end
     
     def dispatch(model, method, options)
-      klass = model.classify.constantize
+      klass = model.camelize.constantize
       clag = self.is_a?(Class) ? self : self.class
       attrs = clag.new.method(model)
       if attrs.arity == 0
