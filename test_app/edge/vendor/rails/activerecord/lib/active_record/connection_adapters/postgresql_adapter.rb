@@ -386,8 +386,8 @@ module ActiveRecord
 
       # Executes an INSERT query and returns the new record's ID
       def insert(sql, name = nil, pk = nil, id_value = nil, sequence_name = nil)
-        table = sql.split(" ", 4)[2]
-        super || last_insert_id(table, sequence_name || default_sequence_name(table, pk))
+        table = sql.split(" ", 4)[2].gsub('"', '')
+        super || pk && last_insert_id(table, sequence_name || default_sequence_name(table, pk))
       end
 
       # Queries the database and returns the results in an Array or nil otherwise.
@@ -587,13 +587,14 @@ module ActiveRecord
         execute "ALTER TABLE #{name} RENAME TO #{new_name}"
       end
 
-      # Adds a column to a table.
+      # Adds a new column to the named table.
+      # See TableDefinition#column for details of the options you can use.
       def add_column(table_name, column_name, type, options = {})
         default = options[:default]
         notnull = options[:null] == false
 
         # Add the column.
-        execute("ALTER TABLE #{quote_table_name(table_name)} ADD COLUMN #{quote_column_name(column_name)} #{type_to_sql(type, options[:limit])}")
+        execute("ALTER TABLE #{quote_table_name(table_name)} ADD COLUMN #{quote_column_name(column_name)} #{type_to_sql(type, options[:limit], options[:precision], options[:scale])}")
 
         change_column_default(table_name, column_name, default) if options_include_default?(options)
         change_column_null(table_name, column_name, false, default) if notnull

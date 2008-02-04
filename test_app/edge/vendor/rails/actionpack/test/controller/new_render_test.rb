@@ -17,6 +17,9 @@ module NewRenderTestHelper
   end
 end
 
+class LabellingFormBuilder < ActionView::Helpers::FormBuilder
+end
+
 class NewRenderTestController < ActionController::Base
   layout :determine_layout
 
@@ -75,11 +78,6 @@ class NewRenderTestController < ActionController::Base
     @secret = 'in the sauce'
     render :file => 'test/render_file_with_ivar', :use_full_path => true
   end
- 
-  def render_file_not_using_full_path_with_relative_path
-    @secret = 'in the sauce'
-    render :file => 'test/../test/render_file_with_ivar', :use_full_path => true
-  end
   
   def render_file_not_using_full_path_with_dot_in_path
     @secret = 'in the sauce'
@@ -136,7 +134,15 @@ class NewRenderTestController < ActionController::Base
   def partial_with_locals
     render :partial => "customer", :locals => { :customer => Customer.new("david") } 
   end
-  
+
+  def partial_with_form_builder
+    render :partial => ActionView::Helpers::FormBuilder.new(:post, nil, @template, {}, Proc.new {})
+  end
+
+  def partial_with_form_builder_subclass
+    render :partial => LabellingFormBuilder.new(:post, nil, @template, {}, Proc.new {})
+  end
+
   def partial_collection
     render :partial => "customer", :collection => [ Customer.new("david"), Customer.new("mary") ]
   end
@@ -477,11 +483,6 @@ class NewRenderTest < Test::Unit::TestCase
     assert_equal "The secret is in the sauce\n", @response.body
   end
 
-  def test_render_file_not_using_full_path_with_relative_path
-    get :render_file_not_using_full_path_with_relative_path
-    assert_equal "The secret is in the sauce\n", @response.body
-  end
-
   def test_render_file_not_using_full_path_with_dot_in_path
     get :render_file_not_using_full_path_with_dot_in_path
     assert_equal "The secret is in the sauce\n", @response.body
@@ -683,6 +684,18 @@ EOS
   def test_partial_with_locals
     get :partial_with_locals
     assert_equal "Hello: david", @response.body
+  end
+
+  def test_partial_with_form_builder
+    get :partial_with_form_builder
+    assert_match(/<label/, @response.body)
+    assert_template('test/_form')
+  end
+
+  def test_partial_with_form_builder_subclass
+    get :partial_with_form_builder_subclass
+    assert_match(/<label/, @response.body)
+    assert_template('test/_labelling_form')
   end
 
   def test_partial_collection
