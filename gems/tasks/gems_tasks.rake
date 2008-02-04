@@ -3,6 +3,7 @@ namespace :gems do
     raise "No gem specified, specify one with GEM=gem_name" unless gem_name = ENV['GEM']
 
     require 'rubygems'
+    require 'rubygems/command_manager'
     
     Gem.manage_gems
     gem = (version = ENV['VERSION']) ?
