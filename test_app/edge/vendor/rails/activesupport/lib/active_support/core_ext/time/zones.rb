@@ -9,8 +9,10 @@ module ActiveSupport #:nodoc:
         end
         
         module ClassMethods
+          attr_accessor :zone_default
+          
           def zone
-            Thread.current[:time_zone]
+            Thread.current[:time_zone] || zone_default
           end
 
           # Sets a global default time zone, separate from the system time zone in ENV['TZ']. 
@@ -36,19 +38,18 @@ module ActiveSupport #:nodoc:
           
           private
             def get_zone(time_zone)
-              ::String === time_zone || ::Numeric === time_zone ? TimeZone[time_zone] : time_zone
+              return time_zone if time_zone.nil? || time_zone.respond_to?(:period_for_local)
+              TimeZone[time_zone]
             end
         end
         
-        # Gives the corresponding time in the supplied zone. self is assumed to be in UTC regardless of constructor.
-        #
-        # Examples:
+        # Returns the simultaneous time in the supplied zone. Examples:
         #
         #   t = Time.utc(2000)        # => Sat Jan 01 00:00:00 UTC 2000
         #   t.in_time_zone('Alaska')  # => Fri, 31 Dec 1999 15:00:00 AKST -09:00
         #   t.in_time_zone('Hawaii')  # => Fri, 31 Dec 1999 14:00:00 HST -10:00
         def in_time_zone(zone)
-          ActiveSupport::TimeWithZone.new(self, get_zone(zone))
+          ActiveSupport::TimeWithZone.new(utc? ? self : getutc, get_zone(zone))
         end
 
         # Returns the simultaneous time in Time.zone
@@ -56,18 +57,17 @@ module ActiveSupport #:nodoc:
           ::Time.zone ? in_time_zone(::Time.zone) : self
         end
 
-        # Replaces the existing zone; leaves time value intact. Examples:
+        # Replaces the existing zone; leaves time values intact. Examples:
         #
         #   t = Time.utc(2000)            # => Sat Jan 01 00:00:00 UTC 2000
         #   t.change_time_zone('Alaska')  # => Sat, 01 Jan 2000 00:00:00 AKST -09:00
         #   t.change_time_zone('Hawaii')  # => Sat, 01 Jan 2000 00:00:00 HST -10:00
+        #
+        # Note the difference between this method and #in_time_zone: #in_time_zone does a calculation to determine
+        # the simultaneous time in the supplied zone, whereas #change_time_zone does no calculation; it just
+        # "dials in" a new time zone for +self+
         def change_time_zone(zone)
           ActiveSupport::TimeWithZone.new(nil, get_zone(zone), self)
-        end
-
-        # Replaces the existing zone to Time.zone; leaves time value intact
-        def change_time_zone_to_current
-          ::Time.zone ? change_time_zone(::Time.zone) : self
         end
         
         private

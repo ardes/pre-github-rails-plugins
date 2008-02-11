@@ -25,6 +25,10 @@ uses_tzinfo 'TimeWithZoneTest' do
     def test_in_time_zone
       assert_equal ActiveSupport::TimeWithZone.new(@utc, TimeZone['Alaska']), @twz.in_time_zone('Alaska')
     end
+    
+    def test_in_time_zone_with_new_zone_equal_to_old_zone_does_not_create_new_object
+      assert_equal @twz.object_id, @twz.in_time_zone(TimeZone['Eastern Time (US & Canada)']).object_id
+    end
   
     def test_in_current_time_zone
       Time.use_zone 'Alaska' do
@@ -35,12 +39,6 @@ uses_tzinfo 'TimeWithZoneTest' do
     def test_change_time_zone
       silence_warnings do # silence warnings raised by tzinfo gem
         assert_equal ActiveSupport::TimeWithZone.new(nil, TimeZone['Alaska'], Time.utc(1999, 12, 31, 19)), @twz.change_time_zone('Alaska')
-      end
-    end
-  
-    def test_change_time_zone_to_current
-      Time.use_zone 'Alaska' do
-        assert_equal ActiveSupport::TimeWithZone.new(nil, TimeZone['Alaska'], Time.utc(1999, 12, 31, 19)), @twz.change_time_zone_to_current
       end
     end
   
@@ -88,6 +86,18 @@ uses_tzinfo 'TimeWithZoneTest' do
       assert_equal "1999-12-31T19:00:00-05:00", @twz.xmlschema
     end
     
+    def test_to_yaml
+      assert_equal "--- 1999-12-31 19:00:00 -05:00\n", @twz.to_yaml
+    end
+    
+    def test_httpdate
+      assert_equal 'Sat, 01 Jan 2000 00:00:00 GMT', @twz.httpdate
+    end
+    
+    def test_rfc2822
+      assert_equal "Fri, 31 Dec 1999 19:00:00 -0500", @twz.rfc2822
+    end
+    
     def test_compare_with_time
       assert_equal  1, @twz <=> Time.utc(1999, 12, 31, 23, 59, 59)
       assert_equal  0, @twz <=> Time.utc(2000, 1, 1, 0, 0, 0)
@@ -104,6 +114,11 @@ uses_tzinfo 'TimeWithZoneTest' do
       assert_equal  1, @twz <=> ActiveSupport::TimeWithZone.new( Time.utc(1999, 12, 31, 23, 59, 59), TimeZone['UTC'] )
       assert_equal  0, @twz <=> ActiveSupport::TimeWithZone.new( Time.utc(2000, 1, 1, 0, 0, 0), TimeZone['UTC'] )
       assert_equal(-1, @twz <=> ActiveSupport::TimeWithZone.new( Time.utc(2000, 1, 1, 0, 0, 1), TimeZone['UTC'] ))
+    end
+    
+    def test_eql?
+      assert @twz.eql?(Time.utc(2000))
+      assert @twz.eql?( ActiveSupport::TimeWithZone.new(Time.utc(2000), TimeZone["Hawaii"]) )
     end
       
     def test_plus
@@ -132,9 +147,29 @@ uses_tzinfo 'TimeWithZoneTest' do
       twz2 = ActiveSupport::TimeWithZone.new( Time.utc(2000, 1, 2), TimeZone['UTC'] )
       assert_equal  86_400.0,  twz2 - twz1
     end
+    
+    def test_to_a
+      assert_equal [45, 30, 5, 1, 2, 2000, 2, 32, false, "HST"], ActiveSupport::TimeWithZone.new( Time.utc(2000, 2, 1, 15, 30, 45), TimeZone['Hawaii'] ).to_a
+    end
+    
+    def test_to_f
+      result = ActiveSupport::TimeWithZone.new( Time.utc(2000, 1, 1), TimeZone['Hawaii'] ).to_f
+      assert_equal 946684800.0, result
+      assert result.is_a?(Float)
+    end
+    
+    def test_to_i
+      result = ActiveSupport::TimeWithZone.new( Time.utc(2000, 1, 1), TimeZone['Hawaii'] ).to_i
+      assert_equal 946684800, result
+      assert result.is_a?(Integer)
+    end
       
     def test_to_time
       assert_equal @twz, @twz.to_time
+    end
+    
+    def test_to_datetime
+      assert_equal DateTime.civil(1999, 12, 31, 19, 0, 0, Rational(-18_000, 86_400)),  @twz.to_datetime
     end
       
     def test_acts_like_time
@@ -177,6 +212,16 @@ uses_tzinfo 'TimeWithZoneTest' do
           assert_equal 'Fri, 31 Dec 1999 14:00:00 HST -10:00', @dt.in_time_zone('Hawaii').inspect
           assert_equal 'Sat, 01 Jan 2000 00:00:00 UTC +00:00', @t.in_time_zone('UTC').inspect
           assert_equal 'Sat, 01 Jan 2000 00:00:00 UTC +00:00', @dt.in_time_zone('UTC').inspect
+          assert_equal 'Fri, 31 Dec 1999 15:00:00 AKST -09:00', @t.in_time_zone(-9.hours).inspect
+        end
+      end
+    end
+    
+    def test_in_time_zone_with_time_local_instance
+      silence_warnings do # silence warnings raised by tzinfo gem
+        with_env_tz 'US/Eastern' do
+          time = Time.local(1999, 12, 31, 19) # == Time.utc(2000)
+          assert_equal 'Fri, 31 Dec 1999 15:00:00 AKST -09:00', time.in_time_zone('Alaska').inspect
         end
       end
     end
@@ -205,22 +250,8 @@ uses_tzinfo 'TimeWithZoneTest' do
           assert_equal 'Sat, 01 Jan 2000 00:00:00 HST -10:00', @dt.change_time_zone('Hawaii').inspect
           assert_equal 'Sat, 01 Jan 2000 00:00:00 UTC +00:00', @t.change_time_zone('UTC').inspect
           assert_equal 'Sat, 01 Jan 2000 00:00:00 UTC +00:00', @dt.change_time_zone('UTC').inspect
+          assert_equal 'Sat, 01 Jan 2000 00:00:00 AKST -09:00', @t.change_time_zone(-9.hours).inspect
         end
-      end
-    end
-    
-    def test_change_time_zone_to_current
-      Time.use_zone 'Alaska' do
-        assert_equal 'Sat, 01 Jan 2000 00:00:00 AKST -09:00', @t.change_time_zone_to_current.inspect
-        assert_equal 'Sat, 01 Jan 2000 00:00:00 AKST -09:00', @dt.change_time_zone_to_current.inspect
-      end
-      Time.use_zone 'Hawaii' do
-        assert_equal 'Sat, 01 Jan 2000 00:00:00 HST -10:00', @t.change_time_zone_to_current.inspect
-        assert_equal 'Sat, 01 Jan 2000 00:00:00 HST -10:00', @dt.change_time_zone_to_current.inspect
-      end
-      Time.use_zone nil do
-        assert_equal @t, @t.change_time_zone_to_current
-        assert_equal @dt, @dt.change_time_zone_to_current
       end
     end
     
@@ -240,6 +271,28 @@ uses_tzinfo 'TimeWithZoneTest' do
       assert_equal TimeZone['Alaska'], Time.zone
     end
     
+    def test_time_zone_getter_and_setter
+      Time.zone = TimeZone['Alaska']
+      assert_equal TimeZone['Alaska'], Time.zone
+      Time.zone = 'Alaska'
+      assert_equal TimeZone['Alaska'], Time.zone
+      Time.zone = -9.hours
+      assert_equal TimeZone['Alaska'], Time.zone
+      Time.zone = nil
+      assert_equal nil, Time.zone
+    end
+    
+    def test_time_zone_getter_and_setter_with_zone_default
+      Time.zone_default = TimeZone['Alaska']
+      assert_equal TimeZone['Alaska'], Time.zone
+      Time.zone = TimeZone['Hawaii']
+      assert_equal TimeZone['Hawaii'], Time.zone
+      Time.zone = nil
+      assert_equal TimeZone['Alaska'], Time.zone
+    ensure
+      Time.zone_default = nil
+    end
+    
     def test_time_zone_setter_is_thread_safe
       Time.use_zone 'Paris' do
         t1 = Thread.new { Time.zone = 'Alaska' }
@@ -249,5 +302,13 @@ uses_tzinfo 'TimeWithZoneTest' do
         assert_equal TimeZone['Hawaii'], t2[:time_zone]
       end
     end
+    
+    protected
+      def with_env_tz(new_tz = 'US/Eastern')
+        old_tz, ENV['TZ'] = ENV['TZ'], new_tz
+        yield
+      ensure
+        old_tz ? ENV['TZ'] = old_tz : ENV.delete('TZ')
+      end
   end
 end

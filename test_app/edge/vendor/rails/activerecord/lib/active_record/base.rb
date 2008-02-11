@@ -2212,21 +2212,24 @@ module ActiveRecord #:nodoc:
       end
 
 
-      # Returns a hash of all the attributes with their names as keys and clones of their objects as values.
+      # Returns a hash of all the attributes with their names as keys and the values of the attributes as values.
       def attributes(options = nil)
-        attributes = clone_attributes :read_attribute
+        attrs = {}
+        self.attribute_names.each do |name|
+          attrs[name]=read_attribute(name)
+        end
 
         if options.nil?
-          attributes
+          attrs
         else
           if except = options[:except]
             except = Array(except).collect { |attribute| attribute.to_s }
-            except.each { |attribute_name| attributes.delete(attribute_name) }
-            attributes
+            except.each { |attribute_name| attrs.delete(attribute_name) }
+            attrs
           elsif only = options[:only]
             only = Array(only).collect { |attribute| attribute.to_s }
-            attributes.delete_if { |key, value| !only.include?(key) }
-            attributes
+            attrs.delete_if { |key, value| !only.include?(key) }
+            attrs
           else
             raise ArgumentError, "Options does not specify :except or :only (#{options.keys.inspect})"
           end
@@ -2469,9 +2472,12 @@ module ActiveRecord #:nodoc:
         )
       end
 
-      # Includes an ugly hack for Time.local instead of Time.new because the latter is reserved by Time itself.
-      def instantiate_time_object(*values)
-        @@default_timezone == :utc ? Time.utc(*values) : Time.local(*values)
+      def instantiate_time_object(name, values)
+        if Time.zone && !self.class.skip_time_zone_conversion_for_attributes.include?(name.to_sym)
+          Time.zone.local(*values)
+        else
+          @@default_timezone == :utc ? Time.utc_time(*values) : Time.local_time(*values)
+        end
       end
 
       def execute_callstack_for_multiparameter_attributes(callstack)
@@ -2483,12 +2489,12 @@ module ActiveRecord #:nodoc:
           else
             begin
               value = if Time == klass
-                instantiate_time_object(*values)
+                instantiate_time_object(name, values)
               elsif Date == klass
                 begin
                   Date.new(*values)
                 rescue ArgumentError => ex # if Date.new raises an exception on an invalid date
-                  instantiate_time_object(*values).to_date # we instantiate Time object and convert it back to a date thus using Time's logic in handling invalid dates
+                  instantiate_time_object(name, values).to_date # we instantiate Time object and convert it back to a date thus using Time's logic in handling invalid dates
                 end
               else
                 klass.new(*values)

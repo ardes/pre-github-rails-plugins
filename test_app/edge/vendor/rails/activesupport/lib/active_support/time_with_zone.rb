@@ -21,6 +21,9 @@ module ActiveSupport
       @utc ||= time_zone.local_to_utc(@time)
     end
     alias_method :comparable_time, :utc
+    alias_method :getgm, :utc
+    alias_method :getutc, :utc
+    alias_method :gmtime, :utc
   
     # Returns the underlying TZInfo::TimezonePeriod for the local time
     def period
@@ -29,6 +32,7 @@ module ActiveSupport
 
     # Returns the simultaneous time in the specified zone
     def in_time_zone(new_zone)
+      return self if time_zone == new_zone
       utc.in_time_zone(new_zone)
     end
   
@@ -42,27 +46,27 @@ module ActiveSupport
       time.change_time_zone(new_zone)
     end
   
-    # Changes the time zone to Time.zone without converting the time
-    def change_time_zone_to_current
-      time.change_time_zone_to_current
-    end
-  
     # Returns a Time.local() instance of the simultaneous time in your system's ENV['TZ'] zone
     def localtime
-      utc.dup.localtime # use #dup because Time#localtime is destructive
+      utc.getlocal
     end
+    alias_method :getlocal, :localtime
   
     def dst?
       period.dst?
     end
+    alias_method :isdst, :dst?
   
     def utc?
       time_zone.name == 'UTC'
     end
+    alias_method :gmt?, :utc?
   
     def utc_offset
       period.utc_total_offset
     end
+    alias_method :gmt_offset, :utc_offset
+    alias_method :gmtoff, :utc_offset
   
     def formatted_offset(colon = true, alternate_utc_string = nil)
       utc? && alternate_utc_string || utc_offset.to_utc_offset_s(colon)
@@ -80,10 +84,24 @@ module ActiveSupport
     def xmlschema
       "#{time.strftime("%Y-%m-%dT%H:%M:%S")}#{formatted_offset(true, 'Z')}"
     end
+    alias_method :iso8601, :xmlschema
   
     def to_json(options = nil)
       %("#{time.strftime("%Y/%m/%d %H:%M:%S")} #{formatted_offset(false)}")
     end
+    
+    def to_yaml(options = {})
+      time.to_yaml(options).gsub('Z', formatted_offset(true, 'Z'))
+    end
+    
+    def httpdate
+      utc.httpdate
+    end
+  
+    def rfc2822
+      to_s(:rfc822)
+    end
+    alias_method :rfc822, :rfc2822
   
     # :db format outputs time in UTC; all others output time in local. Uses TimeWithZone's strftime, so %Z and %z work correctly
     def to_s(format = :default) 
@@ -107,15 +125,37 @@ module ActiveSupport
       utc <=> other
     end
     
+    def eql?(other)
+      utc == other
+    end
+    
     # Need to override #- to intercept situation where a Time or Time With Zone object is passed in
     # Otherwise, just pass on to method missing
     def -(other)
       other.acts_like?(:time) ? utc - other : method_missing(:-, other)
     end
+    
+    def to_a
+      time.to_a[0, 8].push(dst?, zone)
+    end
+    
+    def to_f
+      utc.to_f
+    end    
+    
+    def to_i
+      utc.to_i
+    end
+    alias_method :hash, :to_i
+    alias_method :tv_sec, :to_i
   
     # A TimeProxy acts like a Time, so just return self
     def to_time
       self
+    end
+    
+    def to_datetime
+      utc.to_datetime.new_offset(Rational(utc_offset, 86_400))
     end
     
     # so that self acts_like?(:time)
