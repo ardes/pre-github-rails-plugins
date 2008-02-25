@@ -24,9 +24,8 @@ class FixedDwelling < Dwelling
 - should raise argument error with new(:type => "Dwelling")
 - should return FixedDwelling with new(:type => "FixedDwelling")
 - should be fine with FixedDwelling.new
-- should have @type_dependencies_loaded == true on base class
 - should not call type_class_names on any calls of load_type_dependencies
 
-Finished in 0.110904 seconds
+Finished in 0.124928 seconds
 
-16 examples, 0 failures
+15 examples, 0 failures

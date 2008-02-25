@@ -24,20 +24,19 @@ module Ardes#:nodoc:
   module HasTypes
     def has_types(*types)
       raise RuntimeError, "can only specify has_types on an STI base class" unless self == self.base_class
-      
       options = types.last.is_a?(Hash) ? types.pop : {}
       
-      self.class_eval do
-        cattr_accessor :type_class_names
-      
-        extend TypeFactory if options[:type_factory]
-        
-        unless respond_to?(:load_type_dependencies)
+      unless respond_to?(:load_type_dependencies)
+        self.class_eval do
+          cattr_accessor :type_class_names
+          extend TypeFactory if options[:type_factory]
+          
           class<<self
+            # this only needs to be called once, so blow myself away afterwards
             def load_type_dependencies
-              unless base_class.instance_variable_get('@type_dependencies_loaded')
-                (type_class_names - [self.name]).each(&:constantize)
-                base_class.instance_variable_set('@type_dependencies_loaded', true)
+              (type_class_names - [self.name]).each(&:constantize)
+              class<<self
+                def load_type_dependencies; end
               end
             end
             
@@ -58,9 +57,9 @@ module Ardes#:nodoc:
             end
           end
         end
+        
+        self.type_class_names = types.collect(&:to_s).collect(&:classify)
       end
-      
-      self.type_class_names = types.collect{|t| t.to_s.classify }
     end
     
     # extended into model when :type_factory => true

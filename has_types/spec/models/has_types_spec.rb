@@ -95,10 +95,6 @@ describe "class FixedDwelling < Dwelling" do
     lambda { FixedDwelling.new }.should_not raise_error
   end
   
-  it 'should have @type_dependencies_loaded == true on base class' do
-    FixedDwelling.base_class.instance_variable_get('@type_dependencies_loaded').should == true
-  end
-  
   it 'should not call type_class_names on any calls of load_type_dependencies' do
     FixedDwelling.should_not_receive(:type_class_names)
     FixedDwelling.load_type_dependencies
