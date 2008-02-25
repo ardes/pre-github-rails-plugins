@@ -9,6 +9,10 @@ module Ardes#:nodoc:
   # The solution given here is to load the outstanding dependencies when the subclasses method is called.  This ensures that STI subclasses are
   # loaded just in time to make all the finder magic work.
   #
+  # If the Dependency.mechanism is :load (ie. standardly in development mode) then the types are constantized each time ensuring that the
+  # right classes are loaded.  If the Dependency.mechanism is :require (i.e. production mode) then the hook in subclasses is removed for subsequent
+  # calls.
+  #
   # === Options
   #
   # :type_factory (default false)
@@ -25,11 +29,14 @@ module Ardes#:nodoc:
           extend TypeFactory if options[:type_factory]
           
           class<<self
-            # the first time subclasses is called, load up the dependencies
-            # then blow away all trace of the this hook for subsequent calls
+            # Load all dependencies before sublcasses is accessed
             def subclasses_with_has_types
               (type_class_names - [self.name]).each(&:constantize)
-              returning subclasses_without_has_types do
+              subclasses_without_has_types
+            ensure
+              # Unless we are in Dependency load mode, we can get rid of 
+              # this method hook
+              unless Dependencies.mechanism == :load
                 class<<self
                   alias_method :subclasses, :subclasses_without_has_types
                   undef_method :subclasses_with_has_types
