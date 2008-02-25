@@ -6,11 +6,15 @@ module Ardes#:nodoc:
   # The solution is a bit complicated, because we can't load the subclass dependencies until after
   # the base class is defined.  (If ruby had a <code>class_defined</code> hook, a companion to <code>inherited</code>, this would be trivial)
   #
-  # The solution given here is to load the outstanding dependencies when the classes descends_from_active_record? method is called.
-  # This is called before any queries that need type conditions.  The dependency laoding happens only once, as the the method is
-  # returned to its original state afterwards.
+  # The solution given here is to load the outstanding dependencies when the load_type_dependencies is called.
   #
-  # I'm pretty sure this condition serves to load STI subclasses just in time to make all the finder magic work.
+  # You can call this method when you need to be sure that all of the subclasses are loaded.
+  #
+  # This mixin makes sure to call that method before
+  #   - descends_from_active_record?
+  #   - type_condition
+  #
+  # This ensures that STI subclasses are loaded just in time to make all the finder magic work.
   #
   # === Options
   #
@@ -28,23 +32,26 @@ module Ardes#:nodoc:
       
         extend TypeFactory if options[:type_factory]
         
-        # define intercept hook on descend_from_active_record? which loads up subclasses
-        # only define this when it's not already there, in case has_types is specified more than once
-        unless respond_to?(:descends_from_active_record_with_has_types?)
+        unless respond_to?(:load_type_dependencies)
           class<<self
-            # Intercept calls to descend_from_active_record? and load outstanding dependencies, then wipe
-            # all trace of this method intercept
-            def descends_from_active_record_with_has_types?
-              (type_class_names - [self.name]).each(&:constantize)
-              returning descends_from_active_record_without_has_types? do
-                class<<self
-                  alias_method :descends_from_active_record?, :descends_from_active_record_without_has_types?
-                  undef_method :descends_from_active_record_with_has_types?
-                  undef_method :descends_from_active_record_without_has_types?
-                end
+            def load_type_dependencies
+              unless base_class.instance_variable_get('@type_dependencies_loaded')
+                (type_class_names - [self.name]).each(&:constantize)
+                base_class.instance_variable_set('@type_dependencies_loaded', true)
               end
             end
+            
+            def descends_from_active_record_with_has_types?
+              load_type_dependencies
+              descends_from_active_record_without_has_types?
+            end
             alias_method_chain :descends_from_active_record?, :has_types
+            
+            def type_condition_with_has_types
+              load_type_dependencies
+              type_condition_without_has_types
+            end
+            alias_method_chain :type_condition, :has_types
             
             def inherited(child)
               type_class_names.include?(child.name) ? super : raise(NameError, "#{child.name} is not declared in #{child.base_class.name}. Add has_types :#{child.name.underscore} to #{child.base_class.name} class definition")

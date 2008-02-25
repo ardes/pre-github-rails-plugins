@@ -1,7 +1,6 @@
 
 Animal (class with has_types :pony)
 - should load subclasses on #new
-- should be cleaned up after outstanding dependencies loaded
 - #descends_from_active_record? should work
 
 has_types
@@ -26,6 +25,6 @@ class FixedDwelling < Dwelling
 - should return FixedDwelling with new(:type => "FixedDwelling")
 - should be fine with FixedDwelling.new
 
-Finished in 0.126674 seconds
+Finished in 0.129484 seconds
 
-15 examples, 0 failures
+14 examples, 0 failures
