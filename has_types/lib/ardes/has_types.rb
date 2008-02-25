@@ -8,13 +8,13 @@ module Ardes#:nodoc:
   #
   # The solution given here is to load the outstanding dependencies when the load_type_dependencies is called.
   #
-  # You can call this method when you need to be sure that all of the subclasses are loaded.
-  #
   # This mixin makes sure to call that method before
   #   - descends_from_active_record?
   #   - type_condition
   #
   # This ensures that STI subclasses are loaded just in time to make all the finder magic work.
+  #
+  # You can call this method when you need to be sure that all of the subclasses are loaded.
   #
   # === Options
   #
