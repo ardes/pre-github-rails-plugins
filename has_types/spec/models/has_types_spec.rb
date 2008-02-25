@@ -11,11 +11,6 @@ describe 'Animal (class with has_types :pony)' do
     Animal.new
     Animal.send(:subclasses).collect(&:name).should == ['Pony']
   end
-    
-  it '#descends_from_active_record? should work' do
-    Animal.descends_from_active_record?.should == true
-    Pony.descends_from_active_record?.should == false
-  end
 end
 
 if defined?(RAILS_GEM_VERSION) && RAILS_GEM_VERSION =~ /^1\.2/
@@ -93,12 +88,5 @@ describe "class FixedDwelling < Dwelling" do
   
   it 'should be fine with FixedDwelling.new' do
     lambda { FixedDwelling.new }.should_not raise_error
-  end
-  
-  it 'should not call type_class_names on any calls of load_type_dependencies' do
-    FixedDwelling.should_not_receive(:type_class_names)
-    FixedDwelling.load_type_dependencies
-    FixedDwelling.descends_from_active_record? # calls load_type_dependencies
-    FixedDwelling.send :type_condition # calls load_type_dependencies
   end
 end

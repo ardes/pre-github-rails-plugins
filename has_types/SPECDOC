@@ -1,7 +1,6 @@
 
 Animal (class with has_types :pony)
 - should load subclasses on #new
-- #descends_from_active_record? should work
 
 has_types
 - should load subclasses when any descendent loaded, and have correct SQL on #find
@@ -24,8 +23,7 @@ class FixedDwelling < Dwelling
 - should raise argument error with new(:type => "Dwelling")
 - should return FixedDwelling with new(:type => "FixedDwelling")
 - should be fine with FixedDwelling.new
-- should not call type_class_names on any calls of load_type_dependencies
 
-Finished in 0.124928 seconds
+Finished in 0.13408 seconds
 
-15 examples, 0 failures
+13 examples, 0 failures
