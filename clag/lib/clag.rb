@@ -22,7 +22,7 @@
 #   end
 # end
 #
-# Then do MyClag.create_user, or MyClag.new_user
+# Then do MyClag.create_user, or MyClag.new_user, or MyClag.user_attributes
 #
 # You can make of Clag methods like
 #
@@ -42,12 +42,14 @@
 class Clag
   module Dispatcher
     def respond_to?(method)
-      super(method) || /^(create|new)_(\w+)(!?)$/.match(method.to_s)
+      super(method) || /^(create|new)_(\w+)(!?)$/.match(method.to_s) || method =~ /^(\w+)_attributes$/
     end
     
     def method_missing(method, *args, &block)
       if match = /^(create|new)_(\w+)(!?)$/.match(method.to_s)
         dispatch(match[2], match[1] + match[3], args[0])
+      elsif method =~ /^(\w+)_attributes$/
+        new.send(method)
       else
         super(method, *args, &block)
       end
