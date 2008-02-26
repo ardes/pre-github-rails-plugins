@@ -42,14 +42,14 @@
 class Clag
   module Dispatcher
     def respond_to?(method)
-      super(method) || /^(create|new)_(\w+)(!?)$/.match(method.to_s) || method =~ /^(\w+)_attributes$/
+      super(method) || /^(create|new)_(\w+)(!?)$/.match(method.to_s) || /^(\w+)_attributes$/.match(method.to_s)
     end
     
     def method_missing(method, *args, &block)
       if match = /^(create|new)_(\w+)(!?)$/.match(method.to_s)
         dispatch(match[2], match[1] + match[3], args[0])
-      elsif method =~ /^(\w+)_attributes$/
-        new.send(method)
+      elsif match = /^(\w+)_attributes$/.match(method.to_s)
+        clag_class.new.send(match[1])
       else
         super(method, *args, &block)
       end
@@ -57,13 +57,16 @@ class Clag
     
     def dispatch(model, method, options)
       klass = model.camelize.constantize
-      clag = self.is_a?(Class) ? self : self.class
-      attrs = clag.new.method(model)
+      attrs = clag_class.new.method(model)
       if attrs.arity == 0
         klass.send method, attrs.call.merge(options || {})
       else
         klass.send method, attrs.call(options || {})
       end
+    end
+    
+    def clag_class
+      self.is_a?(Class) ? self : self.class
     end
   end
   
