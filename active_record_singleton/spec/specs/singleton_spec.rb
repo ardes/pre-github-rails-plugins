@@ -105,6 +105,6 @@ describe "An ActiveRecord::Singleton class (concurrent usage)" do
   it "should instantiate only one when concurrent processes get instance" do
     reset_singleton Thing
     Thing.count.should == 0
-    system("#{File.dirname(__FILE__)}/../concurrent_get_instance > /dev/null").should be_true
+    system("ruby #{File.dirname(__FILE__)}/../concurrent_get_instance > /dev/null").should be_true
   end
 end
