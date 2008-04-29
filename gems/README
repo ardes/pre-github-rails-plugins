@@ -1,5 +1,7 @@
 http://plugins.ardes.com > gems
 
+= NOTE: Rails edge has the gems tasks now - use them instead!
+
 = gems
 
 Adapted from technoweenies freeze gems plugin.  This version adds two features:
